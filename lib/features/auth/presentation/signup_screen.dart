@@ -66,9 +66,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     setState(() => _error = null);
     if (_step == 0) {
       setState(() => _step = 1);
-      _pageController.animateToPage(1,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut);
+      _pageController.animateToPage(
+        1,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
     } else {
       _submit();
     }
@@ -77,21 +79,27 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   Future<void> _submit() async {
     setState(() => _loading = true);
     try {
-      await ref.read(authServiceProvider).signUp(
+      await ref
+          .read(authServiceProvider)
+          .signUp(
             email: _emailCtrl.text.trim(),
             password: _passwordCtrl.text,
             displayName: _nameCtrl.text.trim(),
           );
-      await ref.read(agentProfileStoreProvider).save(AgentProfile(
-            agentName: _nameCtrl.text.trim(),
-            agentEmail: _emailCtrl.text.trim(),
-            brokerageName: _brokerageNameCtrl.text.trim(),
-            brokerageAddress: _brokerageAddressCtrl.text.trim(),
-            brokerageCityStateZip: _brokerageCityStateZipCtrl.text.trim(),
-            agentPhone: _agentPhoneCtrl.text.trim(),
-            state: _state,
-            isMultiPersonFirm: _isMultiPersonFirm,
-          ));
+      await ref
+          .read(agentProfileStoreProvider)
+          .save(
+            AgentProfile(
+              agentName: _nameCtrl.text.trim(),
+              agentEmail: _emailCtrl.text.trim(),
+              brokerageName: _brokerageNameCtrl.text.trim(),
+              brokerageAddress: _brokerageAddressCtrl.text.trim(),
+              brokerageCityStateZip: _brokerageCityStateZipCtrl.text.trim(),
+              agentPhone: _agentPhoneCtrl.text.trim(),
+              state: _state,
+              isMultiPersonFirm: _isMultiPersonFirm,
+            ),
+          );
     } on Exception catch (e) {
       setState(() => _error = _friendlyError(e.toString()));
     } finally {
@@ -104,20 +112,23 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-        leading: _step == 1
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () {
-                  setState(() {
-                    _step = 0;
-                    _error = null;
-                  });
-                  _pageController.animateToPage(0,
+        leading:
+            _step == 1
+                ? IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () {
+                    setState(() {
+                      _step = 0;
+                      _error = null;
+                    });
+                    _pageController.animateToPage(
+                      0,
                       duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut);
-                },
-              )
-            : null,
+                      curve: Curves.easeInOut,
+                    );
+                  },
+                )
+                : null,
         title: Text(_step == 0 ? 'Create account' : 'Your brokerage'),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(4),
@@ -131,10 +142,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       body: PageView(
         controller: _pageController,
         physics: const NeverScrollableScrollPhysics(),
-        children: [
-          _buildAccountStep(cs),
-          _buildBrokerageStep(cs),
-        ],
+        children: [_buildAccountStep(cs), _buildBrokerageStep(cs)],
       ),
       bottomNavigationBar: SafeArea(
         child: Padding(
@@ -145,20 +153,25 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
               if (_error != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(_error!,
-                      style: TextStyle(color: cs.error),
-                      textAlign: TextAlign.center),
+                  child: Text(
+                    _error!,
+                    style: TextStyle(color: cs.error),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               FilledButton(
                 onPressed: _loading ? null : _next,
                 style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(52)),
-                child: _loading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2))
-                    : Text(_step == 0 ? 'Next' : 'Create account'),
+                  minimumSize: const Size.fromHeight(52),
+                ),
+                child:
+                    _loading
+                        ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                        : Text(_step == 0 ? 'Next' : 'Create account'),
               ),
               if (_step == 0) ...[
                 const SizedBox(height: 8),
@@ -180,18 +193,21 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Your info',
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineSmall
-                  ?.copyWith(fontWeight: FontWeight.bold)),
+          Text(
+            'Your info',
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 24),
           TextFormField(
             controller: _nameCtrl,
             textCapitalization: TextCapitalization.words,
             textInputAction: TextInputAction.next,
             decoration: const InputDecoration(
-                labelText: 'Full name', border: OutlineInputBorder()),
+              labelText: 'Full name',
+              border: OutlineInputBorder(),
+            ),
           ),
           const SizedBox(height: 16),
           TextFormField(
@@ -199,14 +215,16 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
             decoration: const InputDecoration(
-                labelText: 'Email', border: OutlineInputBorder()),
+              labelText: 'Email',
+              border: OutlineInputBorder(),
+            ),
           ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _passwordCtrl,
             obscureText: _obscure,
             textInputAction: TextInputAction.done,
-            onSubmitted: (_) => _next(),
+            onEditingComplete: () => _next(),
             decoration: InputDecoration(
               labelText: 'Password',
               border: const OutlineInputBorder(),
@@ -228,23 +246,27 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Brokerage details',
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineSmall
-                  ?.copyWith(fontWeight: FontWeight.bold)),
-          Text('Used to pre-fill forms at every showing.',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: cs.onSurfaceVariant)),
+          Text(
+            'Brokerage details',
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          Text(
+            'Used to pre-fill forms at every showing.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+          ),
           const SizedBox(height: 24),
           TextFormField(
             controller: _brokerageNameCtrl,
             textCapitalization: TextCapitalization.words,
             textInputAction: TextInputAction.next,
             decoration: const InputDecoration(
-                labelText: 'Brokerage name', border: OutlineInputBorder()),
+              labelText: 'Brokerage name',
+              border: OutlineInputBorder(),
+            ),
           ),
           const SizedBox(height: 16),
           TextFormField(
@@ -252,8 +274,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             textCapitalization: TextCapitalization.words,
             textInputAction: TextInputAction.next,
             decoration: const InputDecoration(
-                labelText: 'Brokerage street address (optional)',
-                border: OutlineInputBorder()),
+              labelText: 'Brokerage street address (optional)',
+              border: OutlineInputBorder(),
+            ),
           ),
           const SizedBox(height: 16),
           TextFormField(
@@ -261,8 +284,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             textCapitalization: TextCapitalization.words,
             textInputAction: TextInputAction.next,
             decoration: const InputDecoration(
-                labelText: 'City, State, Zip (optional)',
-                border: OutlineInputBorder()),
+              labelText: 'City, State, Zip (optional)',
+              border: OutlineInputBorder(),
+            ),
           ),
           const SizedBox(height: 16),
           TextFormField(
@@ -270,25 +294,30 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             keyboardType: TextInputType.phone,
             textInputAction: TextInputAction.next,
             decoration: const InputDecoration(
-                labelText: 'Your phone number', border: OutlineInputBorder()),
+              labelText: 'Your phone number',
+              border: OutlineInputBorder(),
+            ),
           ),
           const SizedBox(height: 24),
           DropdownButtonFormField<String>(
             value: _state,
             decoration: const InputDecoration(
-                labelText: 'State', border: OutlineInputBorder()),
-            items: kSupportedStates
-                .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                .toList(),
+              labelText: 'State',
+              border: OutlineInputBorder(),
+            ),
+            items:
+                kSupportedStates
+                    .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                    .toList(),
             onChanged: (v) => setState(() => _state = v!),
           ),
           const SizedBox(height: 20),
-          Text('Firm type',
-              style: Theme.of(context).textTheme.labelLarge),
+          Text('Firm type', style: Theme.of(context).textTheme.labelLarge),
           const SizedBox(height: 8),
           _ChoiceCard(
             label: 'Multiple-person firm',
-            subtitle: 'Section 2.1 — you are a designated broker within the firm',
+            subtitle:
+                'Section 2.1 — you are a designated broker within the firm',
             selected: _isMultiPersonFirm,
             onTap: () => setState(() => _isMultiPersonFirm = true),
           ),
@@ -353,12 +382,14 @@ class _ChoiceCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label,
-                      style:
-                          const TextStyle(fontWeight: FontWeight.w600)),
-                  Text(subtitle,
-                      style: TextStyle(
-                          fontSize: 12, color: cs.onSurfaceVariant)),
+                  Text(
+                    label,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                  ),
                 ],
               ),
             ),
