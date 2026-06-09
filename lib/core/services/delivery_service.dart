@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:printing/printing.dart';
 
 import 'package:threshold/features/agreement/data/agreement_model.dart';
 import 'package:threshold/features/agreement/data/agreement_repository.dart';
@@ -24,8 +25,22 @@ class DeliveryService {
   Future<bool> deliver(AgreementModel agreement) async {
     if (!agreement.hasLocalPdf) return false;
 
+    final file = File(agreement.localPdfPath!);
+    if (!file.existsSync()) return false;
+
+    final filename =
+        'agreement_${agreement.buyerName.replaceAll(' ', '_')}.pdf';
+
     if (_sendgridApiKey.isEmpty) {
-      // Dev mode — skip send and mark delivered so UI works for testing.
+      // Dev fallback: open the device share/save sheet so users can
+      // download the PDF locally when email delivery is not configured.
+      final pdfBytes = await file.readAsBytes();
+      final shared = await Printing.sharePdf(
+        bytes: pdfBytes,
+        filename: filename,
+      );
+      if (!shared) return false;
+
       final delivered = agreement.copyWith(
         status: AgreementStatus.delivered,
         deliveredAt: DateTime.now(),
@@ -34,13 +49,8 @@ class DeliveryService {
       return true;
     }
 
-    final file = File(agreement.localPdfPath!);
-    if (!file.existsSync()) return false;
-
     final pdfBytes = await file.readAsBytes();
     final pdfBase64 = base64Encode(pdfBytes);
-    final filename =
-        'agreement_${agreement.buyerName.replaceAll(' ', '_')}.pdf';
 
     final recipients = [
       {'email': agreement.buyerEmail, 'name': agreement.buyerName},
@@ -59,7 +69,7 @@ class DeliveryService {
             'personalizations': [
               {
                 'to': [recipient],
-              }
+              },
             ],
             'from': {'email': _fromEmail, 'name': 'Threshold'},
             'subject':
@@ -69,7 +79,7 @@ class DeliveryService {
                 'type': 'text/plain',
                 'value':
                     'Hi ${recipient['name']},\n\nPlease find your signed buyer representation agreement attached.\n\nThis agreement covers: ${agreement.propertyScope}\nCompensation: ${agreement.compensation}\nTerm: ${_fmt(agreement.startDate)} – ${_fmt(agreement.endDate)}\n\nThreshold',
-              }
+              },
             ],
             'attachments': [
               {
@@ -77,7 +87,7 @@ class DeliveryService {
                 'filename': filename,
                 'type': 'application/pdf',
                 'disposition': 'attachment',
-              }
+              },
             ],
           }),
         );
