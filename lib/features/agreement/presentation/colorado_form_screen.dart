@@ -4,16 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import '../data/agreement_repository.dart';
-import '../data/colorado_form_data.dart';
-import '../../auth/data/agent_profile_store.dart';
+import 'package:threshold/features/agreement/data/agreement_repository.dart';
+import 'package:threshold/features/agreement/data/colorado_form_data.dart';
+import 'package:threshold/features/auth/data/agent_profile_store.dart';
 
 class ColoradoFormScreen extends ConsumerStatefulWidget {
   const ColoradoFormScreen({super.key});
 
   @override
-  ConsumerState<ColoradoFormScreen> createState() =>
-      _ColoradoFormScreenState();
+  ConsumerState<ColoradoFormScreen> createState() => _ColoradoFormScreenState();
 }
 
 class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
@@ -105,9 +104,11 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
     if (!_validateStep()) return;
     if (_step < _totalSteps - 1) {
       setState(() => _step++);
-      _pageController.animateToPage(_step,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut);
+      _pageController.animateToPage(
+        _step,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
     } else {
       _submit();
     }
@@ -119,9 +120,11 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
         _step--;
         _stepError = null;
       });
-      _pageController.animateToPage(_step,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut);
+      _pageController.animateToPage(
+        _step,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
     } else {
       context.go('/agreements');
     }
@@ -140,19 +143,23 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
         isBuyerAgency: _isBuyerAgency,
         compensationType: _compType,
         compensationValue: _compValueCtrl.text.trim(),
-        holdoverDays: _holdoverCtrl.text.trim().isEmpty
-            ? '30'
-            : _holdoverCtrl.text.trim(),
+        holdoverDays:
+            _holdoverCtrl.text.trim().isEmpty
+                ? '30'
+                : _holdoverCtrl.text.trim(),
         computationWillExtend: _computationWillExtend,
         buyerIsPartyToOtherAgreement: _isPartyToOther,
         buyerHasReceivedSubmittedList: _hasReceivedSubmittedList,
       );
 
-      final compensation = _compType == 'percentage'
-          ? '${_compValueCtrl.text.trim()}%'
-          : '\$${_compValueCtrl.text.trim()}';
+      final compensation =
+          _compType == 'percentage'
+              ? '${_compValueCtrl.text.trim()}%'
+              : '\$${_compValueCtrl.text.trim()}';
 
-      final agreement = await ref.read(agreementRepositoryProvider).create(
+      final agreement = await ref
+          .read(agreementRepositoryProvider)
+          .create(
             agentId: user.uid,
             agentName: profile?.agentName ?? user.displayName ?? '',
             agentEmail: profile?.agentEmail ?? user.email ?? '',
@@ -163,7 +170,6 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
             compensation: compensation,
             startDate: _startDate,
             endDate: _endDate,
-            formState: 'Colorado',
             formData: coData.toJson(),
           );
 
@@ -207,7 +213,8 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
           _textStep(
             prompt: 'What property are you showing?',
             controller: _propertyCtrl,
-            hint: 'e.g. 123 Main St, Denver CO 80203\nor "Any residential property in Denver metro"',
+            hint:
+                'e.g. 123 Main St, Denver CO 80203\nor "Any residential property in Denver metro"',
             maxLines: 3,
             capitalize: TextCapitalization.sentences,
           ),
@@ -225,22 +232,29 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
               if (_stepError != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(_stepError!,
-                      style: TextStyle(color: cs.error, fontSize: 13),
-                      textAlign: TextAlign.center),
+                  child: Text(
+                    _stepError!,
+                    style: TextStyle(color: cs.error, fontSize: 13),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               FilledButton(
                 onPressed: _saving ? null : _next,
                 style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(52)),
-                child: _saving
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2))
-                    : Text(_step < _totalSteps - 1
-                        ? 'Next'
-                        : 'Proceed to signatures'),
+                  minimumSize: const Size.fromHeight(52),
+                ),
+                child:
+                    _saving
+                        ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                        : Text(
+                          _step < _totalSteps - 1
+                              ? 'Next'
+                              : 'Proceed to signatures',
+                        ),
               ),
             ],
           ),
@@ -262,11 +276,12 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(prompt,
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineSmall
-                  ?.copyWith(fontWeight: FontWeight.bold)),
+          Text(
+            prompt,
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 28),
           TextField(
             controller: controller,
@@ -294,11 +309,12 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Buyer's contact info",
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineSmall
-                  ?.copyWith(fontWeight: FontWeight.bold)),
+          Text(
+            "Buyer's contact info",
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 28),
           TextField(
             controller: _buyerEmailCtrl,
@@ -331,14 +347,18 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Buyer's address",
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineSmall
-                  ?.copyWith(fontWeight: FontWeight.bold)),
-          Text('Required for the official form. Can be home address.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant)),
+          Text(
+            "Buyer's address",
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          Text(
+            'Required for the official form. Can be home address.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
           const SizedBox(height: 28),
           TextField(
             controller: _buyerAddressCtrl,
@@ -372,15 +392,19 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Your compensation',
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineSmall
-                  ?.copyWith(fontWeight: FontWeight.bold)),
+          Text(
+            'Your compensation',
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
-          Text('Success fee for this buyer agreement.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: cs.onSurfaceVariant)),
+          Text(
+            'Success fee for this buyer agreement.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+          ),
           const SizedBox(height: 24),
           SegmentedButton<String>(
             segments: const [
@@ -388,14 +412,12 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
               ButtonSegment(value: 'dollar', label: Text('Dollar amount')),
             ],
             selected: {_compType},
-            onSelectionChanged: (v) =>
-                setState(() => _compType = v.first),
+            onSelectionChanged: (v) => setState(() => _compType = v.first),
           ),
           const SizedBox(height: 20),
           TextField(
             controller: _compValueCtrl,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
             textInputAction: TextInputAction.done,
             onSubmitted: (_) => _next(),
             autofocus: true,
@@ -421,14 +443,18 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Agreement period',
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineSmall
-                  ?.copyWith(fontWeight: FontWeight.bold)),
-          Text('NAR rules require a defined term.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: cs.onSurfaceVariant)),
+          Text(
+            'Agreement period',
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          Text(
+            'NAR rules require a defined term.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+          ),
           const SizedBox(height: 24),
           _dateTile('Start date', _startDate, () async {
             final d = await showDatePicker(
@@ -465,17 +491,17 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
   }
 
   Widget _legalStep() {
-    final cs = Theme.of(context).colorScheme;
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(24, 32, 24, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('A few quick questions',
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineSmall
-                  ?.copyWith(fontWeight: FontWeight.bold)),
+          Text(
+            'A few quick questions',
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 24),
           _sectionLabel('Brokerage relationship (Section 4)'),
           const SizedBox(height: 8),
@@ -488,7 +514,8 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
           const SizedBox(height: 8),
           _choiceCard(
             label: 'Transaction-Brokerage',
-            subtitle: 'You assist the transaction without representing either party',
+            subtitle:
+                'You assist the transaction without representing either party',
             selected: !_isBuyerAgency,
             onTap: () => setState(() => _isBuyerAgency = false),
           ),
@@ -497,7 +524,8 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
           const SizedBox(height: 8),
           _choiceCard(
             label: 'Will NOT extend for holidays',
-            subtitle: 'Most common — deadlines do not shift on weekends/holidays',
+            subtitle:
+                'Most common — deadlines do not shift on weekends/holidays',
             selected: !_computationWillExtend,
             onTap: () => setState(() => _computationWillExtend = false),
           ),
@@ -518,10 +546,10 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
           ),
           const SizedBox(height: 12),
           _yesNoRow(
-            label: 'Has buyer received a "Submitted Property" list from another broker?',
+            label:
+                'Has buyer received a "Submitted Property" list from another broker?',
             value: _hasReceivedSubmittedList,
-            onChanged: (v) =>
-                setState(() => _hasReceivedSubmittedList = v),
+            onChanged: (v) => setState(() => _hasReceivedSubmittedList = v),
           ),
         ],
       ),
@@ -546,11 +574,14 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label,
-                    style: TextStyle(
-                        fontSize: 12, color: cs.onSurfaceVariant)),
-                Text(_dateFmt.format(date),
-                    style: Theme.of(context).textTheme.bodyLarge),
+                Text(
+                  label,
+                  style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                ),
+                Text(
+                  _dateFmt.format(date),
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
               ],
             ),
             const Spacer(),
@@ -561,9 +592,12 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
     );
   }
 
-  Widget _sectionLabel(String text) => Text(text,
-      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-          color: Theme.of(context).colorScheme.primary));
+  Widget _sectionLabel(String text) => Text(
+    text,
+    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+      color: Theme.of(context).colorScheme.primary,
+    ),
+  );
 
   Widget _choiceCard({
     required String label,
@@ -579,17 +613,16 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           border: Border.all(
-              color: selected ? cs.primary : cs.outline,
-              width: selected ? 2 : 1),
+            color: selected ? cs.primary : cs.outline,
+            width: selected ? 2 : 1,
+          ),
           borderRadius: BorderRadius.circular(12),
-          color: selected ? cs.primaryContainer.withOpacity(0.25) : null,
+          color: selected ? cs.primaryContainer.withValues(alpha: 0.25) : null,
         ),
         child: Row(
           children: [
             Icon(
-              selected
-                  ? Icons.radio_button_checked
-                  : Icons.radio_button_off,
+              selected ? Icons.radio_button_checked : Icons.radio_button_off,
               color: selected ? cs.primary : cs.outline,
             ),
             const SizedBox(width: 12),
@@ -597,12 +630,14 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label,
-                      style:
-                          const TextStyle(fontWeight: FontWeight.w600)),
-                  Text(subtitle,
-                      style: TextStyle(
-                          fontSize: 12, color: cs.onSurfaceVariant)),
+                  Text(
+                    label,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                  ),
                 ],
               ),
             ),
@@ -617,19 +652,15 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
-    final cs = Theme.of(context).colorScheme;
     return Row(
       children: [
-        Expanded(
-          child: Text(label, style: const TextStyle(fontSize: 14)),
-        ),
+        Expanded(child: Text(label, style: const TextStyle(fontSize: 14))),
         const SizedBox(width: 12),
         ToggleButtons(
           isSelected: [!value, value],
           onPressed: (i) => onChanged(i == 1),
           borderRadius: BorderRadius.circular(8),
-          constraints:
-              const BoxConstraints(minWidth: 48, minHeight: 36),
+          constraints: const BoxConstraints(minWidth: 48, minHeight: 36),
           children: const [Text('No'), Text('Yes')],
         ),
       ],
@@ -637,12 +668,12 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
   }
 
   String _stepTitle(int step) => switch (step) {
-        0 => 'Buyer name',
-        1 => 'Contact info',
-        2 => 'Buyer address',
-        3 => 'Property',
-        4 => 'Compensation',
-        5 => 'Dates',
-        _ => 'Legal details',
-      };
+    0 => 'Buyer name',
+    1 => 'Contact info',
+    2 => 'Buyer address',
+    3 => 'Property',
+    4 => 'Compensation',
+    5 => 'Dates',
+    _ => 'Legal details',
+  };
 }

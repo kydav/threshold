@@ -1,6 +1,6 @@
 name: threshold
 description: Mobile-first buyer representation agreement tool for real estate agents.
-publish_to: 'none'
+publish_to: "none"
 version: 1.0.0+1
 
 environment:
@@ -26,8 +26,8 @@ dependencies:
   uuid: ^4.5.1
 
 dev_dependencies:
-  flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.3
+  flutter_lints: ^6.0.0
   flutter_test:
     sdk: flutter
 

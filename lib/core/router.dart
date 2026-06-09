@@ -29,15 +29,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
-      GoRoute(path: '/signup', builder: (_, __) => const SignupScreen()),
+      GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
+      GoRoute(path: '/signup', builder: (_, _) => const SignupScreen()),
       GoRoute(
         path: '/agreements',
-        builder: (_, __) => const HistoryScreen(),
+        builder: (_, _) => const HistoryScreen(),
         routes: [
           GoRoute(
             path: 'new',
-            builder: (_, __) => const _FormRouter(),
+            builder: (_, _) => const _FormRouter(),
           ),
           GoRoute(
             path: ':id/sign',
@@ -61,7 +61,7 @@ class _FormRouter extends ConsumerWidget {
     return profileAsync.when(
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (_, __) => const FormScreen(),
+      error: (_, _) => const FormScreen(),
       data: (profile) {
         final state = profile?.state ?? 'Colorado';
         return switch (state) {

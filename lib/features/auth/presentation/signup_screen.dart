@@ -50,8 +50,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       if (!_emailCtrl.text.contains('@')) return 'Enter a valid email.';
       if (_passwordCtrl.text.length < 6) return 'Password must be 6+ chars.';
     } else {
-      if (_brokerageNameCtrl.text.trim().isEmpty)
+      if (_brokerageNameCtrl.text.trim().isEmpty) {
         return 'Brokerage name is required.';
+      }
       if (_agentPhoneCtrl.text.trim().isEmpty) return 'Phone is required.';
     }
     return null;
@@ -300,7 +301,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           ),
           const SizedBox(height: 24),
           DropdownButtonFormField<String>(
-            value: _state,
+            initialValue: _state,
             decoration: const InputDecoration(
               labelText: 'State',
               border: OutlineInputBorder(),
@@ -334,10 +335,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   }
 
   String _friendlyError(String raw) {
-    if (raw.contains('email-already-in-use'))
+    if (raw.contains('email-already-in-use')) {
       return 'An account with that email already exists.';
-    if (raw.contains('weak-password'))
+    }
+    if (raw.contains('weak-password')) {
       return 'Password is too weak. Use at least 6 characters.';
+    }
     return 'Sign-up failed. Please try again.';
   }
 }
@@ -369,7 +372,7 @@ class _ChoiceCard extends StatelessWidget {
             width: selected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
-          color: selected ? cs.primaryContainer.withOpacity(0.3) : null,
+          color: selected ? cs.primaryContainer.withValues(alpha: 0.3) : null,
         ),
         child: Row(
           children: [

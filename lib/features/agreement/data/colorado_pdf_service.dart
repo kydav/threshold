@@ -1,16 +1,14 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
-
-import 'agreement_model.dart';
-import 'agreement_repository.dart';
-import 'colorado_form_data.dart';
-import '../../../core/services/delivery_service.dart';
+import 'package:threshold/core/services/delivery_service.dart';
+import 'package:threshold/features/agreement/data/agreement_model.dart';
+import 'package:threshold/features/agreement/data/agreement_repository.dart';
+import 'package:threshold/features/agreement/data/colorado_form_data.dart';
 
 class ColoradoPdfService {
   ColoradoPdfService(this._repo, this._delivery);
@@ -119,7 +117,7 @@ class ColoradoPdfService {
     // Save to device.
     final dir = await getApplicationDocumentsDirectory();
     final safeName =
-        agreement.buyerName.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_');
+        agreement.buyerName.replaceAll(RegExp('[^a-zA-Z0-9]'), '_');
     final filename =
         'CO_BC60_${safeName}_${agreement.id.substring(0, 8)}.pdf';
     final file = File('${dir.path}/$filename');
