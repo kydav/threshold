@@ -4,9 +4,8 @@ import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:threshold/features/agreement/data/agreement_model.dart';
 import 'package:uuid/uuid.dart';
-
-import 'agreement_model.dart';
 
 class AgreementRepository {
   Future<Directory> _dir() async {

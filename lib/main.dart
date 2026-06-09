@@ -2,9 +2,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'core/router.dart';
-import 'core/services/connectivity_watcher.dart';
-import 'firebase_options.dart';
+import 'package:threshold/core/router.dart';
+import 'package:threshold/core/services/connectivity_watcher.dart';
+import 'package:threshold/firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,10 +23,7 @@ class ThresholdApp extends ConsumerWidget {
       title: 'Threshold',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF1B4332),
-          brightness: Brightness.light,
-        ),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1B4332)),
         useMaterial3: true,
       ),
       routerConfig: router,

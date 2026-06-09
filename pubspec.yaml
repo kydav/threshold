@@ -7,44 +7,28 @@ environment:
   sdk: ^3.7.0
 
 dependencies:
+  connectivity_plus: ^6.1.4
+  cupertino_icons: ^1.0.8
+  firebase_auth: ^5.5.3
+  firebase_core: ^3.13.1
   flutter:
     sdk: flutter
-
-  cupertino_icons: ^1.0.8
-
-  # Navigation
-  go_router: ^15.1.2
-
-  # Firebase (auth only — data stays on device)
-  firebase_core: ^3.13.1
-  firebase_auth: ^5.5.3
-
-  # State management
   flutter_riverpod: ^2.6.1
-
-  # PDF generation (local, offline-capable)
+  go_router: ^15.1.2
+  http: ^1.4.0
+  intl: ^0.20.2
+  open_filex: ^4.5.1
+  path_provider: ^2.1.5
   pdf: ^3.11.3
   printing: ^5.14.2
-
-  # Signature capture
   syncfusion_flutter_signaturepad: ^28.2.7
-
-  # File handling
-  path_provider: ^2.1.5
-  open_filex: ^4.5.1
-
-  # Network / connectivity
-  http: ^1.4.0
-  connectivity_plus: ^6.1.4
-
-  # Utilities
-  intl: ^0.20.2
   uuid: ^4.5.1
 
 dev_dependencies:
+  flutter_lints: ^6.0.0
   flutter_test:
     sdk: flutter
-  flutter_lints: ^6.0.0
+  
 
 flutter:
   uses-material-design: true

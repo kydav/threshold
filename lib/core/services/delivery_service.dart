@@ -4,8 +4,8 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
-import '../../features/agreement/data/agreement_model.dart';
-import '../../features/agreement/data/agreement_repository.dart';
+import 'package:threshold/features/agreement/data/agreement_model.dart';
+import 'package:threshold/features/agreement/data/agreement_repository.dart';
 
 // Pass via --dart-define=SENDGRID_API_KEY=SG.xxx
 const _sendgridApiKey = String.fromEnvironment('SENDGRID_API_KEY');

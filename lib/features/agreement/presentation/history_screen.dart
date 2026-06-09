@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import '../data/agreement_model.dart';
-import '../data/agreement_repository.dart';
-import '../../auth/data/auth_service.dart';
+import 'package:threshold/features/agreement/data/agreement_model.dart';
+import 'package:threshold/features/agreement/data/agreement_repository.dart';
+import 'package:threshold/features/auth/data/auth_service.dart';
 
 class HistoryScreen extends ConsumerWidget {
   const HistoryScreen({super.key});
@@ -50,7 +50,7 @@ class HistoryScreen extends ConsumerWidget {
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(vertical: 8),
               itemCount: list.length,
-              separatorBuilder: (_, __) => const Divider(height: 1),
+              separatorBuilder: (_, _) => const Divider(height: 1),
               itemBuilder: (context, i) =>
                   _AgreementTile(agreement: list[i]),
             ),
@@ -122,7 +122,7 @@ class _StatusIcon extends StatelessWidget {
         (Icons.mark_email_read_outlined, Colors.green),
     };
     return CircleAvatar(
-      backgroundColor: color.withOpacity(0.15),
+      backgroundColor: color.withValues(alpha: 0.15),
       child: Icon(icon, color: color, size: 20),
     );
   }

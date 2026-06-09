@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
-import '../data/auth_service.dart';
-import '../data/agent_profile_store.dart';
+import 'package:threshold/features/auth/data/agent_profile_store.dart';
+import 'package:threshold/features/auth/data/auth_service.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});

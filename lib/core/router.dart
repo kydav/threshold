@@ -4,12 +4,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
-import '../features/agreement/presentation/history_screen.dart';
-import '../features/agreement/presentation/form_screen.dart';
-import '../features/agreement/presentation/signature_screen.dart';
-import '../features/auth/presentation/login_screen.dart';
-import '../features/auth/presentation/signup_screen.dart';
+import 'package:threshold/features/agreement/presentation/form_screen.dart';
+import 'package:threshold/features/agreement/presentation/history_screen.dart';
+import 'package:threshold/features/agreement/presentation/signature_screen.dart';
+import 'package:threshold/features/auth/presentation/login_screen.dart';
+import 'package:threshold/features/auth/presentation/signup_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final notifier = _AuthNotifier();
@@ -30,19 +29,19 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: '/login',
-        builder: (_, __) => const LoginScreen(),
+        builder: (_, _) => const LoginScreen(),
       ),
       GoRoute(
         path: '/signup',
-        builder: (_, __) => const SignupScreen(),
+        builder: (_, _) => const SignupScreen(),
       ),
       GoRoute(
         path: '/agreements',
-        builder: (_, __) => const HistoryScreen(),
+        builder: (_, _) => const HistoryScreen(),
         routes: [
           GoRoute(
             path: 'new',
-            builder: (_, __) => const FormScreen(),
+            builder: (_, _) => const FormScreen(),
           ),
           GoRoute(
             path: ':id/sign',
