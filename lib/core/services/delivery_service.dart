@@ -10,10 +10,7 @@ import 'package:threshold/features/agreement/data/agreement_repository.dart';
 
 // Pass via --dart-define=SENDGRID_API_KEY=SG.xxx
 const _sendgridApiKey = String.fromEnvironment('SENDGRID_API_KEY');
-const _fromEmail = String.fromEnvironment(
-  'FROM_EMAIL',
-  defaultValue: 'agreements@threshold.app',
-);
+const _fromEmail = String.fromEnvironment('FROM_EMAIL', defaultValue: 'agreements@threshold.app');
 
 class DeliveryService {
   DeliveryService(this._repo);
@@ -28,23 +25,16 @@ class DeliveryService {
     final file = File(agreement.localPdfPath!);
     if (!file.existsSync()) return false;
 
-    final filename =
-        'agreement_${agreement.buyerName.replaceAll(' ', '_')}.pdf';
+    final filename = 'agreement_${agreement.buyerName.replaceAll(' ', '_')}.pdf';
 
     if (_sendgridApiKey.isEmpty) {
       // Dev fallback: open the device share/save sheet so users can
       // download the PDF locally when email delivery is not configured.
       final pdfBytes = await file.readAsBytes();
-      final shared = await Printing.sharePdf(
-        bytes: pdfBytes,
-        filename: filename,
-      );
+      final shared = await Printing.sharePdf(bytes: pdfBytes, filename: filename);
       if (!shared) return false;
 
-      final delivered = agreement.copyWith(
-        status: AgreementStatus.delivered,
-        deliveredAt: DateTime.now(),
-      );
+      final delivered = agreement.copyWith(status: AgreementStatus.delivered, deliveredAt: DateTime.now());
       await _repo.save(delivered);
       return true;
     }
@@ -61,10 +51,7 @@ class DeliveryService {
       for (final recipient in recipients) {
         final res = await http.post(
           Uri.parse('https://api.sendgrid.com/v3/mail/send'),
-          headers: {
-            'Authorization': 'Bearer $_sendgridApiKey',
-            'Content-Type': 'application/json',
-          },
+          headers: {'Authorization': 'Bearer $_sendgridApiKey', 'Content-Type': 'application/json'},
           body: jsonEncode({
             'personalizations': [
               {
@@ -72,8 +59,7 @@ class DeliveryService {
               },
             ],
             'from': {'email': _fromEmail, 'name': 'Threshold'},
-            'subject':
-                'Signed buyer representation agreement — ${agreement.propertyScope}',
+            'subject': 'Signed buyer representation agreement — ${agreement.propertyScope}',
             'content': [
               {
                 'type': 'text/plain',
@@ -82,12 +68,7 @@ class DeliveryService {
               },
             ],
             'attachments': [
-              {
-                'content': pdfBase64,
-                'filename': filename,
-                'type': 'application/pdf',
-                'disposition': 'attachment',
-              },
+              {'content': pdfBase64, 'filename': filename, 'type': 'application/pdf', 'disposition': 'attachment'},
             ],
           }),
         );
@@ -95,10 +76,7 @@ class DeliveryService {
         if (res.statusCode != 202) return false;
       }
 
-      final delivered = agreement.copyWith(
-        status: AgreementStatus.delivered,
-        deliveredAt: DateTime.now(),
-      );
+      final delivered = agreement.copyWith(status: AgreementStatus.delivered, deliveredAt: DateTime.now());
       await _repo.save(delivered);
       return true;
     } on SocketException {
@@ -119,6 +97,4 @@ class DeliveryService {
   String _fmt(DateTime d) => '${d.month}/${d.day}/${d.year}';
 }
 
-final deliveryServiceProvider = Provider<DeliveryService>(
-  (ref) => DeliveryService(ref.read(agreementRepositoryProvider)),
-);
+final deliveryServiceProvider = Provider<DeliveryService>((ref) => DeliveryService(ref.read(agreementRepositoryProvider)));

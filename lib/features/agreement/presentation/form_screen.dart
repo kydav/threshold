@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import 'package:threshold/features/agreement/data/agreement_repository.dart';
-import 'package:threshold/features/auth/data/agent_profile_store.dart';
+import 'package:threshold/features/auth/data/user_profile.dart';
 
 class FormScreen extends ConsumerStatefulWidget {
   const FormScreen({super.key});
@@ -99,13 +99,13 @@ class _FormScreenState extends ConsumerState<FormScreen> {
     setState(() => _saving = true);
     try {
       final user = FirebaseAuth.instance.currentUser!;
-      final profile = await ref.read(agentProfileStoreProvider).load();
+      final profile = await ref.read(userProfileProvider.future);
       final agreement = await ref
           .read(agreementRepositoryProvider)
           .create(
             agentId: user.uid,
-            agentName: profile?.agentName ?? user.displayName ?? '',
-            agentEmail: profile?.agentEmail ?? user.email ?? '',
+            agentName: '${profile?.firstName ?? user.displayName ?? ''} ${profile?.lastName ?? ''}',
+            agentEmail: profile?.email ?? user.email ?? '',
             brokerageName: profile?.brokerageName ?? '',
             buyerName: _buyerNameCtrl.text.trim(),
             buyerEmail: _buyerEmailCtrl.text.trim(),

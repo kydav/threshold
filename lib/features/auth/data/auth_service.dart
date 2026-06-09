@@ -17,6 +17,8 @@ class AuthService {
   }
 
   Future<void> signOut() => _auth.signOut();
+
+  Future<void> sendPasswordResetEmail({required String email}) => _auth.sendPasswordResetEmail(email: email);
 }
 
 final authServiceProvider = Provider<AuthService>((ref) => AuthService(FirebaseAuth.instance));

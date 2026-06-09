@@ -33,15 +33,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _error = null;
     });
     try {
-      await ref.read(authServiceProvider).signIn(
-            email: _emailCtrl.text.trim(),
-            password: _passwordCtrl.text,
-          );
+      await ref.read(authServiceProvider).signIn(email: _emailCtrl.text.trim(), password: _passwordCtrl.text);
       // Router redirect handles navigation after auth state changes.
     } on Exception catch (e) {
       setState(() => _error = _friendlyError(e.toString()));
     } finally {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _resetPassword() async {
+    if (_emailCtrl.text.trim().isEmpty) {
+      setState(() => _error = 'Enter your email above first.');
+      return;
+    }
+    await ref.read(authServiceProvider).sendPasswordResetEmail(email: _emailCtrl.text.trim());
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password reset email sent.')));
     }
   }
 
@@ -61,19 +69,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   const SizedBox(height: 32),
                   Text(
                     'Threshold',
-                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: cs.primary,
-                        ),
+                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.bold, color: cs.primary),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Buyer agreements, done at the door.',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.copyWith(color: cs.onSurfaceVariant),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 48),
@@ -81,12 +83,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     controller: _emailCtrl,
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (v) =>
-                        (v == null || !v.contains('@')) ? 'Enter a valid email' : null,
+                    decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
+                    validator: (v) => (v == null || !v.contains('@')) ? 'Enter a valid email' : null,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -98,38 +96,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       labelText: 'Password',
                       border: const OutlineInputBorder(),
                       suffixIcon: IconButton(
-                        icon: Icon(
-                            _obscure ? Icons.visibility_off : Icons.visibility),
+                        icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility),
                         onPressed: () => setState(() => _obscure = !_obscure),
                       ),
                     ),
-                    validator: (v) =>
-                        (v == null || v.length < 6) ? 'Min 6 characters' : null,
+                    validator: (v) => (v == null || v.length < 6) ? 'Min 6 characters' : null,
                   ),
                   if (_error != null) ...[
                     const SizedBox(height: 12),
-                    Text(
-                      _error!,
-                      style: TextStyle(color: cs.error),
-                      textAlign: TextAlign.center,
-                    ),
+                    Text(_error!, style: TextStyle(color: cs.error), textAlign: TextAlign.center),
                   ],
                   const SizedBox(height: 24),
                   FilledButton(
                     onPressed: _loading ? null : _submit,
-                    child: _loading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('Log in'),
+                    child:
+                        _loading
+                            ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                            : const Text('Log in'),
                   ),
                   const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: () => context.go('/signup'),
-                    child: const Text("Don't have an account? Sign up"),
-                  ),
+
+                  TextButton(onPressed: _resetPassword, child: const Text('Forgot password?')),
+                  const SizedBox(height: 10),
+                  TextButton(onPressed: () => context.go('/signup'), child: const Text("Don't have an account? Sign up")),
                   const SizedBox(height: 32),
                 ],
               ),
@@ -141,8 +130,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   String _friendlyError(String raw) {
-    if (raw.contains('user-not-found') || raw.contains('wrong-password') ||
-        raw.contains('invalid-credential')) {
+    if (raw.contains('user-not-found') || raw.contains('wrong-password') || raw.contains('invalid-credential')) {
       return 'Incorrect email or password.';
     }
     if (raw.contains('too-many-requests')) {

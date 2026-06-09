@@ -8,7 +8,7 @@ import 'package:threshold/features/agreement/presentation/colorado_form_screen.d
 import 'package:threshold/features/agreement/presentation/form_screen.dart';
 import 'package:threshold/features/agreement/presentation/history_screen.dart';
 import 'package:threshold/features/agreement/presentation/signature_screen.dart';
-import 'package:threshold/features/auth/data/agent_profile_store.dart';
+import 'package:threshold/features/auth/data/user_profile.dart';
 import 'package:threshold/features/auth/presentation/login_screen.dart';
 import 'package:threshold/features/auth/presentation/signup_screen.dart';
 
@@ -21,8 +21,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: notifier,
     redirect: (context, state) {
       final loggedIn = FirebaseAuth.instance.currentUser != null;
-      final onAuthPage = state.matchedLocation == '/login' ||
-          state.matchedLocation == '/signup';
+      final onAuthPage = state.matchedLocation == '/login' || state.matchedLocation == '/signup';
 
       if (!loggedIn && !onAuthPage) return '/login';
       if (loggedIn && onAuthPage) return '/agreements';
@@ -35,16 +34,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/agreements',
         builder: (_, _) => const HistoryScreen(),
         routes: [
-          GoRoute(
-            path: 'new',
-            builder: (_, _) => const _FormRouter(),
-          ),
-          GoRoute(
-            path: ':id/sign',
-            builder: (_, state) => SignatureScreen(
-              agreementId: state.pathParameters['id']!,
-            ),
-          ),
+          GoRoute(path: 'new', builder: (_, _) => const _FormRouter()),
+          GoRoute(path: ':id/sign', builder: (_, state) => SignatureScreen(agreementId: state.pathParameters['id']!)),
         ],
       ),
     ],
@@ -57,10 +48,9 @@ class _FormRouter extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final profileAsync = ref.watch(agentProfileProvider);
+    final profileAsync = ref.watch(userProfileProvider);
     return profileAsync.when(
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (_, _) => const FormScreen(),
       data: (profile) {
         final state = profile?.state ?? 'Colorado';

@@ -1,55 +1,74 @@
-// import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:firebase_auth/firebase_auth.dart';
-// import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:threshold/core/services/data_service.dart';
 
-// class UserProfile {
-//   UserProfile({
-//     required this.uid,
-//     required this.email,
-//     required this.firstName,
-//     required this.lastName,
-//     required this.brokerageName,
-//     this.phone,
-//   });
+class UserProfile {
+  UserProfile({
+    required this.uid,
+    required this.email,
+    required this.firstName,
+    required this.lastName,
+    required this.brokerageName,
+    required this.brokerageAddress,
+    required this.brokerageCityStateZip,
+    required this.phone,
+    required this.state,
+    required this.isMultiPersonFirm,
+  });
 
-//   final String uid;
-//   final String email;
-//   final String firstName;
-//   final String lastName;
-//   final String brokerageName;
-//   final String? phone;
+  final String uid;
+  final String email;
+  final String firstName;
+  final String lastName;
+  final String brokerageName;
+  final String brokerageAddress;
+  final String brokerageCityStateZip;
+  final String phone;
+  final String state; // e.g. 'Colorado'
+  final bool isMultiPersonFirm;
 
-//   String get fullName => '$firstName $lastName'.trim();
+  String get fullName => '$firstName $lastName'.trim();
 
-//   factory UserProfile.fromFirestore(DocumentSnapshot doc) {
-//     final d = doc.data() as Map<String, dynamic>;
-//     return UserProfile(
-//       uid: doc.id,
-//       email: d['email'] as String? ?? '',
-//       firstName: d['firstName'] as String? ?? '',
-//       lastName: d['lastName'] as String? ?? '',
-//       brokerageName: d['brokerageName'] as String? ?? '',
-//       phone: d['phone'] as String?,
-//     );
-//   }
+  factory UserProfile.fromFirestore(DocumentSnapshot doc) {
+    final d = doc.data() as Map<String, dynamic>?;
+    if (d == null) {
+      throw StateError('Missing data for user profile: ${doc.id}');
+    }
+    return UserProfile(
+      uid: doc.id,
+      email: d['email'] as String? ?? '',
+      firstName: d['firstName'] as String? ?? '',
+      lastName: d['lastName'] as String? ?? '',
+      brokerageName: d['brokerageName'] as String? ?? '',
+      brokerageAddress: d['brokerageAddress'] as String? ?? '',
+      brokerageCityStateZip: d['brokerageCityStateZip'] as String? ?? '',
+      phone: d['phone'] as String? ?? '',
+      state: d['state'] as String? ?? '',
+      isMultiPersonFirm: d['isMultiPersonFirm'] as bool? ?? false,
+    );
+  }
 
-//   Map<String, dynamic> toFirestore() => {
-//         'email': email,
-//         'firstName': firstName,
-//         'lastName': lastName,
-//         'brokerageName': brokerageName,
-//         if (phone != null) 'phone': phone,
-//         'createdAt': FieldValue.serverTimestamp(),
-//       };
-// }
+  Map<String, dynamic> toFirestore() => {
+    'email': email,
+    'firstName': firstName,
+    'lastName': lastName,
+    'brokerageName': brokerageName,
+    'brokerageAddress': brokerageAddress,
+    'brokerageCityStateZip': brokerageCityStateZip,
+    'phone': phone,
+    'state': state,
+    'isMultiPersonFirm': isMultiPersonFirm,
+    'createdAt': FieldValue.serverTimestamp(),
+  };
+}
 
-// final userProfileProvider = FutureProvider<UserProfile?>((ref) async {
-//   final user = FirebaseAuth.instance.currentUser;
-//   if (user == null) return null;
-//   final doc = await FirebaseFirestore.instance
-//       .collection('users')
-//       .doc(user.uid)
-//       .get();
-//   if (!doc.exists) return null;
-//   return UserProfile.fromFirestore(doc);
-// });
+final userProfileProvider = FutureProvider<UserProfile?>((ref) async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) return null;
+  final doc = await ref.read(dataServiceProvider).getUserProfile(user.uid);
+  return doc;
+});
+
+// Supported states — add more as forms are sourced
+const List<String> kSupportedStates = ['Colorado'];

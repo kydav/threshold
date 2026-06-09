@@ -22,8 +22,7 @@ class ColoradoPdfService {
     required Uint8List agentSignatureBytes,
     required Uint8List buyerSignatureBytes,
   }) async {
-    final assetData =
-        await rootBundle.load('assets/forms/colorado_bc60.pdf');
+    final assetData = await rootBundle.load('assets/forms/colorado_bc60.pdf');
     final pdfBytes = assetData.buffer.asUint8List();
 
     final doc = PdfDocument(inputBytes: pdfBytes);
@@ -54,10 +53,8 @@ class ColoradoPdfService {
     _setCheckbox(form, 'Section 2.2 Checkbox', false);
 
     // ── Section 3 — Listing period ────────────────────────────────────────
-    _setText(form, 'Listing Period Beginning Date',
-        _dateFmt.format(agreement.startDate));
-    _setText(form, 'Alternative Listing Period End Date',
-        _dateFmt.format(agreement.endDate));
+    _setText(form, 'Listing Period Beginning Date', _dateFmt.format(agreement.startDate));
+    _setText(form, 'Alternative Listing Period End Date', _dateFmt.format(agreement.endDate));
     _setText(form, 'Holdover Number of Days', co.holdoverDays);
     _setCheckbox(form, 'Computation of Date Will', co.computationWillExtend);
     _setCheckbox(form, 'Computation of Date Will Not', !co.computationWillExtend);
@@ -116,19 +113,13 @@ class ColoradoPdfService {
 
     // Save to device.
     final dir = await getApplicationDocumentsDirectory();
-    final safeName =
-        agreement.buyerName.replaceAll(RegExp('[^a-zA-Z0-9]'), '_');
-    final filename =
-        'CO_BC60_${safeName}_${agreement.id.substring(0, 8)}.pdf';
+    final safeName = agreement.buyerName.replaceAll(RegExp('[^a-zA-Z0-9]'), '_');
+    final filename = 'CO_BC60_${safeName}_${agreement.id.substring(0, 8)}.pdf';
     final file = File('${dir.path}/$filename');
     await file.writeAsBytes(savedBytes);
     final localPath = file.path;
 
-    final signed = agreement.copyWith(
-      status: AgreementStatus.pendingDelivery,
-      localPdfPath: localPath,
-      signedAt: now,
-    );
+    final signed = agreement.copyWith(status: AgreementStatus.pendingDelivery, localPdfPath: localPath, signedAt: now);
     await _repo.save(signed);
     await _delivery.deliver(signed);
 
@@ -159,12 +150,7 @@ class ColoradoPdfService {
     } catch (_) {}
   }
 
-  void _drawSignature(
-    PdfDocument doc,
-    PdfForm form,
-    String name,
-    Uint8List imageBytes,
-  ) {
+  void _drawSignature(PdfDocument doc, PdfForm form, String name, Uint8List imageBytes) {
     try {
       final f = _find(form, name);
       if (f == null) return;
@@ -175,16 +161,11 @@ class ColoradoPdfService {
       // Signatures are on page 6 (last page) of the Colorado BC60 form.
       final page = doc.pages[doc.pages.count - 1];
 
-      page.graphics.drawImage(
-        image,
-        Rect.fromLTWH(bounds.left, bounds.top, bounds.width, bounds.height),
-      );
+      page.graphics.drawImage(image, Rect.fromLTWH(bounds.left, bounds.top, bounds.width, bounds.height));
     } catch (_) {}
   }
 }
 
-final coloradoPdfServiceProvider = Provider<ColoradoPdfService>((ref) =>
-    ColoradoPdfService(
-      ref.read(agreementRepositoryProvider),
-      ref.read(deliveryServiceProvider),
-    ));
+final coloradoPdfServiceProvider = Provider<ColoradoPdfService>(
+  (ref) => ColoradoPdfService(ref.read(agreementRepositoryProvider), ref.read(deliveryServiceProvider)),
+);

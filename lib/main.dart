@@ -19,11 +19,13 @@ class ThresholdApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(connectivityWatcherProvider);
     final router = ref.watch(routerProvider);
+
     return MaterialApp.router(
       title: 'Threshold',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1B4332)),
+      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1B4332)), useMaterial3: true),
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1B4332), brightness: Brightness.dark),
         useMaterial3: true,
       ),
       routerConfig: router,
