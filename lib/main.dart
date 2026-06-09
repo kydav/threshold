@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'core/router.dart';
 import 'core/services/connectivity_watcher.dart';
 import 'firebase_options.dart';
 
@@ -16,10 +17,9 @@ class ThresholdApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Start connectivity watcher so pending deliveries retry on reconnect.
     ref.watch(connectivityWatcherProvider);
-
-    return MaterialApp(
+    final router = ref.watch(routerProvider);
+    return MaterialApp.router(
       title: 'Threshold',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -29,7 +29,7 @@ class ThresholdApp extends ConsumerWidget {
         ),
         useMaterial3: true,
       ),
-      home: const Scaffold(body: Center(child: Text('Threshold'))),
+      routerConfig: router,
     );
   }
 }
