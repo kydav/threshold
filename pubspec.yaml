@@ -35,6 +35,10 @@ dependencies:
   path_provider: ^2.1.5
   open_filex: ^4.5.1
 
+  # Network / connectivity
+  http: ^1.4.0
+  connectivity_plus: ^6.1.4
+
   # Utilities
   intl: ^0.20.2
   uuid: ^4.5.1
