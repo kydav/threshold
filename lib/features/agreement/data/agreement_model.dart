@@ -19,6 +19,7 @@ class AgreementModel {
     this.localPdfPath,
     this.deliveredAt,
     this.formState = 'Colorado',
+    this.formData = const {},
   });
 
   final String id;
@@ -38,6 +39,7 @@ class AgreementModel {
   final String? localPdfPath;
   final DateTime? deliveredAt;
   final String formState;
+  final Map<String, dynamic> formData;
 
   bool get isPendingDelivery => status == AgreementStatus.pendingDelivery;
   bool get hasLocalPdf => localPdfPath != null;
@@ -64,6 +66,7 @@ class AgreementModel {
             ? DateTime.parse(d['deliveredAt'] as String)
             : null,
         formState: d['formState'] as String? ?? 'Colorado',
+        formData: d['formData'] as Map<String, dynamic>? ?? const {},
       );
 
   Map<String, dynamic> toJson() => {
@@ -84,6 +87,7 @@ class AgreementModel {
         if (localPdfPath != null) 'localPdfPath': localPdfPath,
         if (deliveredAt != null) 'deliveredAt': deliveredAt!.toIso8601String(),
         'formState': formState,
+        if (formData.isNotEmpty) 'formData': formData,
       };
 
   AgreementModel copyWith({
@@ -110,6 +114,7 @@ class AgreementModel {
         localPdfPath: localPdfPath ?? this.localPdfPath,
         deliveredAt: deliveredAt ?? this.deliveredAt,
         formState: formState,
+        formData: formData,
       );
 
   static AgreementStatus _statusFromString(String s) => switch (s) {

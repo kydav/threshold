@@ -1,12 +1,13 @@
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:syncfusion_flutter_signaturepad/signaturepad.dart';
-
 import 'package:threshold/features/agreement/data/agreement_model.dart';
 import 'package:threshold/features/agreement/data/agreement_repository.dart';
+import 'package:threshold/features/agreement/data/colorado_pdf_service.dart';
 import 'package:threshold/features/agreement/data/pdf_service.dart';
 
 class SignatureScreen extends ConsumerStatefulWidget {
@@ -38,24 +39,38 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
   }
 
   Future<void> _finalize() async {
-    if (!_agentSigned || !_buyerSigned) return;
-    if (_agreement == null) return;
+    if (!_agentSigned || !_buyerSigned || _agreement == null) return;
     setState(() => _processing = true);
     try {
       final agentImg = await _agentPadKey.currentState!.toImage(pixelRatio: 2.0);
-      final agentBytes = (await agentImg.toByteData(format: ui.ImageByteFormat.png))!;
+      final agentBytes =
+          (await agentImg.toByteData(format: ui.ImageByteFormat.png))!
+              .buffer
+              .asUint8List();
 
       final buyerImg = await _buyerPadKey.currentState!.toImage(pixelRatio: 2.0);
-      final buyerBytes = (await buyerImg.toByteData(format: ui.ImageByteFormat.png))!;
+      final buyerBytes =
+          (await buyerImg.toByteData(format: ui.ImageByteFormat.png))!
+              .buffer
+              .asUint8List();
 
-      final pdfService = ref.read(pdfServiceProvider);
-      final path = await pdfService.generate(
-        agreement: _agreement!,
-        agentSignatureBytes: agentBytes.buffer.asUint8List(),
-        buyerSignatureBytes: buyerBytes.buffer.asUint8List(),
-      );
+      String? path;
+      if (_agreement!.formState == 'Colorado') {
+        path = await ref.read(coloradoPdfServiceProvider).generate(
+              agreement: _agreement!,
+              agentSignatureBytes: agentBytes,
+              buyerSignatureBytes: buyerBytes,
+            );
+      } else {
+        path = await ref.read(pdfServiceProvider).generate(
+              agreement: _agreement!,
+              agentSignatureBytes: agentBytes,
+              buyerSignatureBytes: buyerBytes,
+            );
+      }
 
       if (path != null && mounted) {
+        ref.read(agreementListProvider.notifier).refresh();
         context.go('/agreements');
       }
     } finally {
@@ -102,10 +117,9 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
             const SizedBox(height: 32),
             FilledButton.icon(
               onPressed: (_agentSigned && _buyerSigned && !_processing) ? _finalize : null,
-              icon:
-                  _processing
-                      ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Icon(Icons.picture_as_pdf_outlined),
+              icon: _processing
+                  ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Icon(Icons.picture_as_pdf_outlined),
               label: const Text('Generate & send PDF'),
             ),
             if (!_agentSigned || !_buyerSigned)
@@ -143,14 +157,14 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
   }
 
   Widget _row(String label, String value) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 2),
-    child: Row(
-      children: [
-        SizedBox(width: 110, child: Text(label, style: const TextStyle(fontWeight: FontWeight.w500))),
-        Expanded(child: Text(value)),
-      ],
-    ),
-  );
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Row(
+          children: [
+            SizedBox(width: 110, child: Text(label, style: const TextStyle(fontWeight: FontWeight.w500))),
+            Expanded(child: Text(value)),
+          ],
+        ),
+      );
 
   String _fmt(DateTime d) => '${d.month}/${d.day}/${d.year}';
 }

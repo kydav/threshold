@@ -4,9 +4,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:threshold/features/agreement/presentation/colorado_form_screen.dart';
 import 'package:threshold/features/agreement/presentation/form_screen.dart';
 import 'package:threshold/features/agreement/presentation/history_screen.dart';
 import 'package:threshold/features/agreement/presentation/signature_screen.dart';
+import 'package:threshold/features/auth/data/agent_profile_store.dart';
 import 'package:threshold/features/auth/presentation/login_screen.dart';
 import 'package:threshold/features/auth/presentation/signup_screen.dart';
 
@@ -27,21 +29,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(
-        path: '/login',
-        builder: (_, _) => const LoginScreen(),
-      ),
-      GoRoute(
-        path: '/signup',
-        builder: (_, _) => const SignupScreen(),
-      ),
+      GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
+      GoRoute(path: '/signup', builder: (_, __) => const SignupScreen()),
       GoRoute(
         path: '/agreements',
-        builder: (_, _) => const HistoryScreen(),
+        builder: (_, __) => const HistoryScreen(),
         routes: [
           GoRoute(
             path: 'new',
-            builder: (_, _) => const FormScreen(),
+            builder: (_, __) => const _FormRouter(),
           ),
           GoRoute(
             path: ':id/sign',
@@ -54,6 +50,28 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+/// Reads the agent's state and routes to the correct state-specific form.
+class _FormRouter extends ConsumerWidget {
+  const _FormRouter();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profileAsync = ref.watch(agentProfileProvider);
+    return profileAsync.when(
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (_, __) => const FormScreen(),
+      data: (profile) {
+        final state = profile?.state ?? 'Colorado';
+        return switch (state) {
+          'Colorado' => const ColoradoFormScreen(),
+          _ => const FormScreen(),
+        };
+      },
+    );
+  }
+}
 
 class _AuthNotifier extends ChangeNotifier {
   _AuthNotifier() {

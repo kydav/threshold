@@ -29,6 +29,7 @@ class AgreementRepository {
     required DateTime startDate,
     required DateTime endDate,
     String formState = 'Colorado',
+    Map<String, dynamic> formData = const {},
   }) async {
     final model = AgreementModel(
       id: const Uuid().v4(),
@@ -45,6 +46,7 @@ class AgreementRepository {
       status: AgreementStatus.draft,
       createdAt: DateTime.now(),
       formState: formState,
+      formData: formData,
     );
     await save(model);
     return model;
