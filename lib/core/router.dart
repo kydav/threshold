@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,40 +11,63 @@ import '../features/agreement/presentation/signature_screen.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/signup_screen.dart';
 
-final _authStream = FirebaseAuth.instance.authStateChanges();
-
 final routerProvider = Provider<GoRouter>((ref) {
+  final notifier = _AuthNotifier();
+  ref.onDispose(notifier.dispose);
+
   return GoRouter(
     initialLocation: '/login',
+    refreshListenable: notifier,
     redirect: (context, state) {
-      final user = FirebaseAuth.instance.currentUser;
+      final loggedIn = FirebaseAuth.instance.currentUser != null;
       final onAuthPage = state.matchedLocation == '/login' ||
           state.matchedLocation == '/signup';
 
-      if (user == null && !onAuthPage) return '/login';
-      if (user != null && onAuthPage) return '/agreements';
+      if (!loggedIn && !onAuthPage) return '/login';
+      if (loggedIn && onAuthPage) return '/agreements';
       return null;
     },
-    refreshListenable: _GoRouterRefreshStream(_authStream),
     routes: [
-      GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
-      GoRoute(path: '/signup', builder: (_, __) => const SignupScreen()),
-      GoRoute(path: '/agreements', builder: (_, __) => const HistoryScreen()),
       GoRoute(
-        path: '/agreements/new',
-        builder: (_, __) => const FormScreen(),
+        path: '/login',
+        builder: (_, __) => const LoginScreen(),
       ),
       GoRoute(
-        path: '/agreements/:id/sign',
-        builder: (_, state) =>
-            SignatureScreen(agreementId: state.pathParameters['id']!),
+        path: '/signup',
+        builder: (_, __) => const SignupScreen(),
+      ),
+      GoRoute(
+        path: '/agreements',
+        builder: (_, __) => const HistoryScreen(),
+        routes: [
+          GoRoute(
+            path: 'new',
+            builder: (_, __) => const FormScreen(),
+          ),
+          GoRoute(
+            path: ':id/sign',
+            builder: (_, state) => SignatureScreen(
+              agreementId: state.pathParameters['id']!,
+            ),
+          ),
+        ],
       ),
     ],
   );
 });
 
-class _GoRouterRefreshStream extends ChangeNotifier {
-  _GoRouterRefreshStream(Stream<dynamic> stream) {
-    stream.listen((_) => notifyListeners());
+class _AuthNotifier extends ChangeNotifier {
+  _AuthNotifier() {
+    _sub = FirebaseAuth.instance.authStateChanges().listen((_) {
+      notifyListeners();
+    });
+  }
+
+  late final StreamSubscription<User?> _sub;
+
+  @override
+  void dispose() {
+    _sub.cancel();
+    super.dispose();
   }
 }
