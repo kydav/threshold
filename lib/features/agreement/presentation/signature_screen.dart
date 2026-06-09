@@ -9,7 +9,6 @@ import 'package:syncfusion_flutter_signaturepad/signaturepad.dart';
 import '../data/agreement_model.dart';
 import '../data/agreement_repository.dart';
 import '../data/pdf_service.dart';
-import '../../auth/data/auth_service.dart';
 
 class SignatureScreen extends ConsumerStatefulWidget {
   const SignatureScreen({super.key, required this.agreementId});

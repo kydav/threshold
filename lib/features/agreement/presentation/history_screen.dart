@@ -12,7 +12,7 @@ class HistoryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final agreements = ref.watch(agentAgreementsProvider);
+    final agreements = ref.watch(agreementListProvider);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Agreements'),
@@ -44,11 +44,16 @@ class HistoryScreen extends ConsumerWidget {
               ),
             );
           }
-          return ListView.separated(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: list.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
-            itemBuilder: (context, i) => _AgreementTile(agreement: list[i]),
+          return RefreshIndicator(
+            onRefresh: () =>
+                ref.read(agreementListProvider.notifier).refresh(),
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              itemCount: list.length,
+              separatorBuilder: (_, __) => const Divider(height: 1),
+              itemBuilder: (context, i) =>
+                  _AgreementTile(agreement: list[i]),
+            ),
           );
         },
       ),
@@ -111,7 +116,8 @@ class _StatusIcon extends StatelessWidget {
     final (icon, color) = switch (status) {
       AgreementStatus.draft => (Icons.edit_outlined, Colors.orange),
       AgreementStatus.signed => (Icons.check_circle_outline, Colors.blue),
-      AgreementStatus.pendingDelivery => (Icons.upload_outlined, Colors.purple),
+      AgreementStatus.pendingDelivery =>
+        (Icons.upload_outlined, Colors.purple),
       AgreementStatus.delivered =>
         (Icons.mark_email_read_outlined, Colors.green),
     };

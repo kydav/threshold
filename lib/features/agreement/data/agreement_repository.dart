@@ -1,24 +1,22 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
 import 'agreement_model.dart';
 
 class AgreementRepository {
-  AgreementRepository(this._firestore);
-  final FirebaseFirestore _firestore;
-
-  CollectionReference<Map<String, dynamic>> get _col =>
-      _firestore.collection('agreements');
-
-  Stream<List<AgreementModel>> watchForAgent(String agentId) {
-    return _col
-        .where('agentId', isEqualTo: agentId)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snap) => snap.docs.map(AgreementModel.fromFirestore).toList());
+  Future<Directory> _dir() async {
+    final base = await getApplicationDocumentsDirectory();
+    final dir = Directory('${base.path}/agreements');
+    if (!dir.existsSync()) dir.createSync(recursive: true);
+    return dir;
   }
+
+  File _file(Directory dir, String id) => File('${dir.path}/$id.json');
 
   Future<AgreementModel> create({
     required String agentId,
@@ -33,10 +31,8 @@ class AgreementRepository {
     required DateTime endDate,
     String formState = 'Colorado',
   }) async {
-    final id = const Uuid().v4();
-    final now = DateTime.now();
     final model = AgreementModel(
-      id: id,
+      id: const Uuid().v4(),
       agentId: agentId,
       agentName: agentName,
       agentEmail: agentEmail,
@@ -48,29 +44,68 @@ class AgreementRepository {
       startDate: startDate,
       endDate: endDate,
       status: AgreementStatus.draft,
-      createdAt: now,
+      createdAt: DateTime.now(),
       formState: formState,
     );
-    await _col.doc(id).set(model.toFirestore());
+    await save(model);
     return model;
   }
 
-  Future<AgreementModel?> get(String id) async {
-    final doc = await _col.doc(id).get();
-    if (!doc.exists) return null;
-    return AgreementModel.fromFirestore(doc);
+  Future<void> save(AgreementModel model) async {
+    final dir = await _dir();
+    await _file(dir, model.id)
+        .writeAsString(jsonEncode(model.toJson()));
   }
 
-  Future<void> update(String id, Map<String, dynamic> data) =>
-      _col.doc(id).update(data);
+  Future<AgreementModel?> get(String id) async {
+    final dir = await _dir();
+    final file = _file(dir, id);
+    if (!file.existsSync()) return null;
+    return AgreementModel.fromJson(
+        jsonDecode(await file.readAsString()) as Map<String, dynamic>);
+  }
+
+  Future<List<AgreementModel>> listForAgent(String agentId) async {
+    final dir = await _dir();
+    final files = dir.listSync().whereType<File>().toList();
+    final results = <AgreementModel>[];
+    for (final f in files) {
+      try {
+        final model = AgreementModel.fromJson(
+            jsonDecode(await f.readAsString()) as Map<String, dynamic>);
+        if (model.agentId == agentId) results.add(model);
+      } catch (_) {}
+    }
+    results.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return results;
+  }
+
+  Future<List<AgreementModel>> listPending(String agentId) async {
+    final all = await listForAgent(agentId);
+    return all.where((a) => a.isPendingDelivery).toList();
+  }
 }
 
-final agreementRepositoryProvider = Provider<AgreementRepository>(
-  (ref) => AgreementRepository(FirebaseFirestore.instance),
-);
+final agreementRepositoryProvider =
+    Provider<AgreementRepository>((_) => AgreementRepository());
 
-final agentAgreementsProvider = StreamProvider<List<AgreementModel>>((ref) {
-  final uid = FirebaseAuth.instance.currentUser?.uid;
-  if (uid == null) return const Stream.empty();
-  return ref.read(agreementRepositoryProvider).watchForAgent(uid);
-});
+// Notifier that holds the in-memory list and refreshes from disk.
+class AgreementListNotifier
+    extends AsyncNotifier<List<AgreementModel>> {
+  @override
+  Future<List<AgreementModel>> build() => _load();
+
+  Future<List<AgreementModel>> _load() {
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    return ref.read(agreementRepositoryProvider).listForAgent(uid);
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(_load);
+  }
+}
+
+final agreementListProvider =
+    AsyncNotifierProvider<AgreementListNotifier, List<AgreementModel>>(
+        AgreementListNotifier.new);

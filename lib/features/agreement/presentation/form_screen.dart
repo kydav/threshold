@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../data/agreement_repository.dart';
-import '../../auth/data/auth_service.dart';
+import '../../auth/data/agent_profile_store.dart';
 
 class FormScreen extends ConsumerStatefulWidget {
   const FormScreen({super.key});
@@ -109,14 +109,12 @@ class _FormScreenState extends ConsumerState<FormScreen> {
     setState(() => _saving = true);
     try {
       final user = FirebaseAuth.instance.currentUser!;
-      final profile = await ref.read(agentProfileProvider.future);
+      final profile = await ref.read(agentProfileStoreProvider).load();
       final agreement = await ref.read(agreementRepositoryProvider).create(
             agentId: user.uid,
-            agentName: profile?['agentName'] as String? ??
-                user.displayName ?? '',
-            agentEmail:
-                profile?['agentEmail'] as String? ?? user.email ?? '',
-            brokerageName: profile?['brokerageName'] as String? ?? '',
+            agentName: profile?.agentName ?? user.displayName ?? '',
+            agentEmail: profile?.agentEmail ?? user.email ?? '',
+            brokerageName: profile?.brokerageName ?? '',
             buyerName: _buyerNameCtrl.text.trim(),
             buyerEmail: _buyerEmailCtrl.text.trim(),
             propertyScope: _propertyScopeCtrl.text.trim(),

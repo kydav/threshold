@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../data/auth_service.dart';
+import '../data/agent_profile_store.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
@@ -40,9 +41,15 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       await ref.read(authServiceProvider).signUp(
             email: _emailCtrl.text.trim(),
             password: _passwordCtrl.text,
-            agentName: _nameCtrl.text.trim(),
-            brokerageName: _brokerageCtrl.text.trim(),
+            displayName: _nameCtrl.text.trim(),
           );
+      // Save profile locally so the form screen can read it without Firestore.
+      await ref.read(agentProfileStoreProvider).save(AgentProfile(
+            agentName: _nameCtrl.text.trim(),
+            agentEmail: _emailCtrl.text.trim(),
+            brokerageName: _brokerageCtrl.text.trim(),
+          ));
+      // Router redirect handles navigation.
     } on Exception catch (e) {
       setState(() => _error = _friendlyError(e.toString()));
     } finally {
@@ -118,9 +125,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       border: const OutlineInputBorder(),
                       helperText: 'Min 6 characters',
                       suffixIcon: IconButton(
-                        icon: Icon(
-                            _obscure ? Icons.visibility_off : Icons.visibility),
-                        onPressed: () => setState(() => _obscure = !_obscure),
+                        icon: Icon(_obscure
+                            ? Icons.visibility_off
+                            : Icons.visibility),
+                        onPressed: () =>
+                            setState(() => _obscure = !_obscure),
                       ),
                     ),
                     validator: (v) =>
