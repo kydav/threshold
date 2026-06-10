@@ -31,6 +31,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _agentPhoneCtrl = TextEditingController();
   String _state = kSupportedStates.first;
   bool _isMultiPersonFirm = true;
+  bool _isBuyerAgency = true;
 
   @override
   void dispose() {
@@ -94,6 +95,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
               phone: _agentPhoneCtrl.text.trim(),
               state: _state,
               isMultiPersonFirm: _isMultiPersonFirm,
+              isBuyerAgency: _isBuyerAgency,
             ),
           );
     } on Exception catch (e) {
@@ -269,6 +271,27 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             subtitle: 'Section 2.2 — you are the sole licensed person',
             selected: !_isMultiPersonFirm,
             onTap: () => setState(() => _isMultiPersonFirm = false),
+          ),
+          const SizedBox(height: 20),
+          Text('Brokerage relationship', style: Theme.of(context).textTheme.labelLarge),
+          const SizedBox(height: 4),
+          Text(
+            'How you typically represent buyers. Used on every form — can be changed in settings.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+          ),
+          const SizedBox(height: 8),
+          _ChoiceCard(
+            label: 'Buyer Agency',
+            subtitle: 'You represent the buyer — most common for showings',
+            selected: _isBuyerAgency,
+            onTap: () => setState(() => _isBuyerAgency = true),
+          ),
+          const SizedBox(height: 8),
+          _ChoiceCard(
+            label: 'Transaction-Brokerage',
+            subtitle: 'You assist the transaction without representing either party',
+            selected: !_isBuyerAgency,
+            onTap: () => setState(() => _isBuyerAgency = false),
           ),
         ],
       ),

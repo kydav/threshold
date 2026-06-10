@@ -15,6 +15,7 @@ class UserProfile {
     required this.phone,
     required this.state,
     required this.isMultiPersonFirm,
+    this.isBuyerAgency = true,
   });
 
   final String uid;
@@ -27,6 +28,7 @@ class UserProfile {
   final String phone;
   final String state; // e.g. 'Colorado'
   final bool isMultiPersonFirm;
+  final bool isBuyerAgency;
 
   String get fullName => '$firstName $lastName'.trim();
 
@@ -46,6 +48,7 @@ class UserProfile {
       phone: d['phone'] as String? ?? '',
       state: d['state'] as String? ?? '',
       isMultiPersonFirm: d['isMultiPersonFirm'] as bool? ?? false,
+      isBuyerAgency: d['isBuyerAgency'] as bool? ?? true,
     );
   }
 
@@ -59,6 +62,7 @@ class UserProfile {
     'phone': phone,
     'state': state,
     'isMultiPersonFirm': isMultiPersonFirm,
+    'isBuyerAgency': isBuyerAgency,
     'createdAt': FieldValue.serverTimestamp(),
   };
 }

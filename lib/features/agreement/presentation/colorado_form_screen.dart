@@ -46,8 +46,7 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
   DateTime _endDate = DateTime.now().add(const Duration(days: 90));
   final _holdoverCtrl = TextEditingController(text: '30');
 
-  // Step 6 — Legal choices
-  bool _isBuyerAgency = true;
+  // Step 6 — Legal choices (isBuyerAgency comes from agent profile)
   bool _computationWillExtend = false;
   bool _isPartyToOther = false;
   bool _hasReceivedSubmittedList = false;
@@ -132,7 +131,7 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
         buyerPhone: _buyerPhoneCtrl.text.trim(),
         buyerStreetAddress: _buyerAddressCtrl.text.trim(),
         buyerCityStateZip: _buyerCityStateZipCtrl.text.trim(),
-        isBuyerAgency: _isBuyerAgency,
+        isBuyerAgency: profile?.isBuyerAgency ?? true,
         compensationType: _compType,
         compensationValue: _compValueCtrl.text.trim(),
         holdoverDays: _holdoverCtrl.text.trim().isEmpty ? '30' : _holdoverCtrl.text.trim(),
@@ -422,22 +421,6 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 24),
-          _sectionLabel('Brokerage relationship (Section 4)'),
-          const SizedBox(height: 8),
-          _choiceCard(
-            label: 'Buyer Agency',
-            subtitle: 'You represent the buyer as their agent',
-            selected: _isBuyerAgency,
-            onTap: () => setState(() => _isBuyerAgency = true),
-          ),
-          const SizedBox(height: 8),
-          _choiceCard(
-            label: 'Transaction-Brokerage',
-            subtitle: 'You assist the transaction without representing either party',
-            selected: !_isBuyerAgency,
-            onTap: () => setState(() => _isBuyerAgency = false),
-          ),
-          const SizedBox(height: 20),
           _sectionLabel('Deadline computation (Section 3)'),
           const SizedBox(height: 8),
           _choiceCard(
