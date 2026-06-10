@@ -1,4 +1,4 @@
-package com.threshold.threshold
+package app.auaha.threshold
 
 import io.flutter.embedding.android.FlutterActivity
 
