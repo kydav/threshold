@@ -1,7 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:threshold/core/services/data_service.dart';
 
 class UserProfile {
   UserProfile({
@@ -67,12 +65,7 @@ class UserProfile {
   };
 }
 
-final userProfileProvider = FutureProvider<UserProfile?>((ref) async {
-  final user = FirebaseAuth.instance.currentUser;
-  if (user == null) return null;
-  final doc = await ref.read(dataServiceProvider).getUserProfile(user.uid);
-  return doc;
-});
+final userProfileProvider = StateProvider<UserProfile?>((_) => null);
 
 // Supported states — add more as forms are sourced
 const List<String> kSupportedStates = ['Colorado'];

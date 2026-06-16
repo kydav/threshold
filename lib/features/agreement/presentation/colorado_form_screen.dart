@@ -103,7 +103,11 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
     if (!_validateStep()) return;
     if (_step < _totalSteps - 1) {
       setState(() => _step++);
-      _pageController.animateToPage(_step, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+      _pageController.animateToPage(
+        _step,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
     } else {
       _submit();
     }
@@ -115,7 +119,11 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
         _step--;
         _stepError = null;
       });
-      _pageController.animateToPage(_step, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+      _pageController.animateToPage(
+        _step,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
     } else {
       context.go('/agreements');
     }
@@ -125,7 +133,7 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
     setState(() => _saving = true);
     try {
       final user = FirebaseAuth.instance.currentUser!;
-      final profile = await ref.read(userProfileProvider.future);
+      final profile = ref.read(userProfileProvider);
 
       final coData = ColoradoFormData(
         buyerPhone: _buyerPhoneCtrl.text.trim(),
@@ -134,19 +142,26 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
         isBuyerAgency: profile?.isBuyerAgency ?? true,
         compensationType: _compType,
         compensationValue: _compValueCtrl.text.trim(),
-        holdoverDays: _holdoverCtrl.text.trim().isEmpty ? '30' : _holdoverCtrl.text.trim(),
+        holdoverDays:
+            _holdoverCtrl.text.trim().isEmpty
+                ? '30'
+                : _holdoverCtrl.text.trim(),
         computationWillExtend: _computationWillExtend,
         buyerIsPartyToOtherAgreement: _isPartyToOther,
         buyerHasReceivedSubmittedList: _hasReceivedSubmittedList,
       );
 
-      final compensation = _compType == 'percentage' ? '${_compValueCtrl.text.trim()}%' : '\$${_compValueCtrl.text.trim()}';
+      final compensation =
+          _compType == 'percentage'
+              ? '${_compValueCtrl.text.trim()}%'
+              : '\$${_compValueCtrl.text.trim()}';
 
       final agreement = await ref
           .read(agreementRepositoryProvider)
           .create(
             agentId: user.uid,
-            agentName: '${profile?.firstName ?? user.displayName ?? ''} ${profile?.lastName ?? ''}',
+            agentName:
+                '${profile?.firstName ?? user.displayName ?? ''} ${profile?.lastName ?? ''}',
             agentEmail: profile?.email ?? user.email ?? '',
             brokerageName: profile?.brokerageName ?? '',
             buyerName: _buyerNameCtrl.text.trim(),
@@ -167,9 +182,14 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final keyboard = MediaQuery.of(context).viewInsets.bottom;
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: _back),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: _back,
+        ),
         title: Text(_stepTitle(_step)),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(4),
@@ -195,8 +215,10 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
           _textStep(
             prompt: 'What property are you showing?',
             controller: _propertyCtrl,
-            hint: 'e.g. 123 Main St, Denver CO 80203\nor "Any residential property in Denver metro"',
+            hint:
+                'e.g. 123 Main St, Denver CO 80203\nor "Any residential property in Denver metro"',
             maxLines: 3,
+            keyboardType: TextInputType.multiline,
             capitalize: TextCapitalization.sentences,
           ),
           _compensationStep(),
@@ -206,22 +228,36 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
       ),
       bottomNavigationBar: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+          padding: EdgeInsets.fromLTRB(20, 8, 20, 16 + keyboard),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               if (_stepError != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(_stepError!, style: TextStyle(color: cs.error, fontSize: 13), textAlign: TextAlign.center),
+                  child: Text(
+                    _stepError!,
+                    style: TextStyle(color: cs.error, fontSize: 13),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               FilledButton(
                 onPressed: _saving ? null : _next,
-                style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(52),
+                ),
                 child:
                     _saving
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                        : Text(_step < _totalSteps - 1 ? 'Next' : 'Proceed to signatures'),
+                        ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                        : Text(
+                          _step < _totalSteps - 1
+                              ? 'Next'
+                              : 'Proceed to signatures',
+                        ),
               ),
             ],
           ),
@@ -235,15 +271,20 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
     required TextEditingController controller,
     required String hint,
     TextCapitalization capitalize = TextCapitalization.none,
-    TextInputType keyboardType = TextInputType.text,
     int maxLines = 1,
+    TextInputType keyboardType = TextInputType.text,
   }) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 40, 24, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(prompt, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+          Text(
+            prompt,
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 28),
           TextField(
             controller: controller,
@@ -251,9 +292,13 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
             keyboardType: keyboardType,
             maxLines: maxLines,
             autofocus: true,
-            textInputAction: maxLines == 1 ? TextInputAction.done : TextInputAction.newline,
+            textInputAction:
+                maxLines == 1 ? TextInputAction.done : TextInputAction.newline,
             onSubmitted: maxLines == 1 ? (_) => _next() : null,
-            decoration: InputDecoration(hintText: hint, border: const OutlineInputBorder()),
+            decoration: InputDecoration(
+              hintText: hint,
+              border: const OutlineInputBorder(),
+            ),
             style: Theme.of(context).textTheme.bodyLarge,
           ),
         ],
@@ -267,13 +312,21 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Buyer's contact info", style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+          Text(
+            "Buyer's contact info",
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 28),
           TextField(
             controller: _buyerEmailCtrl,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
+            decoration: const InputDecoration(
+              labelText: 'Email',
+              border: OutlineInputBorder(),
+            ),
           ),
           const SizedBox(height: 16),
           TextField(
@@ -281,7 +334,10 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
             keyboardType: TextInputType.phone,
             textInputAction: TextInputAction.done,
             onSubmitted: (_) => _next(),
-            decoration: const InputDecoration(labelText: 'Phone', border: OutlineInputBorder()),
+            decoration: const InputDecoration(
+              labelText: 'Phone',
+              border: OutlineInputBorder(),
+            ),
           ),
         ],
       ),
@@ -294,17 +350,27 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Buyer's address", style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+          Text(
+            "Buyer's address",
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+          ),
           Text(
             'Required for the official form. Can be home address.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 28),
           TextField(
             controller: _buyerAddressCtrl,
             textCapitalization: TextCapitalization.words,
             textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(labelText: 'Street address', border: OutlineInputBorder()),
+            decoration: const InputDecoration(
+              labelText: 'Street address',
+              border: OutlineInputBorder(),
+            ),
           ),
           const SizedBox(height: 16),
           TextField(
@@ -312,7 +378,10 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
             textCapitalization: TextCapitalization.words,
             textInputAction: TextInputAction.done,
             onSubmitted: (_) => _next(),
-            decoration: const InputDecoration(labelText: 'City, State, Zip', border: OutlineInputBorder()),
+            decoration: const InputDecoration(
+              labelText: 'City, State, Zip',
+              border: OutlineInputBorder(),
+            ),
           ),
         ],
       ),
@@ -326,11 +395,18 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Your compensation', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+          Text(
+            'Your compensation',
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 8),
           Text(
             'Success fee for this buyer agreement.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
           ),
           const SizedBox(height: 24),
           SegmentedButton<String>(
@@ -370,10 +446,17 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Agreement period', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+          Text(
+            'Agreement period',
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+          ),
           Text(
             'NAR rules require a defined term.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
           ),
           const SizedBox(height: 24),
           _dateTile('Start date', _startDate, () async {
@@ -418,14 +501,17 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
         children: [
           Text(
             'A few quick questions',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 24),
           _sectionLabel('Deadline computation (Section 3)'),
           const SizedBox(height: 8),
           _choiceCard(
             label: 'Will NOT extend for holidays',
-            subtitle: 'Most common — deadlines do not shift on weekends/holidays',
+            subtitle:
+                'Most common — deadlines do not shift on weekends/holidays',
             selected: !_computationWillExtend,
             onTap: () => setState(() => _computationWillExtend = false),
           ),
@@ -446,7 +532,8 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
           ),
           const SizedBox(height: 12),
           _yesNoRow(
-            label: 'Has buyer received a "Submitted Property" list from another broker?',
+            label:
+                'Has buyer received a "Submitted Property" list from another broker?',
             value: _hasReceivedSubmittedList,
             onChanged: (v) => setState(() => _hasReceivedSubmittedList = v),
           ),
@@ -462,7 +549,10 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(border: Border.all(color: cs.outline), borderRadius: BorderRadius.circular(12)),
+        decoration: BoxDecoration(
+          border: Border.all(color: cs.outline),
+          borderRadius: BorderRadius.circular(12),
+        ),
         child: Row(
           children: [
             Icon(Icons.calendar_today, color: cs.primary),
@@ -470,8 +560,14 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
-                Text(_dateFmt.format(date), style: Theme.of(context).textTheme.bodyLarge),
+                Text(
+                  label,
+                  style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                ),
+                Text(
+                  _dateFmt.format(date),
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
               ],
             ),
             const Spacer(),
@@ -482,10 +578,19 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
     );
   }
 
-  Widget _sectionLabel(String text) =>
-      Text(text, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Theme.of(context).colorScheme.primary));
+  Widget _sectionLabel(String text) => Text(
+    text,
+    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+      color: Theme.of(context).colorScheme.primary,
+    ),
+  );
 
-  Widget _choiceCard({required String label, required String subtitle, required bool selected, required VoidCallback onTap}) {
+  Widget _choiceCard({
+    required String label,
+    required String subtitle,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
     final cs = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
@@ -493,20 +598,32 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          border: Border.all(color: selected ? cs.primary : cs.outline, width: selected ? 2 : 1),
+          border: Border.all(
+            color: selected ? cs.primary : cs.outline,
+            width: selected ? 2 : 1,
+          ),
           borderRadius: BorderRadius.circular(12),
           color: selected ? cs.primaryContainer.withValues(alpha: 0.25) : null,
         ),
         child: Row(
           children: [
-            Icon(selected ? Icons.radio_button_checked : Icons.radio_button_off, color: selected ? cs.primary : cs.outline),
+            Icon(
+              selected ? Icons.radio_button_checked : Icons.radio_button_off,
+              color: selected ? cs.primary : cs.outline,
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-                  Text(subtitle, style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
+                  Text(
+                    label,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                  ),
                 ],
               ),
             ),
@@ -516,7 +633,11 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
     );
   }
 
-  Widget _yesNoRow({required String label, required bool value, required ValueChanged<bool> onChanged}) {
+  Widget _yesNoRow({
+    required String label,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
     return Row(
       children: [
         Expanded(child: Text(label, style: const TextStyle(fontSize: 14))),

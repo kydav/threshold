@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:threshold/core/services/data_service.dart';
 import 'package:threshold/features/auth/data/auth_service.dart';
 import 'package:threshold/features/auth/data/user_profile.dart';
+import 'package:threshold/features/auth/presentation/brokerage_step.dart';
+import 'package:threshold/features/auth/presentation/info_step.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
@@ -69,7 +71,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     setState(() => _error = null);
     if (_step == 0) {
       setState(() => _step = 1);
-      _pageController.animateToPage(1, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+      _pageController.animateToPage(
+        1,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
     } else {
       _submit();
     }
@@ -80,7 +86,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     try {
       await ref
           .read(authServiceProvider)
-          .signUp(email: _emailCtrl.text.trim(), password: _passwordCtrl.text, displayName: _nameCtrl.text.trim());
+          .signUp(
+            email: _emailCtrl.text.trim(),
+            password: _passwordCtrl.text,
+            displayName: _nameCtrl.text.trim(),
+          );
       await ref
           .read(dataServiceProvider)
           .saveUserProfile(
@@ -98,6 +108,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
               isBuyerAgency: _isBuyerAgency,
             ),
           );
+      final profile = await ref
+          .read(dataServiceProvider)
+          .getUserProfile(ref.read(authServiceProvider).currentUser!.uid);
+      ref.read(userProfileProvider.notifier).state = profile;
     } on Exception catch (e) {
       setState(() => _error = _friendlyError(e.toString()));
     } finally {
@@ -108,7 +122,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final keyboard = MediaQuery.viewInsetsOf(context).bottom;
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         leading:
             _step == 1
@@ -119,7 +135,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                       _step = 0;
                       _error = null;
                     });
-                    _pageController.animateToPage(0, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+                    _pageController.animateToPage(
+                      0,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
                   },
                 )
                 : null,
@@ -136,164 +156,68 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       body: PageView(
         controller: _pageController,
         physics: const NeverScrollableScrollPhysics(),
-        children: [_buildAccountStep(cs), _buildBrokerageStep(cs)],
+        children: [
+          InfoStep(
+            nameCtrl: _nameCtrl,
+            emailCtrl: _emailCtrl,
+            passwordCtrl: _passwordCtrl,
+            obscure: _obscure,
+            next: _next,
+            obscureCallback: () => setState(() => _obscure = !_obscure),
+          ),
+          BrokerageStep(
+            brokerageNameCtrl: _brokerageNameCtrl,
+            brokerageAddressCtrl: _brokerageAddressCtrl,
+            brokerageCityStateZipCtrl: _brokerageCityStateZipCtrl,
+            agentPhoneCtrl: _agentPhoneCtrl,
+            state: _state,
+            isMultiPersonFirm: _isMultiPersonFirm,
+            isBuyerAgency: _isBuyerAgency,
+            stateCallback: (val) => setState(() => _state = val),
+            multiPersonFirmCallback:
+                (val) => setState(() => _isMultiPersonFirm = val),
+            buyerAgencyCallback: (val) => setState(() => _isBuyerAgency = val),
+          ),
+        ],
       ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (_error != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(_error!, style: TextStyle(color: cs.error), textAlign: TextAlign.center),
+
+      bottomNavigationBar: Padding(
+        padding: EdgeInsets.fromLTRB(20, 8, 20, 16 + keyboard),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  _error!,
+                  style: TextStyle(color: cs.error),
+                  textAlign: TextAlign.center,
                 ),
-              FilledButton(
-                onPressed: _loading ? null : _next,
-                style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
-                child:
-                    _loading
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                        : Text(_step == 0 ? 'Next' : 'Create account'),
               ),
-              if (_step == 0) ...[
-                const SizedBox(height: 8),
-                TextButton(onPressed: () => context.go('/login'), child: const Text('Already have an account? Log in')),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAccountStep(ColorScheme cs) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 32, 24, 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text('Your info', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 24),
-          TextFormField(
-            controller: _nameCtrl,
-            textCapitalization: TextCapitalization.words,
-            textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(labelText: 'Full name', border: OutlineInputBorder()),
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _emailCtrl,
-            keyboardType: TextInputType.emailAddress,
-            textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _passwordCtrl,
-            obscureText: _obscure,
-            textInputAction: TextInputAction.done,
-            onEditingComplete: () => _next(),
-            decoration: InputDecoration(
-              labelText: 'Password',
-              border: const OutlineInputBorder(),
-              helperText: 'Min 6 characters',
-              suffixIcon: IconButton(
-                icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility),
-                onPressed: () => setState(() => _obscure = !_obscure),
+            FilledButton(
+              onPressed: _loading ? null : _next,
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
               ),
+              child:
+                  _loading
+                      ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                      : Text(_step == 0 ? 'Next' : 'Create account'),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBrokerageStep(ColorScheme cs) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 32, 24, 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text('Brokerage details', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
-          Text(
-            'Used to pre-fill forms at every showing.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
-          ),
-          const SizedBox(height: 24),
-          TextFormField(
-            controller: _brokerageNameCtrl,
-            textCapitalization: TextCapitalization.words,
-            textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(labelText: 'Brokerage name', border: OutlineInputBorder()),
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _brokerageAddressCtrl,
-            textCapitalization: TextCapitalization.words,
-            textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(labelText: 'Brokerage street address (optional)', border: OutlineInputBorder()),
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _brokerageCityStateZipCtrl,
-            textCapitalization: TextCapitalization.words,
-            textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(labelText: 'City, State, Zip (optional)', border: OutlineInputBorder()),
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: _agentPhoneCtrl,
-            keyboardType: TextInputType.phone,
-            textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(labelText: 'Your phone number', border: OutlineInputBorder()),
-          ),
-          const SizedBox(height: 24),
-          DropdownButtonFormField<String>(
-            initialValue: _state,
-            decoration: const InputDecoration(labelText: 'State', border: OutlineInputBorder()),
-            items: kSupportedStates.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
-            onChanged: (v) => setState(() => _state = v!),
-          ),
-          const SizedBox(height: 20),
-          Text('Firm type', style: Theme.of(context).textTheme.labelLarge),
-          const SizedBox(height: 8),
-          _ChoiceCard(
-            label: 'Multiple-person firm',
-            subtitle: 'Section 2.1 — you are a designated broker within the firm',
-            selected: _isMultiPersonFirm,
-            onTap: () => setState(() => _isMultiPersonFirm = true),
-          ),
-          const SizedBox(height: 8),
-          _ChoiceCard(
-            label: 'One-person firm',
-            subtitle: 'Section 2.2 — you are the sole licensed person',
-            selected: !_isMultiPersonFirm,
-            onTap: () => setState(() => _isMultiPersonFirm = false),
-          ),
-          const SizedBox(height: 20),
-          Text('Brokerage relationship', style: Theme.of(context).textTheme.labelLarge),
-          const SizedBox(height: 4),
-          Text(
-            'How you typically represent buyers. Used on every form — can be changed in settings.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-          ),
-          const SizedBox(height: 8),
-          _ChoiceCard(
-            label: 'Buyer Agency',
-            subtitle: 'You represent the buyer — most common for showings',
-            selected: _isBuyerAgency,
-            onTap: () => setState(() => _isBuyerAgency = true),
-          ),
-          const SizedBox(height: 8),
-          _ChoiceCard(
-            label: 'Transaction-Brokerage',
-            subtitle: 'You assist the transaction without representing either party',
-            selected: !_isBuyerAgency,
-            onTap: () => setState(() => _isBuyerAgency = false),
-          ),
-        ],
+            if (_step == 0) ...[
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => context.go('/login'),
+                child: const Text('Already have an account? Log in'),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -306,46 +230,5 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       return 'Password is too weak. Use at least 6 characters.';
     }
     return 'Sign-up failed. Please try again.';
-  }
-}
-
-class _ChoiceCard extends StatelessWidget {
-  const _ChoiceCard({required this.label, required this.subtitle, required this.selected, required this.onTap});
-
-  final String label;
-  final String subtitle;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          border: Border.all(color: selected ? cs.primary : cs.outline, width: selected ? 2 : 1),
-          borderRadius: BorderRadius.circular(12),
-          color: selected ? cs.primaryContainer.withValues(alpha: 0.3) : null,
-        ),
-        child: Row(
-          children: [
-            Icon(selected ? Icons.radio_button_checked : Icons.radio_button_off, color: selected ? cs.primary : cs.outline),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-                  Text(subtitle, style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

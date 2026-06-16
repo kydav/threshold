@@ -77,7 +77,11 @@ class _FormScreenState extends ConsumerState<FormScreen> {
     if (!_validateStep()) return;
     if (_step < 4) {
       setState(() => _step++);
-      _pageController.animateToPage(_step, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+      _pageController.animateToPage(
+        _step,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
     } else {
       _submit();
     }
@@ -89,7 +93,11 @@ class _FormScreenState extends ConsumerState<FormScreen> {
         _step--;
         _stepError = null;
       });
-      _pageController.animateToPage(_step, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+      _pageController.animateToPage(
+        _step,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
     } else {
       context.go('/agreements');
     }
@@ -99,12 +107,13 @@ class _FormScreenState extends ConsumerState<FormScreen> {
     setState(() => _saving = true);
     try {
       final user = FirebaseAuth.instance.currentUser!;
-      final profile = await ref.read(userProfileProvider.future);
+      final profile = ref.read(userProfileProvider);
       final agreement = await ref
           .read(agreementRepositoryProvider)
           .create(
             agentId: user.uid,
-            agentName: '${profile?.firstName ?? user.displayName ?? ''} ${profile?.lastName ?? ''}',
+            agentName:
+                '${profile?.firstName ?? user.displayName ?? ''} ${profile?.lastName ?? ''}',
             agentEmail: profile?.email ?? user.email ?? '',
             brokerageName: profile?.brokerageName ?? '',
             buyerName: _buyerNameCtrl.text.trim(),
@@ -124,10 +133,14 @@ class _FormScreenState extends ConsumerState<FormScreen> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     const totalSteps = 5;
+    final keyboard = MediaQuery.viewInsetsOf(context).bottom;
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: _back),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: _back,
+        ),
         title: Text(_stepTitle(_step)),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(4),
@@ -187,13 +200,19 @@ class _FormScreenState extends ConsumerState<FormScreen> {
       ),
       bottomNavigationBar: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+          padding: EdgeInsets.fromLTRB(20, 8, 20, 16 + keyboard),
           child: FilledButton(
             onPressed: _saving ? null : _next,
-            style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(52),
+            ),
             child:
                 _saving
-                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                    ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                     : Text(_step < 4 ? 'Next' : 'Proceed to signatures'),
           ),
         ),
@@ -239,7 +258,12 @@ class _StepPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(prompt, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+          Text(
+            prompt,
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 28),
           TextField(
             controller: controller,
@@ -247,9 +271,14 @@ class _StepPage extends StatelessWidget {
             textCapitalization: textCapitalization,
             maxLines: maxLines,
             autofocus: true,
-            textInputAction: maxLines == 1 ? TextInputAction.done : TextInputAction.newline,
+            textInputAction:
+                maxLines == 1 ? TextInputAction.done : TextInputAction.newline,
             onSubmitted: maxLines == 1 ? (_) => onSubmit() : null,
-            decoration: InputDecoration(hintText: hint, border: const OutlineInputBorder(), errorText: error),
+            decoration: InputDecoration(
+              hintText: hint,
+              border: const OutlineInputBorder(),
+              errorText: error,
+            ),
             style: Theme.of(context).textTheme.bodyLarge,
           ),
         ],
@@ -300,12 +329,16 @@ class _DateStepPage extends StatelessWidget {
         children: [
           Text(
             'How long does the agreement last?',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
             'NAR rules require a defined term. 90 days is common for a showing.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
           ),
           const SizedBox(height: 32),
           _DateTile(
@@ -333,7 +366,10 @@ class _DateStepPage extends StatelessWidget {
                   onChanged: onEndChanged,
                 ),
           ),
-          if (error != null) ...[const SizedBox(height: 12), Text(error!, style: TextStyle(color: cs.error, fontSize: 13))],
+          if (error != null) ...[
+            const SizedBox(height: 12),
+            Text(error!, style: TextStyle(color: cs.error, fontSize: 13)),
+          ],
         ],
       ),
     );
@@ -341,7 +377,11 @@ class _DateStepPage extends StatelessWidget {
 }
 
 class _DateTile extends StatelessWidget {
-  const _DateTile({required this.label, required this.date, required this.onTap});
+  const _DateTile({
+    required this.label,
+    required this.date,
+    required this.onTap,
+  });
 
   final String label;
   final DateTime date;
@@ -357,7 +397,10 @@ class _DateTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        decoration: BoxDecoration(border: Border.all(color: cs.outline), borderRadius: BorderRadius.circular(12)),
+        decoration: BoxDecoration(
+          border: Border.all(color: cs.outline),
+          borderRadius: BorderRadius.circular(12),
+        ),
         child: Row(
           children: [
             Icon(Icons.calendar_today, color: cs.primary),
@@ -365,8 +408,16 @@ class _DateTile extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: cs.onSurfaceVariant)),
-                Text(_fmt.format(date), style: Theme.of(context).textTheme.bodyLarge),
+                Text(
+                  label,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelMedium?.copyWith(color: cs.onSurfaceVariant),
+                ),
+                Text(
+                  _fmt.format(date),
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
               ],
             ),
             const Spacer(),
