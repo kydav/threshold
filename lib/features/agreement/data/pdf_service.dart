@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import 'package:threshold/core/services/delivery_service.dart';
 import 'package:threshold/features/agreement/data/agreement_model.dart';
 import 'package:threshold/features/agreement/data/agreement_repository.dart';
@@ -24,6 +25,7 @@ class PdfService {
     required AgreementModel agreement,
     required Uint8List agentSignatureBytes,
     required Uint8List buyerSignatureBytes,
+    bool autoEmail = true,
   }) async {
     final pdf = pw.Document();
     final agentSigImage = pw.MemoryImage(agentSignatureBytes);
@@ -102,16 +104,24 @@ class PdfService {
     await file.writeAsBytes(bytes);
     final localPath = file.path;
 
-    // Persist the signed state with the PDF path.
-    final signed = agreement.copyWith(
-      status: AgreementStatus.pendingDelivery,
-      localPdfPath: localPath,
-      signedAt: now,
-    );
-    await _repo.save(signed);
-
-    // Attempt immediate delivery; connectivity watcher retries if offline.
-    await _delivery.deliver(signed);
+    if (autoEmail) {
+      final signed = agreement.copyWith(
+        status: AgreementStatus.pendingDelivery,
+        localPdfPath: localPath,
+        signedAt: now,
+      );
+      await _repo.save(signed);
+      await _delivery.deliver(signed);
+    } else {
+      final signed = agreement.copyWith(
+        status: AgreementStatus.delivered,
+        localPdfPath: localPath,
+        signedAt: now,
+        deliveredAt: now,
+      );
+      await _repo.save(signed);
+      await Printing.sharePdf(bytes: bytes, filename: filename);
+    }
 
     return localPath;
   }

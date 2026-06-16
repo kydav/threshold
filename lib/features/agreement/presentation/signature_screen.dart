@@ -27,6 +27,7 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
   bool _agentSigned = false;
   bool _buyerSigned = false;
   bool _buyer2Signed = false;
+  bool _autoEmail = true;
   bool _processing = false;
   AgreementModel? _agreement;
 
@@ -95,6 +96,7 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
               agentSignatureBytes: agentBytes,
               buyerSignatureBytes: buyerBytes,
               buyer2SignatureBytes: buyer2Bytes,
+              autoEmail: _autoEmail,
             );
       } else {
         path = await ref
@@ -103,6 +105,7 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
               agreement: _agreement!,
               agentSignatureBytes: agentBytes,
               buyerSignatureBytes: buyerBytes,
+              autoEmail: _autoEmail,
             );
       }
 
@@ -165,7 +168,15 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
                 },
               ),
             ],
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Email forms automatically'),
+              subtitle: const Text('Sends to buyer and agent via SendGrid'),
+              value: _autoEmail,
+              onChanged: (v) => setState(() => _autoEmail = v ?? true),
+            ),
+            const SizedBox(height: 8),
             FilledButton.icon(
               onPressed: _canFinalize ? _finalize : null,
               icon:
