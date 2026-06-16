@@ -12,6 +12,11 @@ class ColoradoFormData {
     required this.buyerIsPartyToOtherAgreement,
     required this.buyerHasReceivedSubmittedList,
     this.additionalProvisions = '',
+    this.buyer2Name = '',
+    this.buyer2Email = '',
+    this.buyer2Phone = '',
+    this.buyer2StreetAddress = '',
+    this.buyer2CityStateZip = '',
   });
 
   // 'percentage' or 'dollar'
@@ -21,6 +26,15 @@ class ColoradoFormData {
   final String buyerPhone;
   final String buyerStreetAddress;
   final String buyerCityStateZip;
+
+  // Co-buyer (optional — empty string means no co-buyer)
+  final String buyer2Name;
+  final String buyer2Email;
+  final String buyer2Phone;
+  final String buyer2StreetAddress;
+  final String buyer2CityStateZip;
+
+  bool get hasCoBuyer => buyer2Name.isNotEmpty;
 
   // Section 4: brokerage relationship
   final bool isBuyerAgency;
@@ -52,6 +66,11 @@ class ColoradoFormData {
         buyerHasReceivedSubmittedList:
             d['buyerHasReceivedSubmittedList'] as bool? ?? false,
         additionalProvisions: d['additionalProvisions'] as String? ?? '',
+        buyer2Name: d['buyer2Name'] as String? ?? '',
+        buyer2Email: d['buyer2Email'] as String? ?? '',
+        buyer2Phone: d['buyer2Phone'] as String? ?? '',
+        buyer2StreetAddress: d['buyer2StreetAddress'] as String? ?? '',
+        buyer2CityStateZip: d['buyer2CityStateZip'] as String? ?? '',
       );
 
   Map<String, dynamic> toJson() => {
@@ -66,5 +85,10 @@ class ColoradoFormData {
         'buyerIsPartyToOtherAgreement': buyerIsPartyToOtherAgreement,
         'buyerHasReceivedSubmittedList': buyerHasReceivedSubmittedList,
         'additionalProvisions': additionalProvisions,
+        'buyer2Name': buyer2Name,
+        'buyer2Email': buyer2Email,
+        'buyer2Phone': buyer2Phone,
+        'buyer2StreetAddress': buyer2StreetAddress,
+        'buyer2CityStateZip': buyer2CityStateZip,
       };
 }

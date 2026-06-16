@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:syncfusion_flutter_signaturepad/signaturepad.dart';
 import 'package:threshold/features/agreement/data/agreement_model.dart';
 import 'package:threshold/features/agreement/data/agreement_repository.dart';
+import 'package:threshold/features/agreement/data/colorado_form_data.dart';
 import 'package:threshold/features/agreement/data/colorado_pdf_service.dart';
 import 'package:threshold/features/agreement/data/pdf_service.dart';
 
@@ -20,9 +22,11 @@ class SignatureScreen extends ConsumerStatefulWidget {
 class _SignatureScreenState extends ConsumerState<SignatureScreen> {
   final _agentPadKey = GlobalKey<SfSignaturePadState>();
   final _buyerPadKey = GlobalKey<SfSignaturePadState>();
+  final _buyer2PadKey = GlobalKey<SfSignaturePadState>();
 
   bool _agentSigned = false;
   bool _buyerSigned = false;
+  bool _buyer2Signed = false;
   bool _processing = false;
   AgreementModel? _agreement;
 
@@ -39,8 +43,20 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
     if (mounted) setState(() => _agreement = a);
   }
 
+  bool get _hasCoBuyer {
+    if (_agreement == null) return false;
+    if (_agreement!.formState != 'Colorado') return false;
+    return ColoradoFormData.fromJson(_agreement!.formData).hasCoBuyer;
+  }
+
+  bool get _canFinalize =>
+      _agentSigned &&
+      _buyerSigned &&
+      (!_hasCoBuyer || _buyer2Signed) &&
+      !_processing;
+
   Future<void> _finalize() async {
-    if (!_agentSigned || !_buyerSigned || _agreement == null) return;
+    if (!_canFinalize || _agreement == null) return;
     setState(() => _processing = true);
     try {
       final agentImg = await _agentPadKey.currentState!.toImage(
@@ -59,6 +75,17 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
             format: ui.ImageByteFormat.png,
           ))!.buffer.asUint8List();
 
+      Uint8List? buyer2Bytes;
+      if (_hasCoBuyer) {
+        final buyer2Img = await _buyer2PadKey.currentState!.toImage(
+          pixelRatio: 2.0,
+        );
+        buyer2Bytes =
+            (await buyer2Img.toByteData(
+              format: ui.ImageByteFormat.png,
+            ))!.buffer.asUint8List();
+      }
+
       String? path;
       if (_agreement!.formState == 'Colorado') {
         path = await ref
@@ -67,6 +94,7 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
               agreement: _agreement!,
               agentSignatureBytes: agentBytes,
               buyerSignatureBytes: buyerBytes,
+              buyer2SignatureBytes: buyer2Bytes,
             );
       } else {
         path = await ref
@@ -80,9 +108,7 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
 
       if (path != null && mounted) {
         await ref.read(agreementListProvider.notifier).refresh();
-        if (mounted) {
-          context.go('/agreements');
-        }
+        if (mounted) context.go('/agreements');
       }
     } finally {
       if (mounted) setState(() => _processing = false);
@@ -125,12 +151,23 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
                 setState(() => _buyerSigned = false);
               },
             ),
+            if (_hasCoBuyer) ...[
+              const SizedBox(height: 20),
+              _SignatureBlock(
+                label:
+                    'Co-buyer signature — ${ColoradoFormData.fromJson(_agreement!.formData).buyer2Name}',
+                padKey: _buyer2PadKey,
+                signed: _buyer2Signed,
+                onStrokeEnd: () => setState(() => _buyer2Signed = true),
+                onClear: () {
+                  _buyer2PadKey.currentState?.clear();
+                  setState(() => _buyer2Signed = false);
+                },
+              ),
+            ],
             const SizedBox(height: 32),
             FilledButton.icon(
-              onPressed:
-                  (_agentSigned && _buyerSigned && !_processing)
-                      ? _finalize
-                      : null,
+              onPressed: _canFinalize ? _finalize : null,
               icon:
                   _processing
                       ? const SizedBox(
@@ -141,11 +178,11 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
                       : const Icon(Icons.picture_as_pdf_outlined),
               label: const Text('Generate & send PDF'),
             ),
-            if (!_agentSigned || !_buyerSigned)
+            if (!_canFinalize && !_processing)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
-                  'Both parties must sign before generating the PDF.',
+                  'All parties must sign before generating the PDF.',
                   style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12),
                   textAlign: TextAlign.center,
                 ),

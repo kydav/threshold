@@ -57,6 +57,12 @@ class DeliveryService {
       {'email': agreement.agentEmail, 'name': agreement.agentName},
     ];
 
+    final buyer2Email = agreement.formData['buyer2Email'] as String?;
+    final buyer2Name = agreement.formData['buyer2Name'] as String?;
+    if (buyer2Email != null && buyer2Email.isNotEmpty) {
+      recipients.add({'email': buyer2Email, 'name': buyer2Name ?? 'Co-buyer'});
+    }
+
     try {
       for (final recipient in recipients) {
         final res = await http.post(

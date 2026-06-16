@@ -25,14 +25,22 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
 
   // Step 0 — Buyer name
   final _buyerNameCtrl = TextEditingController();
+  bool _hasCoBuyer = false;
+  final _buyer2NameCtrl = TextEditingController();
 
   // Step 1 — Buyer contact
   final _buyerEmailCtrl = TextEditingController();
   final _buyerPhoneCtrl = TextEditingController();
+  bool _hasCoBuyerContact = false;
+  final _buyer2EmailCtrl = TextEditingController();
+  final _buyer2PhoneCtrl = TextEditingController();
 
   // Step 2 — Buyer address
   final _buyerAddressCtrl = TextEditingController();
   final _buyerCityStateZipCtrl = TextEditingController();
+  bool _hasSeparateAddresses = false;
+  final _buyer2AddressCtrl = TextEditingController();
+  final _buyer2CityStateZipCtrl = TextEditingController();
 
   // Step 3 — Property
   final _propertyCtrl = TextEditingController();
@@ -57,10 +65,15 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
   void dispose() {
     _pageController.dispose();
     _buyerNameCtrl.dispose();
+    _buyer2NameCtrl.dispose();
     _buyerEmailCtrl.dispose();
     _buyerPhoneCtrl.dispose();
+    _buyer2EmailCtrl.dispose();
+    _buyer2PhoneCtrl.dispose();
     _buyerAddressCtrl.dispose();
     _buyerCityStateZipCtrl.dispose();
+    _buyer2AddressCtrl.dispose();
+    _buyer2CityStateZipCtrl.dispose();
     _propertyCtrl.dispose();
     _compValueCtrl.dispose();
     _holdoverCtrl.dispose();
@@ -74,6 +87,10 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
           setState(() => _stepError = "Buyer's name is required.");
           return false;
         }
+        if (_hasCoBuyer && _buyer2NameCtrl.text.trim().isEmpty) {
+          setState(() => _stepError = "Co-buyer's name is required.");
+          return false;
+        }
       case 1:
         final email = _buyerEmailCtrl.text.trim();
         if (!email.contains('@') || !email.contains('.')) {
@@ -83,6 +100,17 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
         if (_buyerPhoneCtrl.text.trim().isEmpty) {
           setState(() => _stepError = 'Phone number is required.');
           return false;
+        }
+        if (_hasCoBuyer && _hasCoBuyerContact) {
+          final email2 = _buyer2EmailCtrl.text.trim();
+          if (!email2.contains('@') || !email2.contains('.')) {
+            setState(() => _stepError = "Enter a valid email for the co-buyer.");
+            return false;
+          }
+          if (_buyer2PhoneCtrl.text.trim().isEmpty) {
+            setState(() => _stepError = "Co-buyer phone number is required.");
+            return false;
+          }
         }
       case 3:
         if (_propertyCtrl.text.trim().isEmpty) {
@@ -135,6 +163,13 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
       final user = FirebaseAuth.instance.currentUser!;
       final profile = ref.read(userProfileProvider);
 
+      final buyer2Address = _hasCoBuyer && _hasSeparateAddresses
+          ? _buyer2AddressCtrl.text.trim()
+          : '';
+      final buyer2CityStateZip = _hasCoBuyer && _hasSeparateAddresses
+          ? _buyer2CityStateZipCtrl.text.trim()
+          : '';
+
       final coData = ColoradoFormData(
         buyerPhone: _buyerPhoneCtrl.text.trim(),
         buyerStreetAddress: _buyerAddressCtrl.text.trim(),
@@ -149,6 +184,11 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
         computationWillExtend: _computationWillExtend,
         buyerIsPartyToOtherAgreement: _isPartyToOther,
         buyerHasReceivedSubmittedList: _hasReceivedSubmittedList,
+        buyer2Name: _hasCoBuyer ? _buyer2NameCtrl.text.trim() : '',
+        buyer2Email: _hasCoBuyer && _hasCoBuyerContact ? _buyer2EmailCtrl.text.trim() : '',
+        buyer2Phone: _hasCoBuyer && _hasCoBuyerContact ? _buyer2PhoneCtrl.text.trim() : '',
+        buyer2StreetAddress: buyer2Address,
+        buyer2CityStateZip: buyer2CityStateZip,
       );
 
       final compensation =
@@ -204,12 +244,7 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
         controller: _pageController,
         physics: const NeverScrollableScrollPhysics(),
         children: [
-          _textStep(
-            prompt: "What's the buyer's full legal name?",
-            controller: _buyerNameCtrl,
-            hint: 'As it appears on ID',
-            capitalize: TextCapitalization.words,
-          ),
+          _buyerNameStep(),
           _contactStep(),
           _addressStep(),
           _textStep(
@@ -262,6 +297,58 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buyerNameStep() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(24, 40, 24, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "What's the buyer's full legal name?",
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 28),
+          TextField(
+            controller: _buyerNameCtrl,
+            textCapitalization: TextCapitalization.words,
+            textInputAction: _hasCoBuyer ? TextInputAction.next : TextInputAction.done,
+            onSubmitted: _hasCoBuyer ? null : (_) => _next(),
+            autofocus: true,
+            decoration: const InputDecoration(
+              hintText: 'As it appears on ID',
+              border: OutlineInputBorder(),
+            ),
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+          const SizedBox(height: 20),
+          CheckboxListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Add a co-buyer'),
+            value: _hasCoBuyer,
+            onChanged: (v) => setState(() => _hasCoBuyer = v ?? false),
+          ),
+          if (_hasCoBuyer) ...[
+            const SizedBox(height: 12),
+            TextField(
+              controller: _buyer2NameCtrl,
+              textCapitalization: TextCapitalization.words,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _next(),
+              decoration: const InputDecoration(
+                labelText: "Co-buyer's full legal name",
+                hintText: 'As it appears on ID',
+                border: OutlineInputBorder(),
+              ),
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -333,12 +420,47 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
             controller: _buyerPhoneCtrl,
             keyboardType: TextInputType.phone,
             textInputAction: TextInputAction.done,
-            onSubmitted: (_) => _next(),
+            onSubmitted: _hasCoBuyer && !_hasCoBuyerContact ? null : (_) => _next(),
             decoration: const InputDecoration(
               labelText: 'Phone',
               border: OutlineInputBorder(),
             ),
           ),
+          if (_hasCoBuyer) ...[
+            const SizedBox(height: 24),
+            const Divider(),
+            const SizedBox(height: 8),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Add co-buyer contact info'),
+              subtitle: const Text('Co-buyer will also receive the agreement by email'),
+              value: _hasCoBuyerContact,
+              onChanged: (v) => setState(() => _hasCoBuyerContact = v ?? false),
+            ),
+            if (_hasCoBuyerContact) ...[
+              const SizedBox(height: 16),
+              TextField(
+                controller: _buyer2EmailCtrl,
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(
+                  labelText: 'Co-buyer email',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _buyer2PhoneCtrl,
+                keyboardType: TextInputType.phone,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => _next(),
+                decoration: const InputDecoration(
+                  labelText: 'Co-buyer phone',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ],
         ],
       ),
     );
@@ -377,12 +499,46 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
             controller: _buyerCityStateZipCtrl,
             textCapitalization: TextCapitalization.words,
             textInputAction: TextInputAction.done,
-            onSubmitted: (_) => _next(),
+            onSubmitted: _hasCoBuyer && !_hasSeparateAddresses ? null : (_) => _next(),
             decoration: const InputDecoration(
               labelText: 'City, State, Zip',
               border: OutlineInputBorder(),
             ),
           ),
+          if (_hasCoBuyer) ...[
+            const SizedBox(height: 24),
+            const Divider(),
+            const SizedBox(height: 8),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Use separate address for co-buyer'),
+              value: _hasSeparateAddresses,
+              onChanged: (v) => setState(() => _hasSeparateAddresses = v ?? false),
+            ),
+            if (_hasSeparateAddresses) ...[
+              const SizedBox(height: 16),
+              TextField(
+                controller: _buyer2AddressCtrl,
+                textCapitalization: TextCapitalization.words,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(
+                  labelText: "Co-buyer street address",
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _buyer2CityStateZipCtrl,
+                textCapitalization: TextCapitalization.words,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => _next(),
+                decoration: const InputDecoration(
+                  labelText: 'Co-buyer city, State, Zip',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ],
         ],
       ),
     );

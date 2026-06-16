@@ -21,6 +21,7 @@ class ColoradoPdfService {
     required AgreementModel agreement,
     required Uint8List agentSignatureBytes,
     required Uint8List buyerSignatureBytes,
+    Uint8List? buyer2SignatureBytes,
   }) async {
     final assetData = await rootBundle.load('assets/forms/colorado_bc60.pdf');
     final pdfBytes = assetData.buffer.asUint8List();
@@ -33,15 +34,29 @@ class ColoradoPdfService {
 
     // ── Parties ──────────────────────────────────────────────────────────────
     _setText(form, 'Document Date', _dateFmt.format(now));
-    _setText(form, 'Buyer/Buyers Name', agreement.buyerName);
+
+    final buyerDisplayName = co.hasCoBuyer
+        ? '${agreement.buyerName} and ${co.buyer2Name}'
+        : agreement.buyerName;
+    _setText(form, 'Buyer/Buyers Name', buyerDisplayName);
+
+    // Buyer 1 contact fields (page 6 signature section)
     _setText(form, 'Buyers Email Address', agreement.buyerEmail);
-    _setText(form, 'Buyers Email Address_2', agreement.buyerEmail);
     _setText(form, 'Buyers Phone No', co.buyerPhone);
-    _setText(form, 'Buyers Phone No_2', co.buyerPhone);
     _setText(form, 'Buyers Street Address', co.buyerStreetAddress);
-    _setText(form, 'Buyers Street Address_2', co.buyerStreetAddress);
     _setText(form, 'Buyers City State Zip', co.buyerCityStateZip);
-    _setText(form, 'Buyers City State Zip_2', co.buyerCityStateZip);
+
+    // Co-buyer fields — the _2 fields are co-buyer slots on the same page 6
+    if (co.hasCoBuyer) {
+      _setText(form, 'Buyers Email Address_2',
+          co.buyer2Email.isNotEmpty ? co.buyer2Email : agreement.buyerEmail);
+      _setText(form, 'Buyers Phone No_2',
+          co.buyer2Phone.isNotEmpty ? co.buyer2Phone : co.buyerPhone);
+      _setText(form, 'Buyers Street Address_2',
+          co.buyer2StreetAddress.isNotEmpty ? co.buyer2StreetAddress : co.buyerStreetAddress);
+      _setText(form, 'Buyers City State Zip_2',
+          co.buyer2CityStateZip.isNotEmpty ? co.buyer2CityStateZip : co.buyerCityStateZip);
+    }
 
     _setText(form, 'Brokerage Firm Name', agreement.brokerageName);
     _setText(form, 'Broker Name', agreement.agentName);
@@ -102,6 +117,9 @@ class ColoradoPdfService {
     // ── Draw signatures at field bounds ───────────────────────────────────
     _drawSignature(doc, form, 'Buyers Signature', buyerSignatureBytes);
     _drawSignature(doc, form, 'Brokers Signature', agentSignatureBytes);
+    if (co.hasCoBuyer && buyer2SignatureBytes != null) {
+      _drawSignature(doc, form, 'Buyers Signature_2', buyer2SignatureBytes);
+    }
 
     // ── Flatten all fields so values are baked in and uneditable ─────────
     for (int i = 0; i < form.fields.count; i++) {
