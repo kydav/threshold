@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:printing/printing.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:threshold/core/services/delivery_service.dart';
 import 'package:threshold/features/agreement/data/agreement_model.dart';
@@ -22,6 +23,7 @@ class ColoradoPdfService {
     required Uint8List agentSignatureBytes,
     required Uint8List buyerSignatureBytes,
     Uint8List? buyer2SignatureBytes,
+    bool autoEmail = true,
   }) async {
     final assetData = await rootBundle.load('assets/forms/colorado_bc60.pdf');
     final pdfBytes = assetData.buffer.asUint8List();
@@ -137,9 +139,24 @@ class ColoradoPdfService {
     await file.writeAsBytes(savedBytes);
     final localPath = file.path;
 
-    final signed = agreement.copyWith(status: AgreementStatus.pendingDelivery, localPdfPath: localPath, signedAt: now);
-    await _repo.save(signed);
-    await _delivery.deliver(signed);
+    if (autoEmail) {
+      final signed = agreement.copyWith(
+        status: AgreementStatus.pendingDelivery,
+        localPdfPath: localPath,
+        signedAt: now,
+      );
+      await _repo.save(signed);
+      await _delivery.deliver(signed);
+    } else {
+      final signed = agreement.copyWith(
+        status: AgreementStatus.delivered,
+        localPdfPath: localPath,
+        signedAt: now,
+        deliveredAt: now,
+      );
+      await _repo.save(signed);
+      await Printing.sharePdf(bytes: Uint8List.fromList(savedBytes), filename: filename);
+    }
 
     return localPath;
   }
