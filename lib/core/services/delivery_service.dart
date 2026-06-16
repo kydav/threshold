@@ -71,7 +71,14 @@ class DeliveryService {
                 'to': [recipient],
               },
             ],
-            'from': {'email': _fromEmail, 'name': 'Threshold'},
+            'from': {
+              'email': _fromEmail,
+              'name': '${agreement.agentName} via Threshold',
+            },
+            'reply_to': {
+              'email': agreement.agentEmail,
+              'name': agreement.agentName,
+            },
             'subject':
                 'Signed buyer representation agreement — ${agreement.propertyScope}',
             'content': [
