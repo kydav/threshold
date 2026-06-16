@@ -8,7 +8,8 @@
         {
             "name": "threshold",
             "request": "launch",
-            "type": "dart"
+            "type": "dart",
+            "args": ["--no-swift-package-manager"]
         },
         {
             "name": "threshold (profile mode)",
