@@ -4,11 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:threshold/core/router.dart';
 import 'package:threshold/core/services/connectivity_watcher.dart';
+import 'package:threshold/core/services/subscription_service.dart';
+import 'package:threshold/features/auth/data/user_profile.dart';
 import 'package:threshold/firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await configureRevenueCat();
   runApp(const ProviderScope(child: ThresholdApp()));
 }
 
@@ -18,6 +21,7 @@ class ThresholdApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(connectivityWatcherProvider);
+    ref.watch(profileLoaderProvider);
     final router = ref.watch(routerProvider);
 
     return MaterialApp.router(

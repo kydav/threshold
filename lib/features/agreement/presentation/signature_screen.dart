@@ -5,11 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:syncfusion_flutter_signaturepad/signaturepad.dart';
+import 'package:threshold/core/config/revenue_cat_config.dart';
+import 'package:threshold/core/services/subscription_service.dart';
 import 'package:threshold/features/agreement/data/agreement_model.dart';
 import 'package:threshold/features/agreement/data/agreement_repository.dart';
 import 'package:threshold/features/agreement/data/colorado_form_data.dart';
 import 'package:threshold/features/agreement/data/colorado_pdf_service.dart';
 import 'package:threshold/features/agreement/data/pdf_service.dart';
+import 'package:threshold/features/paywall/presentation/paywall_screen.dart';
 
 class SignatureScreen extends ConsumerStatefulWidget {
   const SignatureScreen({required this.agreementId, super.key});
@@ -46,8 +49,18 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
 
   bool get _hasCoBuyer {
     if (_agreement == null) return false;
-    if (_agreement!.formState != 'Colorado') return false;
-    return ColoradoFormData.fromJson(_agreement!.formData).hasCoBuyer;
+    if (_agreement!.formState == 'Colorado') {
+      return ColoradoFormData.fromJson(_agreement!.formData).hasCoBuyer;
+    }
+    return (_agreement!.formData['buyer2Name'] as String? ?? '').isNotEmpty;
+  }
+
+  String get _coBuyerName {
+    if (_agreement == null) return 'Co-buyer';
+    if (_agreement!.formState == 'Colorado') {
+      return ColoradoFormData.fromJson(_agreement!.formData).buyer2Name;
+    }
+    return _agreement!.formData['buyer2Name'] as String? ?? 'Co-buyer';
   }
 
   bool get _canFinalize =>
@@ -58,6 +71,24 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
 
   Future<void> _finalize() async {
     if (!_canFinalize || _agreement == null) return;
+
+    // Check paywall: count non-draft agreements the user has already sent.
+    final isPro = !kPaywallEnabled ||
+        ref.read(subscriptionProvider.notifier).isProActive;
+    if (!isPro) {
+      final allAgreements =
+          await ref.read(agreementRepositoryProvider).listForAgent(
+                _agreement!.agentId,
+              );
+      final sentCount = allAgreements
+          .where((a) => a.status != AgreementStatus.draft)
+          .length;
+      if (sentCount >= kFreeAgreementLimit && mounted) {
+        final subscribed = await showPaywall(context);
+        if (!subscribed || !mounted) return;
+      }
+    }
+
     setState(() => _processing = true);
     try {
       final agentImg = await _agentPadKey.currentState!.toImage(
@@ -105,6 +136,7 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
               agreement: _agreement!,
               agentSignatureBytes: agentBytes,
               buyerSignatureBytes: buyerBytes,
+              buyer2SignatureBytes: buyer2Bytes,
               autoEmail: _autoEmail,
             );
       }
@@ -157,8 +189,7 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
             if (_hasCoBuyer) ...[
               const SizedBox(height: 20),
               _SignatureBlock(
-                label:
-                    'Co-buyer signature — ${ColoradoFormData.fromJson(_agreement!.formData).buyer2Name}',
+                label: 'Co-buyer signature — $_coBuyerName',
                 padKey: _buyer2PadKey,
                 signed: _buyer2Signed,
                 onStrokeEnd: () => setState(() => _buyer2Signed = true),

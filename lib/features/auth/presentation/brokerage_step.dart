@@ -20,7 +20,7 @@ class BrokerageStep extends StatelessWidget {
   final TextEditingController brokerageAddressCtrl;
   final TextEditingController brokerageCityStateZipCtrl;
   final TextEditingController agentPhoneCtrl;
-  final String state;
+  final String? state;
   final bool isMultiPersonFirm;
   final bool isBuyerAgency;
   final ValueChanged<String> stateCallback;
@@ -94,61 +94,62 @@ class BrokerageStep extends StatelessWidget {
               labelText: 'State',
               border: OutlineInputBorder(),
             ),
-            items:
-                kSupportedStates
-                    .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                    .toList(),
+            hint: const Text('Select your state'),
+            items: kSupportedStates
+                .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                .toList(),
             onChanged: (v) {
               if (v == null) return;
               stateCallback(v);
             },
           ),
-          const SizedBox(height: 20),
-          Text('Firm type', style: Theme.of(context).textTheme.labelLarge),
-          const SizedBox(height: 8),
-          _ChoiceCard(
-            label: 'Multiple-person firm',
-            subtitle:
-                'Section 2.1 — you are a designated broker within the firm',
-            selected: isMultiPersonFirm,
-            onTap: () {
-              multiPersonFirmCallback(true);
-            },
-          ),
-          const SizedBox(height: 8),
-          _ChoiceCard(
-            label: 'One-person firm',
-            subtitle: 'Section 2.2 — you are the sole licensed person',
-            selected: !isMultiPersonFirm,
-            onTap: () => multiPersonFirmCallback(false),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'Brokerage relationship',
-            style: Theme.of(context).textTheme.labelLarge,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'How you typically represent buyers. Used on every form — can be changed in settings.',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-          ),
-          const SizedBox(height: 8),
-          _ChoiceCard(
-            label: 'Buyer Agency',
-            subtitle: 'You represent the buyer — most common for showings',
-            selected: isBuyerAgency,
-            onTap: () => buyerAgencyCallback(true),
-          ),
-          const SizedBox(height: 8),
-          _ChoiceCard(
-            label: 'Transaction-Brokerage',
-            subtitle:
-                'You assist the transaction without representing either party',
-            selected: !isBuyerAgency,
-            onTap: () => buyerAgencyCallback(false),
-          ),
+          if (state == 'Colorado') ...[
+            const SizedBox(height: 20),
+            Text('Firm type', style: Theme.of(context).textTheme.labelLarge),
+            const SizedBox(height: 8),
+            _ChoiceCard(
+              label: 'Multiple-person firm',
+              subtitle:
+                  'Section 2.1 — you are a designated broker within the firm',
+              selected: isMultiPersonFirm,
+              onTap: () => multiPersonFirmCallback(true),
+            ),
+            const SizedBox(height: 8),
+            _ChoiceCard(
+              label: 'One-person firm',
+              subtitle: 'Section 2.2 — you are the sole licensed person',
+              selected: !isMultiPersonFirm,
+              onTap: () => multiPersonFirmCallback(false),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Brokerage relationship',
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'How you typically represent buyers. Used on every form — can be changed in settings.',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: cs.onSurfaceVariant),
+            ),
+            const SizedBox(height: 8),
+            _ChoiceCard(
+              label: 'Buyer Agency',
+              subtitle: 'You represent the buyer — most common for showings',
+              selected: isBuyerAgency,
+              onTap: () => buyerAgencyCallback(true),
+            ),
+            const SizedBox(height: 8),
+            _ChoiceCard(
+              label: 'Transaction-Brokerage',
+              subtitle:
+                  'You assist the transaction without representing either party',
+              selected: !isBuyerAgency,
+              onTap: () => buyerAgencyCallback(false),
+            ),
+          ],
         ],
       ),
     );

@@ -31,7 +31,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _brokerageAddressCtrl = TextEditingController();
   final _brokerageCityStateZipCtrl = TextEditingController();
   final _agentPhoneCtrl = TextEditingController();
-  String _state = kSupportedStates.first;
+  String? _state;
   bool _isMultiPersonFirm = true;
   bool _isBuyerAgency = true;
 
@@ -58,6 +58,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         return 'Brokerage name is required.';
       }
       if (_agentPhoneCtrl.text.trim().isEmpty) return 'Phone is required.';
+      if (_state == null) return 'Please select your state.';
     }
     return null;
   }
@@ -82,38 +83,55 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   }
 
   Future<void> _submit() async {
+    // Capture all ref-dependent values before any await — the router navigates
+    // away (disposing this widget) as soon as signUp triggers the auth state
+    // change, so ref becomes invalid after the first suspension point.
+    // profileNotifier is provider-scoped (not widget-scoped) so it stays
+    // valid after disposal and we can set the profile directly after the save.
+    final authService = ref.read(authServiceProvider);
+    final dataService = ref.read(dataServiceProvider);
+    final profileNotifier = ref.read(userProfileProvider.notifier);
+    final email = _emailCtrl.text.trim();
+    final password = _passwordCtrl.text;
+    final displayName = _nameCtrl.text.trim();
+    final brokerageName = _brokerageNameCtrl.text.trim();
+    final brokerageAddress = _brokerageAddressCtrl.text.trim();
+    final brokerageCityStateZip = _brokerageCityStateZipCtrl.text.trim();
+    final phone = _agentPhoneCtrl.text.trim();
+    final state = _state ?? '';
+    final isMultiPersonFirm = _isMultiPersonFirm;
+    final isBuyerAgency = _isBuyerAgency;
+
     setState(() => _loading = true);
     try {
-      await ref
-          .read(authServiceProvider)
-          .signUp(
-            email: _emailCtrl.text.trim(),
-            password: _passwordCtrl.text,
-            displayName: _nameCtrl.text.trim(),
-          );
-      await ref
-          .read(dataServiceProvider)
-          .saveUserProfile(
-            UserProfile(
-              uid: ref.read(authServiceProvider).currentUser!.uid,
-              email: _emailCtrl.text.trim(),
-              firstName: _nameCtrl.text.trim().split(' ').first,
-              lastName: _nameCtrl.text.trim().split(' ').skip(1).join(' '),
-              brokerageName: _brokerageNameCtrl.text.trim(),
-              brokerageAddress: _brokerageAddressCtrl.text.trim(),
-              brokerageCityStateZip: _brokerageCityStateZipCtrl.text.trim(),
-              phone: _agentPhoneCtrl.text.trim(),
-              state: _state,
-              isMultiPersonFirm: _isMultiPersonFirm,
-              isBuyerAgency: _isBuyerAgency,
-            ),
-          );
-      final profile = await ref
-          .read(dataServiceProvider)
-          .getUserProfile(ref.read(authServiceProvider).currentUser!.uid);
-      ref.read(userProfileProvider.notifier).state = profile;
+      await authService.signUp(
+        email: email,
+        password: password,
+        displayName: displayName,
+      );
+      // Widget is likely disposed after this point — use only captured values.
+      final uid = authService.currentUser!.uid;
+      final profile = UserProfile(
+        uid: uid,
+        email: email,
+        firstName: displayName.split(' ').first,
+        lastName: displayName.split(' ').skip(1).join(' '),
+        brokerageName: brokerageName,
+        brokerageAddress: brokerageAddress,
+        brokerageCityStateZip: brokerageCityStateZip,
+        phone: phone,
+        state: state,
+        isMultiPersonFirm: isMultiPersonFirm,
+        isBuyerAgency: isBuyerAgency,
+      );
+      await dataService.saveUserProfile(profile);
+      // Set directly — profileLoaderProvider raced ahead before the save
+      // completed and got null. The notifier is provider-scoped so this is
+      // safe after widget disposal.
+      profileNotifier.state = profile;
     } on Exception catch (e) {
-      setState(() => _error = _friendlyError(e.toString()));
+      debugPrint('signup _submit error: $e');
+      if (mounted) setState(() => _error = _friendlyError(e.toString()));
     } finally {
       if (mounted) setState(() => _loading = false);
     }

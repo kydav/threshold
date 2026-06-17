@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:threshold/core/services/data_service.dart';
-
 import 'package:threshold/features/auth/data/auth_service.dart';
-import 'package:threshold/features/auth/data/user_profile.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -34,18 +31,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _loading = true;
       _error = null;
     });
-    try {
-      await ref
-          .read(authServiceProvider)
-          .signIn(email: _emailCtrl.text.trim(), password: _passwordCtrl.text);
-      final profile = await ref
-          .read(dataServiceProvider)
-          .getUserProfile(ref.read(authServiceProvider).currentUser!.uid);
-      ref.read(userProfileProvider.notifier).state = profile;
+    // Capture before first await — widget may be disposed after signIn triggers
+    // the auth state change and the router navigates away.
+    final authService = ref.read(authServiceProvider);
+    final email = _emailCtrl.text.trim();
+    final password = _passwordCtrl.text;
 
-      // Router redirect handles navigation after auth state changes.
+    try {
+      await authService.signIn(email: email, password: password);
+      // profileLoaderProvider watches auth state and auto-loads the profile.
     } on Exception catch (e) {
-      setState(() => _error = _friendlyError(e.toString()));
+      if (mounted) setState(() => _error = _friendlyError(e.toString()));
     } finally {
       if (mounted) setState(() => _loading = false);
     }

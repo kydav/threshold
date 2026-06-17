@@ -1,5 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:threshold/core/services/data_service.dart';
+import 'package:threshold/features/auth/data/auth_service.dart';
 
 class UserProfile {
   UserProfile({
@@ -67,5 +70,28 @@ class UserProfile {
 
 final userProfileProvider = StateProvider<UserProfile?>((_) => null);
 
+/// Watches auth state and auto-loads the Firestore profile into
+/// [userProfileProvider] — handles app restarts where Firebase silently
+/// restores an existing session without going through the login screen.
+final profileLoaderProvider = Provider<void>((ref) {
+  ref.listen<AsyncValue<dynamic>>(
+    currentUserProvider,
+    (_, next) {
+      final uid = next.valueOrNull?.uid as String?;
+      if (uid != null) {
+        ref.read(dataServiceProvider).getUserProfile(uid).then((profile) {
+          ref.read(userProfileProvider.notifier).state = profile;
+        }).catchError((e) {
+          debugPrint('profileLoaderProvider: failed to load profile — $e');
+        });
+      } else if (next.hasValue) {
+        // Definitive null = logged out; clear the cached profile.
+        ref.read(userProfileProvider.notifier).state = null;
+      }
+    },
+    fireImmediately: true,
+  );
+});
+
 // Supported states — add more as forms are sourced
-const List<String> kSupportedStates = ['Colorado'];
+const List<String> kSupportedStates = ['Colorado', 'Utah'];

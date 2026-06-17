@@ -25,70 +25,163 @@ class PdfService {
     required AgreementModel agreement,
     required Uint8List agentSignatureBytes,
     required Uint8List buyerSignatureBytes,
+    Uint8List? buyer2SignatureBytes,
     bool autoEmail = true,
   }) async {
+    final fd = agreement.formData;
+    final buyerPhone = fd['buyerPhone'] as String? ?? '';
+    final buyerAddress = fd['buyerStreetAddress'] as String? ?? '';
+    final buyerCityStateZip = fd['buyerCityStateZip'] as String? ?? '';
+    final buyer2Name = fd['buyer2Name'] as String? ?? '';
+    final buyer2Email = fd['buyer2Email'] as String? ?? '';
+    final buyer2Phone = fd['buyer2Phone'] as String? ?? '';
+    final buyer2Address = fd['buyer2StreetAddress'] as String? ?? '';
+    final buyer2CityStateZip = fd['buyer2CityStateZip'] as String? ?? '';
+    final hasCoBuyer = buyer2Name.isNotEmpty;
+
+    final baseFont = await PdfGoogleFonts.notoSansRegular();
+    final boldFont = await PdfGoogleFonts.notoSansBold();
+    final theme = pw.ThemeData.withFont(base: baseFont, bold: boldFont);
+
     final pdf = pw.Document();
     final agentSigImage = pw.MemoryImage(agentSignatureBytes);
     final buyerSigImage = pw.MemoryImage(buyerSignatureBytes);
+    final buyer2SigImage =
+        buyer2SignatureBytes != null
+            ? pw.MemoryImage(buyer2SignatureBytes)
+            : null;
     final now = DateTime.now();
 
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.letter,
         margin: const pw.EdgeInsets.all(48),
-        build: (ctx) => [
-          _header(agreement),
-          pw.SizedBox(height: 20),
-          _sectionTitle('Parties'),
-          _labelValue('Buyer', agreement.buyerName),
-          _labelValue('Buyer email', agreement.buyerEmail),
-          _labelValue('Agent', agreement.agentName),
-          _labelValue('Agent email', agreement.agentEmail),
-          _labelValue('Brokerage', agreement.brokerageName),
-          pw.SizedBox(height: 16),
-          _sectionTitle('Agreement Terms'),
-          _labelValue('Property scope', agreement.propertyScope),
-          _labelValue('Buyer agent compensation', agreement.compensation),
-          _labelValue('Start date', _dateFmt.format(agreement.startDate)),
-          _labelValue('End date', _dateFmt.format(agreement.endDate)),
-          pw.SizedBox(height: 16),
-          _sectionTitle('NAR Compliance'),
-          pw.Text(
-            'This agreement is entered into pursuant to the NAR settlement requirements '
-            'effective August 17, 2024. The buyer agrees to the stated compensation '
-            'arrangement before touring any properties.',
-            style: const pw.TextStyle(fontSize: 10),
-          ),
-          pw.SizedBox(height: 24),
-          _sectionTitle('Signatures'),
-          pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Expanded(
-                child: _signatureBlock(
-                  label: 'Agent signature',
-                  name: agreement.agentName,
-                  imageProvider: agentSigImage,
-                  date: now,
+        theme: theme,
+        build:
+            (ctx) => [
+              _header(agreement),
+              pw.SizedBox(height: 20),
+              _sectionTitle('Parties'),
+              _labelValue('Buyer', agreement.buyerName),
+              _labelValue('Buyer email', agreement.buyerEmail),
+              if (buyerPhone.isNotEmpty) _labelValue('Buyer phone', buyerPhone),
+              if (buyerAddress.isNotEmpty)
+                _labelValue('Buyer address', buyerAddress),
+              if (buyerCityStateZip.isNotEmpty)
+                _labelValue('', buyerCityStateZip),
+              if (hasCoBuyer) ...[
+                pw.SizedBox(height: 8),
+                _labelValue('Co-buyer', buyer2Name),
+                if (buyer2Email.isNotEmpty)
+                  _labelValue('Co-buyer email', buyer2Email),
+                if (buyer2Phone.isNotEmpty)
+                  _labelValue('Co-buyer phone', buyer2Phone),
+                if (buyer2Address.isNotEmpty)
+                  _labelValue('Co-buyer address', buyer2Address),
+                if (buyer2CityStateZip.isNotEmpty)
+                  _labelValue('', buyer2CityStateZip),
+              ],
+              pw.SizedBox(height: 8),
+              _labelValue('Agent', agreement.agentName),
+              _labelValue('Agent email', agreement.agentEmail),
+              _labelValue('Brokerage', agreement.brokerageName),
+              pw.SizedBox(height: 16),
+              _sectionTitle('Agreement Terms'),
+              _labelValue('Property scope', agreement.propertyScope),
+              _labelValue('Buyer agent compensation', agreement.compensation),
+              _labelValue('Start date', _dateFmt.format(agreement.startDate)),
+              _labelValue('End date', _dateFmt.format(agreement.endDate)),
+              if (fd['protectionPeriodMonths'] != null)
+                _labelValue(
+                  'Protection period',
+                  '${fd['protectionPeriodMonths']} months',
                 ),
+              if (fd['disputeResolution'] != null) ...[
+                pw.SizedBox(height: 4),
+                _labelValue(
+                  'Dispute resolution',
+                  fd['disputeResolution'] == 'shall'
+                      ? 'Parties shall seek mediation'
+                      : 'Parties may at their option seek mediation',
+                ),
+              ],
+              pw.SizedBox(height: 16),
+              _sectionTitle('NAR Compliance'),
+              pw.Text(
+                'This agreement is entered into pursuant to the NAR settlement requirements '
+                'effective August 17, 2024. The buyer agrees to the stated compensation '
+                'arrangement before touring any properties.',
+                style: const pw.TextStyle(fontSize: 10),
               ),
-              pw.SizedBox(width: 24),
-              pw.Expanded(
-                child: _signatureBlock(
-                  label: 'Buyer signature',
-                  name: agreement.buyerName,
-                  imageProvider: buyerSigImage,
-                  date: now,
+              pw.SizedBox(height: 24),
+              _sectionTitle('Signatures'),
+              pw.Row(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Expanded(
+                    child: _signatureBlock(
+                      label: 'Agent signature',
+                      name: agreement.agentName,
+                      imageProvider: agentSigImage,
+                      date: now,
+                    ),
+                  ),
+                  pw.SizedBox(width: 24),
+                  pw.Expanded(
+                    child: _signatureBlock(
+                      label: 'Buyer signature',
+                      name: agreement.buyerName,
+                      imageProvider: buyerSigImage,
+                      date: now,
+                    ),
+                  ),
+                ],
+              ),
+              if (hasCoBuyer && buyer2SigImage != null) ...[
+                pw.SizedBox(height: 16),
+                pw.Row(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Expanded(
+                      child: _signatureBlock(
+                        label: 'Co-buyer signature',
+                        name: buyer2Name,
+                        imageProvider: buyer2SigImage,
+                        date: now,
+                      ),
+                    ),
+                    pw.SizedBox(width: 24),
+                    pw.Expanded(child: pw.SizedBox()),
+                  ],
+                ),
+              ],
+              pw.SizedBox(height: 24),
+              if (agreement.formState == 'Utah')
+                pw.Container(
+                  padding: const pw.EdgeInsets.all(8),
+                  margin: const pw.EdgeInsets.only(bottom: 8),
+                  decoration: pw.BoxDecoration(
+                    border: pw.Border.all(color: PdfColors.orange700),
+                    borderRadius: const pw.BorderRadius.all(
+                      pw.Radius.circular(4),
+                    ),
+                  ),
+                  child: pw.Text(
+                    'BETA - This form is for testing purposes only and is not legally binding or valid.',
+                    style: const pw.TextStyle(
+                      fontSize: 9,
+                      color: PdfColors.orange900,
+                    ),
+                  ),
+                ),
+              pw.Text(
+                'Generated by Threshold on ${_dateFmt.format(now)}',
+                style: const pw.TextStyle(
+                  fontSize: 8,
+                  color: PdfColors.grey600,
                 ),
               ),
             ],
-          ),
-          pw.SizedBox(height: 24),
-          pw.Text(
-            'Generated by Threshold on ${_dateFmt.format(now)}',
-            style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600),
-          ),
-        ],
       ),
     );
 
@@ -96,8 +189,10 @@ class PdfService {
 
     // Save PDF to device documents directory.
     final dir = await getApplicationDocumentsDirectory();
-    final safeName =
-        agreement.buyerName.replaceAll(RegExp('[^a-zA-Z0-9]'), '_');
+    final safeName = agreement.buyerName.replaceAll(
+      RegExp('[^a-zA-Z0-9]'),
+      '_',
+    );
     final filename =
         'agreement_${safeName}_${agreement.id.substring(0, 8)}.pdf';
     final file = File('${dir.path}/$filename');
@@ -127,80 +222,83 @@ class PdfService {
   }
 
   pw.Widget _header(AgreementModel a) => pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Text(
-            'Buyer Representation Agreement',
-            style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
-          ),
-          pw.Text(
-            a.formState,
-            style: const pw.TextStyle(fontSize: 12, color: PdfColors.grey700),
-          ),
-          pw.Divider(),
-        ],
-      );
+    crossAxisAlignment: pw.CrossAxisAlignment.start,
+    children: [
+      pw.Text(
+        'Buyer Representation Agreement',
+        style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
+      ),
+      pw.Text(
+        a.formState,
+        style: const pw.TextStyle(fontSize: 12, color: PdfColors.grey700),
+      ),
+      pw.Divider(),
+    ],
+  );
 
   pw.Widget _sectionTitle(String text) => pw.Padding(
-        padding: const pw.EdgeInsets.only(bottom: 6),
-        child: pw.Text(
-          text,
-          style: pw.TextStyle(
-            fontSize: 12,
-            fontWeight: pw.FontWeight.bold,
-            color: PdfColors.green900,
-          ),
-        ),
-      );
+    padding: const pw.EdgeInsets.only(bottom: 6),
+    child: pw.Text(
+      text,
+      style: pw.TextStyle(
+        fontSize: 12,
+        fontWeight: pw.FontWeight.bold,
+        color: PdfColors.green900,
+      ),
+    ),
+  );
 
   pw.Widget _labelValue(String label, String value) => pw.Padding(
-        padding: const pw.EdgeInsets.only(bottom: 4),
-        child: pw.Row(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            pw.SizedBox(
-              width: 140,
-              child: pw.Text('$label:',
-                  style: pw.TextStyle(
-                      fontSize: 10, fontWeight: pw.FontWeight.bold)),
-            ),
-            pw.Expanded(
-              child: pw.Text(value, style: const pw.TextStyle(fontSize: 10)),
-            ),
-          ],
+    padding: const pw.EdgeInsets.only(bottom: 4),
+    child: pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.SizedBox(
+          width: 140,
+          child: pw.Text(
+            '$label:',
+            style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+          ),
         ),
-      );
+        pw.Expanded(
+          child: pw.Text(value, style: const pw.TextStyle(fontSize: 10)),
+        ),
+      ],
+    ),
+  );
 
   pw.Widget _signatureBlock({
     required String label,
     required String name,
     required pw.ImageProvider imageProvider,
     required DateTime date,
-  }) =>
-      pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Text(label,
-              style: pw.TextStyle(
-                  fontSize: 10, fontWeight: pw.FontWeight.bold)),
-          pw.Container(
-            height: 60,
-            margin: const pw.EdgeInsets.symmetric(vertical: 4),
-            decoration: pw.BoxDecoration(
-              border: pw.Border.all(color: PdfColors.grey400),
-            ),
-            child: pw.Image(imageProvider),
-          ),
-          pw.Text(name, style: const pw.TextStyle(fontSize: 10)),
-          pw.Text(
-            DateFormat('MM/dd/yyyy HH:mm').format(date),
-            style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
-          ),
-        ],
-      );
+  }) => pw.Column(
+    crossAxisAlignment: pw.CrossAxisAlignment.start,
+    children: [
+      pw.Text(
+        label,
+        style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+      ),
+      pw.Container(
+        height: 60,
+        margin: const pw.EdgeInsets.symmetric(vertical: 4),
+        decoration: pw.BoxDecoration(
+          border: pw.Border.all(color: PdfColors.grey400),
+        ),
+        child: pw.Image(imageProvider),
+      ),
+      pw.Text(name, style: const pw.TextStyle(fontSize: 10)),
+      pw.Text(
+        DateFormat('MM/dd/yyyy HH:mm').format(date),
+        style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
+      ),
+    ],
+  );
 }
 
-final pdfServiceProvider = Provider<PdfService>((ref) => PdfService(
-      ref.read(agreementRepositoryProvider),
-      ref.read(deliveryServiceProvider),
-    ));
+final pdfServiceProvider = Provider<PdfService>(
+  (ref) => PdfService(
+    ref.read(agreementRepositoryProvider),
+    ref.read(deliveryServiceProvider),
+  ),
+);

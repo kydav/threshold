@@ -49,6 +49,7 @@ class InfoStep extends StatelessWidget {
             controller: emailCtrl,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
+            autocorrect: false,
             decoration: const InputDecoration(
               labelText: 'Email',
               border: OutlineInputBorder(),

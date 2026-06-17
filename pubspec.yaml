@@ -24,6 +24,7 @@ dependencies:
   path_provider: ^2.1.5
   pdf: ^3.11.3
   printing: ^5.14.2
+  purchases_flutter: ^10.2.3
   syncfusion_flutter_pdf: ^28.2.7
   syncfusion_flutter_signaturepad: ^28.2.7
   uuid: ^4.5.1

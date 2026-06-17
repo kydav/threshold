@@ -8,6 +8,7 @@ import 'package:threshold/features/agreement/presentation/colorado_form_screen.d
 import 'package:threshold/features/agreement/presentation/form_screen.dart';
 import 'package:threshold/features/agreement/presentation/history_screen.dart';
 import 'package:threshold/features/agreement/presentation/signature_screen.dart';
+import 'package:threshold/features/agreement/presentation/utah_form_screen.dart';
 import 'package:threshold/features/auth/data/user_profile.dart';
 import 'package:threshold/features/auth/presentation/login_screen.dart';
 import 'package:threshold/features/auth/presentation/signup_screen.dart';
@@ -49,16 +50,25 @@ final routerProvider = Provider<GoRouter>((ref) {
   );
 });
 
-/// Reads the agent's state and routes to the correct state-specific form.
+/// Watches the agent profile and routes to the correct state-specific form.
+/// Shows a loader while the profile is still being fetched from Firestore.
 class _FormRouter extends ConsumerWidget {
   const _FormRouter();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final profile = ref.read(userProfileProvider);
-    final state = profile?.state ?? 'Colorado';
-    return switch (state) {
+    final profile = ref.watch(userProfileProvider);
+
+    // Profile hasn't loaded from Firestore yet — wait for it.
+    if (profile == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    return switch (profile.state) {
       'Colorado' => const ColoradoFormScreen(),
+      'Utah' => const UtahFormScreen(),
       _ => const FormScreen(),
     };
   }
