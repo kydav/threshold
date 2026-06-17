@@ -1,56 +1,25 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart' as http;
-import 'package:printing/printing.dart';
-
 import 'package:threshold/features/agreement/data/agreement_model.dart';
 import 'package:threshold/features/agreement/data/agreement_repository.dart';
-
-// Pass via --dart-define=SENDGRID_API_KEY=SG.xxx
-const _sendgridApiKey = String.fromEnvironment('SENDGRID_API_KEY');
-const _fromEmail = String.fromEnvironment(
-  'FROM_EMAIL',
-  defaultValue: 'agreements@threshold.app',
-);
 
 class DeliveryService {
   DeliveryService(this._repo);
   final AgreementRepository _repo;
 
-  /// Attempt to deliver a signed agreement. Returns true on success.
-  /// On failure the agreement stays in pending_delivery so the
-  /// connectivity watcher retries when signal returns.
   Future<bool> deliver(AgreementModel agreement) async {
     if (!agreement.hasLocalPdf) return false;
 
     final file = File(agreement.localPdfPath!);
     if (!file.existsSync()) return false;
 
-    final filename =
-        'agreement_${agreement.buyerName.replaceAll(' ', '_')}.pdf';
-
-    if (_sendgridApiKey.isEmpty) {
-      // Dev fallback: open the device share/save sheet so users can
-      // download the PDF locally when email delivery is not configured.
-      final pdfBytes = await file.readAsBytes();
-      final shared = await Printing.sharePdf(
-        bytes: pdfBytes,
-        filename: filename,
-      );
-      if (!shared) return false;
-
-      final delivered = agreement.copyWith(
-        status: AgreementStatus.delivered,
-        deliveredAt: DateTime.now(),
-      );
-      await _repo.save(delivered);
-      return true;
-    }
-
     final pdfBytes = await file.readAsBytes();
     final pdfBase64 = base64Encode(pdfBytes);
+    final filename =
+        'agreement_${agreement.buyerName.replaceAll(' ', '_')}.pdf';
 
     final recipients = [
       {'email': agreement.buyerEmail, 'name': agreement.buyerName},
@@ -63,50 +32,26 @@ class DeliveryService {
       recipients.add({'email': buyer2Email, 'name': buyer2Name ?? 'Co-buyer'});
     }
 
-    try {
-      for (final recipient in recipients) {
-        final res = await http.post(
-          Uri.parse('https://api.sendgrid.com/v3/mail/send'),
-          headers: {
-            'Authorization': 'Bearer $_sendgridApiKey',
-            'Content-Type': 'application/json',
-          },
-          body: jsonEncode({
-            'personalizations': [
-              {
-                'to': [recipient],
-              },
-            ],
-            'from': {
-              'email': _fromEmail,
-              'name': '${agreement.agentName} via Threshold',
-            },
-            'reply_to': {
-              'email': agreement.agentEmail,
-              'name': agreement.agentName,
-            },
-            'subject':
-                'Signed buyer representation agreement — ${agreement.propertyScope}',
-            'content': [
-              {
-                'type': 'text/plain',
-                'value':
-                    'Hi ${recipient['name']},\n\nPlease find your signed buyer representation agreement attached.\n\nThis agreement covers: ${agreement.propertyScope}\nCompensation: ${agreement.compensation}\nTerm: ${_fmt(agreement.startDate)} – ${_fmt(agreement.endDate)}\n\nThreshold',
-              },
-            ],
-            'attachments': [
-              {
-                'content': pdfBase64,
-                'filename': filename,
-                'type': 'application/pdf',
-                'disposition': 'attachment',
-              },
-            ],
-          }),
-        );
+    final bodyText =
+        'Please find your signed buyer representation agreement attached.\n\n'
+        'This agreement covers: ${agreement.propertyScope}\n'
+        'Compensation: ${agreement.compensation}\n'
+        'Term: ${_fmt(agreement.startDate)} – ${_fmt(agreement.endDate)}\n\n'
+        'Threshold';
 
-        if (res.statusCode != 202) return false;
-      }
+    try {
+      final callable = FirebaseFunctions.instance
+          .httpsCallable('sendAgreementEmail');
+      await callable.call({
+        'recipients': recipients,
+        'agentName': agreement.agentName,
+        'agentEmail': agreement.agentEmail,
+        'subject':
+            'Signed buyer representation agreement — ${agreement.propertyScope}',
+        'bodyText': bodyText,
+        'pdfBase64': pdfBase64,
+        'filename': filename,
+      });
 
       final delivered = agreement.copyWith(
         status: AgreementStatus.delivered,
@@ -114,6 +59,8 @@ class DeliveryService {
       );
       await _repo.save(delivered);
       return true;
+    } on FirebaseFunctionsException catch (_) {
+      return false;
     } on SocketException {
       return false;
     } catch (_) {
@@ -121,7 +68,6 @@ class DeliveryService {
     }
   }
 
-  /// Retry all pending agreements for the given agent.
   Future<void> retryPending(String agentId) async {
     final pending = await _repo.listPending(agentId);
     for (final agreement in pending) {
