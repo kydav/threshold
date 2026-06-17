@@ -131,6 +131,7 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
 
   void _next() {
     if (!_validateStep()) return;
+    FocusScope.of(context).unfocus();
     if (_step < _totalSteps - 1) {
       setState(() => _step++);
       _pageController.animateToPage(
@@ -422,6 +423,7 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
             keyboardType: TextInputType.emailAddress,
             autocorrect: false,
             enableSuggestions: false,
+            autofocus: true,
             textInputAction: TextInputAction.next,
             decoration: const InputDecoration(
               labelText: 'Email',
@@ -504,6 +506,7 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
           TextField(
             controller: _buyerAddressCtrl,
             textCapitalization: TextCapitalization.words,
+            autofocus: true,
             textInputAction: TextInputAction.next,
             decoration: const InputDecoration(
               labelText: 'Street address',

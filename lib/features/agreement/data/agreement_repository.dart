@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:threshold/features/agreement/data/agreement_model.dart';
+import 'package:threshold/features/auth/data/auth_service.dart';
 import 'package:uuid/uuid.dart';
 
 class AgreementRepository {
@@ -94,16 +94,18 @@ final agreementRepositoryProvider =
 class AgreementListNotifier
     extends AsyncNotifier<List<AgreementModel>> {
   @override
-  Future<List<AgreementModel>> build() => _load();
-
-  Future<List<AgreementModel>> _load() {
-    final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+  Future<List<AgreementModel>> build() {
+    // Rebuild whenever auth state changes so agreements clear on logout/login.
+    final uid = ref.watch(currentUserProvider).valueOrNull?.uid ?? '';
     return ref.read(agreementRepositoryProvider).listForAgent(uid);
   }
 
   Future<void> refresh() async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(_load);
+    final uid = ref.read(currentUserProvider).valueOrNull?.uid ?? '';
+    state = await AsyncValue.guard(
+      () => ref.read(agreementRepositoryProvider).listForAgent(uid),
+    );
   }
 }
 
