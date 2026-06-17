@@ -1,8 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:printing/printing.dart';
 
+import 'package:threshold/core/services/delivery_service.dart';
 import 'package:threshold/features/agreement/data/agreement_model.dart';
 import 'package:threshold/features/agreement/data/agreement_repository.dart';
 import 'package:threshold/features/auth/data/auth_service.dart';
@@ -66,12 +70,12 @@ class HistoryScreen extends ConsumerWidget {
   }
 }
 
-class _AgreementTile extends StatelessWidget {
+class _AgreementTile extends ConsumerWidget {
   const _AgreementTile({required this.agreement});
   final AgreementModel agreement;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
     final dateStr =
         DateFormat('MMM d, yyyy').format(agreement.createdAt.toLocal());
@@ -81,11 +85,136 @@ class _AgreementTile extends StatelessWidget {
       title: Text(agreement.buyerName),
       subtitle: Text('${agreement.propertyScope} · $dateStr'),
       trailing: _statusChip(agreement.status, cs),
-      onTap: () {
-        if (agreement.status == AgreementStatus.draft) {
-          context.go('/agreements/${agreement.id}/sign');
-        }
-      },
+      onTap: () => _handleTap(context, ref),
+    );
+  }
+
+  Future<void> _handleTap(BuildContext context, WidgetRef ref) async {
+    switch (agreement.status) {
+      case AgreementStatus.draft:
+        context.go('/agreements/${agreement.id}/sign');
+
+      case AgreementStatus.delivered:
+        await _sharePdf(context);
+
+      case AgreementStatus.signed:
+      case AgreementStatus.pendingDelivery:
+        if (context.mounted) await _showDeliverySheet(context, ref);
+    }
+  }
+
+  Future<void> _sharePdf(BuildContext context) async {
+    final path = agreement.localPdfPath;
+    if (path == null || !File(path).existsSync()) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('PDF not found on this device.')),
+        );
+      }
+      return;
+    }
+    final bytes = await File(path).readAsBytes();
+    final filename = path.split('/').last;
+    await Printing.sharePdf(bytes: bytes, filename: filename);
+  }
+
+  Future<void> _showDeliverySheet(BuildContext context, WidgetRef ref) async {
+    final hasPdf =
+        agreement.localPdfPath != null &&
+        File(agreement.localPdfPath!).existsSync();
+
+    await showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            agreement.buyerName,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          Text(
+                            agreement.propertyScope,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.email_outlined),
+                title: const Text('Send via email'),
+                subtitle: const Text('Delivers to buyer and agent via SendGrid'),
+                enabled: hasPdf,
+                onTap: hasPdf
+                    ? () async {
+                        Navigator.pop(ctx);
+                        final messenger = ScaffoldMessenger.of(context);
+                        final ok = await ref
+                            .read(deliveryServiceProvider)
+                            .deliver(agreement);
+                        if (context.mounted) {
+                          await ref
+                              .read(agreementListProvider.notifier)
+                              .refresh();
+                        }
+                        messenger.showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              ok
+                                  ? 'Agreement sent successfully.'
+                                  : 'Failed to send. Check your connection.',
+                            ),
+                          ),
+                        );
+                      }
+                    : null,
+              ),
+              ListTile(
+                leading: const Icon(Icons.share_outlined),
+                title: const Text('Share / Download'),
+                subtitle: const Text('Opens the system share sheet'),
+                enabled: hasPdf,
+                onTap: hasPdf
+                    ? () {
+                        Navigator.pop(ctx);
+                        _sharePdf(context);
+                      }
+                    : null,
+              ),
+              if (!hasPdf)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                  child: Text(
+                    'PDF not found on this device.',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
