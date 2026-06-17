@@ -69,6 +69,7 @@ jobs:
         run: |
           flutter build ipa --release \
             --export-options-plist=ios/ExportOptions.plist \
+            --build-number=${{ github.run_number }} \
             --verbose 2>&1 | tail -100
           # Surface the full xcodebuild log on failure
           if [ ${PIPESTATUS[0]} -ne 0 ]; then
