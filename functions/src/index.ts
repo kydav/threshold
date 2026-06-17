@@ -1,8 +1,12 @@
 import * as admin from 'firebase-admin';
-import * as functions from 'firebase-functions';
 import * as sgMail from '@sendgrid/mail';
+import { onCall } from 'firebase-functions/v2/https';
+import { defineSecret } from 'firebase-functions/params';
 
 admin.initializeApp();
+
+const sendgridApiKey = defineSecret('SENDGRID_API_KEY');
+const sendgridFromEmail = defineSecret('SENDGRID_FROM_EMAIL');
 
 interface Recipient {
   email: string;
@@ -19,8 +23,13 @@ interface SendAgreementData {
   filename: string;
 }
 
-export const sendAgreementEmail = functions.https.onCall(
-  async (request: functions.https.CallableRequest<SendAgreementData>) => {
+export const sendAgreementEmail = onCall(
+  {
+    secrets: [sendgridApiKey, sendgridFromEmail],
+    region: 'us-central1',
+    invoker: 'public',
+  },
+  async (request) => {
     const {
       recipients,
       agentName,
@@ -29,22 +38,18 @@ export const sendAgreementEmail = functions.https.onCall(
       bodyText,
       pdfBase64,
       filename,
-    } = request.data;
+    } = request.data as SendAgreementData;
 
     if (!recipients?.length || !pdfBase64 || !filename) {
-      throw new functions.https.HttpsError(
-        'invalid-argument',
-        'Missing required fields.'
-      );
+      throw new Error('Missing required fields.');
     }
 
-    const apiKey = functions.config().sendgrid.api_key;
+    sgMail.setApiKey(sendgridApiKey.value());
+
     const from = {
-      email: functions.config().sendgrid.from_email || 'hello@auaha.app',
+      email: sendgridFromEmail.value() || 'hello@auaha.app',
       name: `${agentName} via Threshold`,
     };
-
-    sgMail.setApiKey(apiKey);
 
     for (const recipient of recipients) {
       await sgMail.send({
