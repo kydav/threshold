@@ -24,12 +24,8 @@ interface SendAgreementData {
 }
 
 export const sendAgreementEmail = onCall(
-  { secrets: [sendgridApiKey, fromEmail] },
+  { secrets: [sendgridApiKey, fromEmail], region: 'us-central1' },
   async (request) => {
-    if (!request.auth) {
-      throw new HttpsError('unauthenticated', 'Must be signed in.');
-    }
-
     const {
       recipients,
       agentName,
