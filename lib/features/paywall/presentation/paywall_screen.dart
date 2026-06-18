@@ -36,23 +36,27 @@ class _PaywallSheetState extends ConsumerState<_PaywallSheet> {
     });
     try {
       final ok = await ref.read(subscriptionProvider.notifier).purchase();
-      if (mounted) Navigator.of(context).pop(ok);
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          if (e is PlatformException &&
-              e.message != null &&
-              e.message!.contains('cancelled')) {
-            _error = 'Purchase cancelled.';
-            return;
-          }
-          if (e is Exception) {
-            _error = 'Purchase failed: ${e.toString()}';
-          } else {
-            _error = 'Purchase failed: $e';
-          }
-        });
+      if (!mounted) return;
+      if (ok) {
+        Navigator.of(context).pop(true);
+      } else {
+        // Cancelled returns false silently — just close without an error message.
+        Navigator.of(context).pop(false);
       }
+    } on PlatformException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        final msg = e.message ?? '';
+        if (msg.toLowerCase().contains('network') ||
+            msg.toLowerCase().contains('internet') ||
+            msg.toLowerCase().contains('connection')) {
+          _error = 'No internet connection. Check your connection and try again.';
+        } else {
+          _error = 'Something went wrong. Please try again.';
+        }
+      });
+    } catch (e) {
+      if (mounted) setState(() => _error = 'Something went wrong. Please try again.');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -65,10 +69,27 @@ class _PaywallSheetState extends ConsumerState<_PaywallSheet> {
     });
     try {
       await ref.read(subscriptionProvider.notifier).restore();
+      if (!mounted) return;
       final isPro = ref.read(subscriptionProvider.notifier).isProActive;
-      if (mounted) Navigator.of(context).pop(isPro);
+      if (isPro) {
+        Navigator.of(context).pop(true);
+      } else {
+        setState(() => _error = 'No active subscription found for this Apple ID.');
+      }
+    } on PlatformException catch (e) {
+      if (!mounted) return;
+      final msg = e.message ?? '';
+      setState(() {
+        if (msg.toLowerCase().contains('network') ||
+            msg.toLowerCase().contains('internet') ||
+            msg.toLowerCase().contains('connection')) {
+          _error = 'No internet connection. Check your connection and try again.';
+        } else {
+          _error = 'Restore failed. Please try again.';
+        }
+      });
     } catch (e) {
-      if (mounted) setState(() => _error = 'Restore failed: $e');
+      if (mounted) setState(() => _error = 'Restore failed. Please try again.');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
