@@ -7,7 +7,7 @@
 // Single key used for both platforms (legacy shared key format).
 // Move to dart-defines before going to production.
 const kRevenueCatIosKey = 'appl_cHSXBAlGposupBWyTsMCVtHiusw';
-const kRevenueCatAndroidKey = 'test_hqtWwOIxKtDwbBnhtKfNqkVuLAK';
+const kRevenueCatAndroidKey = 'goog_TmOtUITUlWMUBFggwqQsSOmDKxs';
 
 // Must match the Entitlement identifier exactly (case-sensitive) in RevenueCat.
 const kEntitlementId = 'Threshold Pro';
