@@ -55,6 +55,13 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
     return (_agreement!.formData['buyer2Name'] as String? ?? '').isNotEmpty;
   }
 
+  String get _buyerDisplayName {
+    if (_agreement == null) return '';
+    final buyer1 = _agreement!.formData['buyer1Name'] as String?;
+    if (buyer1 != null && buyer1.isNotEmpty) return buyer1;
+    return _agreement!.buyerName;
+  }
+
   String get _coBuyerName {
     if (_agreement == null) return 'Co-buyer';
     if (_agreement!.formState == 'Colorado') {
@@ -73,16 +80,14 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
     if (!_canFinalize || _agreement == null) return;
 
     // Check paywall: count non-draft agreements the user has already sent.
-    final isPro = !kPaywallEnabled ||
-        ref.read(subscriptionProvider.notifier).isProActive;
+    final isPro =
+        !kPaywallEnabled || ref.read(subscriptionProvider.notifier).isProActive;
     if (!isPro) {
-      final allAgreements =
-          await ref.read(agreementRepositoryProvider).listForAgent(
-                _agreement!.agentId,
-              );
-      final sentCount = allAgreements
-          .where((a) => a.status != AgreementStatus.draft)
-          .length;
+      final allAgreements = await ref
+          .read(agreementRepositoryProvider)
+          .listForAgent(_agreement!.agentId);
+      final sentCount =
+          allAgreements.where((a) => a.status != AgreementStatus.draft).length;
       if (sentCount >= kFreeAgreementLimit && mounted) {
         final subscribed = await showPaywall(context);
         if (!subscribed || !mounted) return;
@@ -177,7 +182,7 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
             ),
             const SizedBox(height: 20),
             _SignatureBlock(
-              label: 'Buyer signature — ${_agreement!.buyerName}',
+              label: 'Buyer signature — $_buyerDisplayName',
               padKey: _buyerPadKey,
               signed: _buyerSigned,
               onStrokeEnd: () => setState(() => _buyerSigned = true),

@@ -102,9 +102,13 @@ class _UtahFormScreenState extends ConsumerState<UtahFormScreen> {
         }
       case 2:
         if (_locationValueCtrl.text.trim().isEmpty) {
-          setState(() => _stepError = _locationType == 'county'
-              ? 'Enter the county name.'
-              : 'Enter the property address(es).');
+          setState(
+            () =>
+                _stepError =
+                    _locationType == 'county'
+                        ? 'Enter the county name.'
+                        : 'Enter the property address(es).',
+          );
           return false;
         }
       case 3:
@@ -160,27 +164,31 @@ class _UtahFormScreenState extends ConsumerState<UtahFormScreen> {
       final user = FirebaseAuth.instance.currentUser!;
       final profile = ref.read(userProfileProvider);
 
-      final locationLabel = _locationType == 'county'
-          ? 'County: ${_locationValueCtrl.text.trim()}'
-          : _locationValueCtrl.text.trim();
+      final locationLabel =
+          _locationType == 'county'
+              ? 'County: ${_locationValueCtrl.text.trim()}'
+              : _locationValueCtrl.text.trim();
 
-      final compensation = _feeType == 'percentage'
-          ? '${_feeValueCtrl.text.trim()}%'
-          : '\$${_feeValueCtrl.text.trim()}';
+      final compensation =
+          _feeType == 'percentage'
+              ? '${_feeValueCtrl.text.trim()}%'
+              : '\$${_feeValueCtrl.text.trim()}';
 
       final agentName =
           '${profile?.firstName ?? ''} ${profile?.lastName ?? ''}'.trim();
 
-      final agreement = await ref.read(agreementRepositoryProvider).create(
+      final agreement = await ref
+          .read(agreementRepositoryProvider)
+          .create(
             agentId: user.uid,
-            agentName: agentName.isNotEmpty
-                ? agentName
-                : user.displayName ?? '',
+            agentName:
+                agentName.isNotEmpty ? agentName : user.displayName ?? '',
             agentEmail: profile?.email ?? user.email ?? '',
             brokerageName: profile?.brokerageName ?? '',
-            buyerName: _hasCoBuyer
-                ? '${_buyerNameCtrl.text.trim()} and ${_buyer2NameCtrl.text.trim()}'
-                : _buyerNameCtrl.text.trim(),
+            buyerName:
+                _hasCoBuyer
+                    ? '${_buyerNameCtrl.text.trim()} and ${_buyer2NameCtrl.text.trim()}'
+                    : _buyerNameCtrl.text.trim(),
             buyerEmail: _buyerEmailCtrl.text.trim(),
             propertyScope: locationLabel,
             compensation: compensation,
@@ -193,18 +201,22 @@ class _UtahFormScreenState extends ConsumerState<UtahFormScreen> {
               'buyerStreetAddress': _buyerAddressCtrl.text.trim(),
               'buyerCityStateZip': _buyerCityStateZipCtrl.text.trim(),
               'buyer2Name': _hasCoBuyer ? _buyer2NameCtrl.text.trim() : '',
-              'buyer2Email': _hasCoBuyer && _hasCoBuyerContact
-                  ? _buyer2EmailCtrl.text.trim()
-                  : '',
-              'buyer2Phone': _hasCoBuyer && _hasCoBuyerContact
-                  ? _buyer2PhoneCtrl.text.trim()
-                  : '',
-              'buyer2StreetAddress': _hasCoBuyer && _hasSeparateAddresses
-                  ? _buyer2AddressCtrl.text.trim()
-                  : '',
-              'buyer2CityStateZip': _hasCoBuyer && _hasSeparateAddresses
-                  ? _buyer2CityStateZipCtrl.text.trim()
-                  : '',
+              'buyer2Email':
+                  _hasCoBuyer && _hasCoBuyerContact
+                      ? _buyer2EmailCtrl.text.trim()
+                      : '',
+              'buyer2Phone':
+                  _hasCoBuyer && _hasCoBuyerContact
+                      ? _buyer2PhoneCtrl.text.trim()
+                      : '',
+              'buyer2StreetAddress':
+                  _hasCoBuyer && _hasSeparateAddresses
+                      ? _buyer2AddressCtrl.text.trim()
+                      : '',
+              'buyer2CityStateZip':
+                  _hasCoBuyer && _hasSeparateAddresses
+                      ? _buyer2CityStateZipCtrl.text.trim()
+                      : '',
               'locationType': _locationType,
               'locationValue': _locationValueCtrl.text.trim(),
               'feeType': _feeType,
@@ -262,7 +274,11 @@ class _UtahFormScreenState extends ConsumerState<UtahFormScreen> {
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: EdgeInsets.fromLTRB(
-              20, 8, 20, 16 + MediaQuery.of(context).viewInsets.bottom),
+            20,
+            8,
+            20,
+            16 + MediaQuery.of(context).viewInsets.bottom,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -280,17 +296,18 @@ class _UtahFormScreenState extends ConsumerState<UtahFormScreen> {
                 style: FilledButton.styleFrom(
                   minimumSize: const Size.fromHeight(52),
                 ),
-                child: _saving
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(
-                        _step < _totalSteps - 1
-                            ? 'Next'
-                            : 'Proceed to signatures',
-                      ),
+                child:
+                    _saving
+                        ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                        : Text(
+                          _step < _totalSteps - 1
+                              ? 'Next'
+                              : 'Proceed to signatures',
+                        ),
               ),
             ],
           ),
@@ -309,10 +326,9 @@ class _UtahFormScreenState extends ConsumerState<UtahFormScreen> {
         children: [
           Text(
             "Buyer's full legal name",
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 24),
           TextField(
@@ -362,23 +378,23 @@ class _UtahFormScreenState extends ConsumerState<UtahFormScreen> {
         children: [
           Text(
             "Buyer's contact & address",
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           Text(
             'Used on the signature block.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 20),
           TextField(
             controller: _buyerEmailCtrl,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
+            autocorrect: false,
             autofocus: true,
             decoration: const InputDecoration(
               labelText: 'Email',
@@ -422,8 +438,7 @@ class _UtahFormScreenState extends ConsumerState<UtahFormScreen> {
               contentPadding: EdgeInsets.zero,
               title: const Text('Separate contact info for co-buyer'),
               value: _hasCoBuyerContact,
-              onChanged: (v) =>
-                  setState(() => _hasCoBuyerContact = v ?? false),
+              onChanged: (v) => setState(() => _hasCoBuyerContact = v ?? false),
             ),
             if (_hasCoBuyerContact) ...[
               TextField(
@@ -451,8 +466,8 @@ class _UtahFormScreenState extends ConsumerState<UtahFormScreen> {
               contentPadding: EdgeInsets.zero,
               title: const Text('Separate address for co-buyer'),
               value: _hasSeparateAddresses,
-              onChanged: (v) =>
-                  setState(() => _hasSeparateAddresses = v ?? false),
+              onChanged:
+                  (v) => setState(() => _hasSeparateAddresses = v ?? false),
             ),
             if (_hasSeparateAddresses) ...[
               TextField(
@@ -490,10 +505,9 @@ class _UtahFormScreenState extends ConsumerState<UtahFormScreen> {
         children: [
           Text(
             'Properties location',
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 24),
           _radioTile(
@@ -519,20 +533,24 @@ class _UtahFormScreenState extends ConsumerState<UtahFormScreen> {
             textCapitalization: TextCapitalization.words,
             autofocus: true,
             maxLines: _locationType == 'address' ? 3 : 1,
-            keyboardType: _locationType == 'address'
-                ? TextInputType.multiline
-                : TextInputType.text,
-            textInputAction: _locationType == 'address'
-                ? TextInputAction.newline
-                : TextInputAction.done,
+            keyboardType:
+                _locationType == 'address'
+                    ? TextInputType.multiline
+                    : TextInputType.text,
+            textInputAction:
+                _locationType == 'address'
+                    ? TextInputAction.newline
+                    : TextInputAction.done,
             onSubmitted: _locationType == 'address' ? null : (_) => _next(),
             decoration: InputDecoration(
-              labelText: _locationType == 'county'
-                  ? 'County name'
-                  : 'Property address(es)',
-              hintText: _locationType == 'county'
-                  ? 'e.g. Salt Lake County'
-                  : 'e.g. 123 Main St, SLC UT 84101',
+              labelText:
+                  _locationType == 'county'
+                      ? 'County name'
+                      : 'Property address(es)',
+              hintText:
+                  _locationType == 'county'
+                      ? 'e.g. Salt Lake County'
+                      : 'e.g. 123 Main St, SLC UT 84101',
               border: const OutlineInputBorder(),
             ),
           ),
@@ -550,10 +568,9 @@ class _UtahFormScreenState extends ConsumerState<UtahFormScreen> {
         children: [
           Text(
             'Brokerage fee',
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 24),
           _radioTile(
@@ -577,8 +594,7 @@ class _UtahFormScreenState extends ConsumerState<UtahFormScreen> {
           TextField(
             controller: _feeValueCtrl,
             autofocus: true,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
             textInputAction: TextInputAction.done,
             onSubmitted: (_) => _next(),
             decoration: InputDecoration(
@@ -604,14 +620,15 @@ class _UtahFormScreenState extends ConsumerState<UtahFormScreen> {
         children: [
           Text(
             'Term & protection period',
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 24),
-          Text('Effective end date',
-              style: Theme.of(context).textTheme.labelLarge),
+          Text(
+            'Effective end date',
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
           const SizedBox(height: 8),
           _dateTile(_dateFmt.format(_endDate), () async {
             final d = await showDatePicker(
@@ -623,16 +640,17 @@ class _UtahFormScreenState extends ConsumerState<UtahFormScreen> {
             if (d != null) setState(() => _endDate = d);
           }, cs),
           const SizedBox(height: 24),
-          Text('Protection period',
-              style: Theme.of(context).textTheme.labelLarge),
+          Text(
+            'Protection period',
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
           const SizedBox(height: 4),
           Text(
             'Months after expiration during which the fee still applies '
             'if the buyer purchases a property shown during the term.',
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: cs.onSurfaceVariant),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
           ),
           const SizedBox(height: 8),
           TextField(
@@ -661,18 +679,16 @@ class _UtahFormScreenState extends ConsumerState<UtahFormScreen> {
         children: [
           Text(
             'Dispute resolution',
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
             'The parties _______ seek mediation before pursuing other remedies.',
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(color: cs.onSurfaceVariant),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
           ),
           const SizedBox(height: 24),
           _radioTile(
@@ -680,8 +696,7 @@ class _UtahFormScreenState extends ConsumerState<UtahFormScreen> {
             subtitle: 'Mediation is required before other remedies',
             value: 'shall',
             groupValue: _disputeResolution,
-            onChanged: (v) =>
-                setState(() => _disputeResolution = v ?? 'shall'),
+            onChanged: (v) => setState(() => _disputeResolution = v ?? 'shall'),
             cs: cs,
           ),
           const SizedBox(height: 8),
@@ -690,8 +705,7 @@ class _UtahFormScreenState extends ConsumerState<UtahFormScreen> {
             subtitle: 'Mediation is optional',
             value: 'may',
             groupValue: _disputeResolution,
-            onChanged: (v) =>
-                setState(() => _disputeResolution = v ?? 'may'),
+            onChanged: (v) => setState(() => _disputeResolution = v ?? 'may'),
             cs: cs,
           ),
         ],
@@ -721,9 +735,10 @@ class _UtahFormScreenState extends ConsumerState<UtahFormScreen> {
             width: selected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
-          color: selected
-              ? cs.primary.withValues(alpha: 0.06)
-              : Colors.transparent,
+          color:
+              selected
+                  ? cs.primary.withValues(alpha: 0.06)
+                  : Colors.transparent,
         ),
         child: Row(
           children: [
@@ -737,18 +752,19 @@ class _UtahFormScreenState extends ConsumerState<UtahFormScreen> {
                   width: 2,
                 ),
               ),
-              child: selected
-                  ? Center(
-                      child: Container(
-                        width: 10,
-                        height: 10,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: cs.primary,
+              child:
+                  selected
+                      ? Center(
+                        child: Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: cs.primary,
+                          ),
                         ),
-                      ),
-                    )
-                  : null,
+                      )
+                      : null,
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -764,9 +780,9 @@ class _UtahFormScreenState extends ConsumerState<UtahFormScreen> {
                   ),
                   Text(
                     subtitle,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: cs.onSurfaceVariant,
-                        ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -801,14 +817,14 @@ class _UtahFormScreenState extends ConsumerState<UtahFormScreen> {
   }
 
   String _stepTitle(int step) => switch (step) {
-        0 => 'Buyer name',
-        1 => 'Contact & address',
-        2 => 'Properties location',
-        3 => 'Brokerage fee',
-        4 => 'Term & protection',
-        5 => 'Dispute resolution',
-        _ => 'New agreement',
-      };
+    0 => 'Buyer name',
+    1 => 'Contact & address',
+    2 => 'Properties location',
+    3 => 'Brokerage fee',
+    4 => 'Term & protection',
+    5 => 'Dispute resolution',
+    _ => 'New agreement',
+  };
 }
 
 class _DisclaimerBanner extends StatelessWidget {
@@ -821,8 +837,11 @@ class _DisclaimerBanner extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          Icon(Icons.warning_amber_rounded,
-              size: 16, color: cs.onErrorContainer),
+          Icon(
+            Icons.warning_amber_rounded,
+            size: 16,
+            color: cs.onErrorContainer,
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(

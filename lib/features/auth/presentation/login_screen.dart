@@ -97,6 +97,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     controller: _emailCtrl,
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
+                    autocorrect: false,
+                    autofillHints: const [AutofillHints.email],
                     decoration: const InputDecoration(
                       labelText: 'Email',
                       border: OutlineInputBorder(),
@@ -113,6 +115,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     obscureText: _obscure,
                     textInputAction: TextInputAction.done,
                     onFieldSubmitted: (_) => _submit(),
+                    autofillHints: const [AutofillHints.password],
                     decoration: InputDecoration(
                       labelText: 'Password',
                       border: const OutlineInputBorder(),

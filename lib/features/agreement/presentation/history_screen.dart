@@ -9,7 +9,6 @@ import 'package:printing/printing.dart';
 import 'package:threshold/core/services/delivery_service.dart';
 import 'package:threshold/features/agreement/data/agreement_model.dart';
 import 'package:threshold/features/agreement/data/agreement_repository.dart';
-import 'package:threshold/features/auth/data/auth_service.dart';
 
 class HistoryScreen extends ConsumerWidget {
   const HistoryScreen({super.key});
@@ -19,12 +18,26 @@ class HistoryScreen extends ConsumerWidget {
     final agreements = ref.watch(agreementListProvider);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Agreements'),
+        backgroundColor: const Color(0xFF0A1F6B),
+        foregroundColor: Colors.white,
+        leading: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Image.asset('assets/icon/icon_transparent.png'),
+        ),
+        title: const Text(
+          'Threshold',
+          style: TextStyle(
+            fontSize: 20,
+            fontFamily: 'helvetica',
+            letterSpacing: 2,
+            color: Colors.white,
+          ),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Sign out',
-            onPressed: () => ref.read(authServiceProvider).signOut(),
+            icon: const Icon(Icons.menu),
+            tooltip: 'Profile',
+            onPressed: () => context.go('/agreements/profile'),
           ),
         ],
       ),
@@ -37,9 +50,11 @@ class HistoryScreen extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.description_outlined,
-                      size: 64,
-                      color: Theme.of(context).colorScheme.outlineVariant),
+                  Icon(
+                    Icons.description_outlined,
+                    size: 64,
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                  ),
                   const SizedBox(height: 16),
                   const Text('No agreements yet'),
                   const SizedBox(height: 8),
@@ -49,14 +64,12 @@ class HistoryScreen extends ConsumerWidget {
             );
           }
           return RefreshIndicator(
-            onRefresh: () =>
-                ref.read(agreementListProvider.notifier).refresh(),
+            onRefresh: () => ref.read(agreementListProvider.notifier).refresh(),
             child: ListView.separated(
               padding: const EdgeInsets.symmetric(vertical: 8),
               itemCount: list.length,
               separatorBuilder: (_, _) => const Divider(height: 1),
-              itemBuilder: (context, i) =>
-                  _AgreementTile(agreement: list[i]),
+              itemBuilder: (context, i) => _AgreementTile(agreement: list[i]),
             ),
           );
         },
@@ -77,8 +90,9 @@ class _AgreementTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
-    final dateStr =
-        DateFormat('MMM d, yyyy').format(agreement.createdAt.toLocal());
+    final dateStr = DateFormat(
+      'MMM d, yyyy',
+    ).format(agreement.createdAt.toLocal());
 
     return ListTile(
       leading: _StatusIcon(status: agreement.status),
@@ -125,96 +139,103 @@ class _AgreementTile extends ConsumerWidget {
 
     await showModalBottomSheet(
       context: context,
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            agreement.buyerName,
-                            style: Theme.of(context).textTheme.titleMedium,
+      builder:
+          (ctx) => SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                agreement.buyerName,
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              Text(
+                                agreement.propertyScope,
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.bodySmall?.copyWith(
+                                  color:
+                                      Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
                           ),
-                          Text(
-                            agreement.propertyScope,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1),
-              ListTile(
-                leading: const Icon(Icons.email_outlined),
-                title: const Text('Send via email'),
-                subtitle: const Text('Delivers to buyer and agent via SendGrid'),
-                enabled: hasPdf,
-                onTap: hasPdf
-                    ? () async {
-                        Navigator.pop(ctx);
-                        final messenger = ScaffoldMessenger.of(context);
-                        final ok = await ref
-                            .read(deliveryServiceProvider)
-                            .deliver(agreement);
-                        if (context.mounted) {
-                          await ref
-                              .read(agreementListProvider.notifier)
-                              .refresh();
-                        }
-                        messenger.showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              ok
-                                  ? 'Agreement sent successfully.'
-                                  : 'Failed to send. Check your connection.',
-                            ),
-                          ),
-                        );
-                      }
-                    : null,
-              ),
-              ListTile(
-                leading: const Icon(Icons.share_outlined),
-                title: const Text('Share / Download'),
-                subtitle: const Text('Opens the system share sheet'),
-                enabled: hasPdf,
-                onTap: hasPdf
-                    ? () {
-                        Navigator.pop(ctx);
-                        _sharePdf(context);
-                      }
-                    : null,
-              ),
-              if (!hasPdf)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-                  child: Text(
-                    'PDF not found on this device.',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                      fontSize: 13,
+                        ),
+                      ],
                     ),
                   ),
-                ),
-            ],
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.email_outlined),
+                    title: const Text('Send via email'),
+                    subtitle: const Text(
+                      'Delivers to buyer and agent via SendGrid',
+                    ),
+                    enabled: hasPdf,
+                    onTap:
+                        hasPdf
+                            ? () async {
+                              Navigator.pop(ctx);
+                              final messenger = ScaffoldMessenger.of(context);
+                              final ok = await ref
+                                  .read(deliveryServiceProvider)
+                                  .deliver(agreement);
+                              if (context.mounted) {
+                                await ref
+                                    .read(agreementListProvider.notifier)
+                                    .refresh();
+                              }
+                              messenger.showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    ok
+                                        ? 'Agreement sent successfully.'
+                                        : 'Failed to send. Check your connection.',
+                                  ),
+                                ),
+                              );
+                            }
+                            : null,
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.share_outlined),
+                    title: const Text('Share / Download'),
+                    subtitle: const Text('Opens the system share sheet'),
+                    enabled: hasPdf,
+                    onTap:
+                        hasPdf
+                            ? () {
+                              Navigator.pop(ctx);
+                              _sharePdf(context);
+                            }
+                            : null,
+                  ),
+                  if (!hasPdf)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                      child: Text(
+                        'PDF not found on this device.',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
     );
   }
 
@@ -245,10 +266,11 @@ class _StatusIcon extends StatelessWidget {
     final (icon, color) = switch (status) {
       AgreementStatus.draft => (Icons.edit_outlined, Colors.orange),
       AgreementStatus.signed => (Icons.check_circle_outline, Colors.blue),
-      AgreementStatus.pendingDelivery =>
-        (Icons.upload_outlined, Colors.purple),
-      AgreementStatus.delivered =>
-        (Icons.mark_email_read_outlined, Colors.green),
+      AgreementStatus.pendingDelivery => (Icons.upload_outlined, Colors.purple),
+      AgreementStatus.delivered => (
+        Icons.mark_email_read_outlined,
+        Colors.green,
+      ),
     };
     return CircleAvatar(
       backgroundColor: color.withValues(alpha: 0.15),

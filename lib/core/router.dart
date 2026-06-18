@@ -11,6 +11,7 @@ import 'package:threshold/features/agreement/presentation/signature_screen.dart'
 import 'package:threshold/features/agreement/presentation/utah_form_screen.dart';
 import 'package:threshold/features/auth/data/user_profile.dart';
 import 'package:threshold/features/auth/presentation/login_screen.dart';
+import 'package:threshold/features/auth/presentation/profile_screen.dart';
 import 'package:threshold/features/auth/presentation/signup_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -38,6 +39,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, _) => const HistoryScreen(),
         routes: [
           GoRoute(path: 'new', builder: (_, _) => const _FormRouter()),
+          GoRoute(path: 'profile', builder: (_, _) => const ProfileScreen()),
           GoRoute(
             path: ':id/sign',
             builder:
