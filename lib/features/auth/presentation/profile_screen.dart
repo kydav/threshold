@@ -6,9 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'package:threshold/core/config/revenue_cat_config.dart';
 import 'package:threshold/core/services/data_service.dart';
+import 'package:threshold/core/services/subscription_service.dart';
 import 'package:threshold/features/auth/data/auth_service.dart';
 import 'package:threshold/features/auth/data/user_profile.dart';
+import 'package:threshold/features/paywall/presentation/paywall_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -343,6 +346,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
             const SizedBox(height: 48),
             const Divider(),
+            const SizedBox(height: 24),
+
+            // Subscription
+            _sectionLabel('Subscription'),
+            const SizedBox(height: 12),
+            _SubscriptionTile(),
+            const SizedBox(height: 24),
+            const Divider(),
             const SizedBox(height: 16),
 
             // Sign out
@@ -447,6 +458,87 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _SubscriptionTile extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
+    final sub = ref.watch(subscriptionProvider);
+    final isPro = !kPaywallEnabled ||
+        (sub.valueOrNull?.entitlements.active.containsKey(kEntitlementId) ??
+            false);
+
+    if (isPro) {
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          border: Border.all(color: cs.primary, width: 2),
+          borderRadius: BorderRadius.circular(12),
+          color: cs.primaryContainer.withValues(alpha: 0.3),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.verified_outlined, color: cs.primary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Threshold Pro',
+                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  Text('Active subscription',
+                      style: TextStyle(
+                          fontSize: 12, color: cs.onSurfaceVariant)),
+                ],
+              ),
+            ),
+            Icon(Icons.check_circle, color: cs.primary),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            border: Border.all(color: cs.outline),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.lock_outline, color: cs.onSurfaceVariant),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Free plan',
+                        style: TextStyle(fontWeight: FontWeight.w600)),
+                    Text('$kFreeAgreementLimit agreements included',
+                        style: TextStyle(
+                            fontSize: 12, color: cs.onSurfaceVariant)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        FilledButton.icon(
+          onPressed: () => showPaywall(context),
+          icon: const Icon(Icons.star_outline),
+          label: const Text('Upgrade to Threshold Pro'),
+          style: FilledButton.styleFrom(
+            minimumSize: const Size.fromHeight(48),
+          ),
+        ),
+      ],
     );
   }
 }
