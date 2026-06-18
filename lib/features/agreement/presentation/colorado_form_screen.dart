@@ -234,7 +234,10 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final keyboard = MediaQuery.of(context).viewInsets.bottom;
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) { if (!didPop) _back(); },
+      child: Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         leading: IconButton(
@@ -309,6 +312,7 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 
@@ -460,6 +464,7 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
               TextField(
                 controller: _buyer2EmailCtrl,
                 keyboardType: TextInputType.emailAddress,
+                autocorrect: false,
                 textInputAction: TextInputAction.next,
                 decoration: const InputDecoration(
                   labelText: 'Co-buyer email',

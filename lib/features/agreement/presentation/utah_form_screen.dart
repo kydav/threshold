@@ -92,12 +92,9 @@ class _UtahFormScreenState extends ConsumerState<UtahFormScreen> {
           setState(() => _stepError = 'Enter a valid email address.');
           return false;
         }
-        if (_buyerPhoneCtrl.text.trim().isEmpty) {
-          setState(() => _stepError = 'Phone number is required.');
-          return false;
-        }
-        if (_buyerAddressCtrl.text.trim().isEmpty) {
-          setState(() => _stepError = 'Address is required.');
+        if (_buyerPhoneCtrl.text.trim().isEmpty &&
+            _buyerAddressCtrl.text.trim().isEmpty) {
+          setState(() => _stepError = 'Phone number or street address is required.');
           return false;
         }
       case 2:
@@ -235,7 +232,10 @@ class _UtahFormScreenState extends ConsumerState<UtahFormScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) { if (!didPop) _back(); },
+      child: Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         leading: IconButton(
@@ -313,6 +313,7 @@ class _UtahFormScreenState extends ConsumerState<UtahFormScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 
@@ -444,6 +445,7 @@ class _UtahFormScreenState extends ConsumerState<UtahFormScreen> {
               TextField(
                 controller: _buyer2EmailCtrl,
                 keyboardType: TextInputType.emailAddress,
+                autocorrect: false,
                 textInputAction: TextInputAction.next,
                 decoration: const InputDecoration(
                   labelText: 'Co-buyer email',
