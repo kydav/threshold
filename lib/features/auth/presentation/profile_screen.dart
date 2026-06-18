@@ -194,7 +194,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             // Account info (read-only)
             _sectionLabel('Account'),
             const SizedBox(height: 8),
-            _readOnlyTile(Icons.email_outlined, 'Test@test.com' ?? ''),
+            _readOnlyTile(Icons.email_outlined, profile?.email ?? ''),
             const SizedBox(height: 24),
 
             // Name

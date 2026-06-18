@@ -3,11 +3,11 @@ name: iOS Release to TestFlight
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
   workflow_dispatch:
     inputs:
       disable_paywall:
-        description: 'Disable paywall (for beta builds)'
+        description: "Disable paywall (for beta builds)"
         type: boolean
         default: false
 
@@ -20,11 +20,11 @@ jobs:
 
       - uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '26'
+          xcode-version: "26"
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.41.4'
+          flutter-version: "3.44.0"
           channel: stable
           cache: true
 
