@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:threshold/core/config/revenue_cat_config.dart';
@@ -16,7 +17,9 @@ class SubscriptionNotifier extends AsyncNotifier<CustomerInfo?> {
   Future<CustomerInfo?> build() async {
     final user = ref.watch(currentUserProvider).valueOrNull;
     if (user == null) {
-      try { await Purchases.logOut(); } catch (_) {}
+      try {
+        await Purchases.logOut();
+      } catch (_) {}
       return null;
     }
     final result = await Purchases.logIn(user.uid);
@@ -38,9 +41,15 @@ class SubscriptionNotifier extends AsyncNotifier<CustomerInfo?> {
       if (package == null) return false;
       final result = await Purchases.purchase(PurchaseParams.package(package));
       state = AsyncData(result.customerInfo);
-      return result.customerInfo.entitlements.active.containsKey(kEntitlementId);
+      return result.customerInfo.entitlements.active.containsKey(
+        kEntitlementId,
+      );
     } on PurchasesErrorCode catch (e) {
+      debugPrint('Purchase failed: $e');
       if (e == PurchasesErrorCode.purchaseCancelledError) return false;
+      rethrow;
+    } on Exception catch (e) {
+      debugPrint('Purchase failed');
       rethrow;
     }
   }
@@ -61,4 +70,5 @@ class SubscriptionNotifier extends AsyncNotifier<CustomerInfo?> {
 
 final subscriptionProvider =
     AsyncNotifierProvider<SubscriptionNotifier, CustomerInfo?>(
-        SubscriptionNotifier.new);
+      SubscriptionNotifier.new,
+    );

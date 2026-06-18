@@ -34,8 +34,7 @@ class _PaywallSheetState extends ConsumerState<_PaywallSheet> {
       _error = null;
     });
     try {
-      final ok =
-          await ref.read(subscriptionProvider.notifier).purchase();
+      final ok = await ref.read(subscriptionProvider.notifier).purchase();
       if (mounted) Navigator.of(context).pop(ok);
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
@@ -51,8 +50,7 @@ class _PaywallSheetState extends ConsumerState<_PaywallSheet> {
     });
     try {
       await ref.read(subscriptionProvider.notifier).restore();
-      final isPro =
-          ref.read(subscriptionProvider.notifier).isProActive;
+      final isPro = ref.read(subscriptionProvider.notifier).isProActive;
       if (mounted) Navigator.of(context).pop(isPro);
     } catch (e) {
       if (mounted) setState(() => _error = 'Restore failed: $e');
@@ -78,23 +76,21 @@ class _PaywallSheetState extends ConsumerState<_PaywallSheet> {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          Icon(Icons.workspace_premium_rounded,
-              size: 56, color: cs.primary),
+          Icon(Icons.workspace_premium_rounded, size: 56, color: cs.primary),
           const SizedBox(height: 16),
           Text(
             'Unlock Threshold Pro',
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
             "You've used your 2 free agreements.",
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: cs.onSurfaceVariant,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 28),
@@ -105,16 +101,17 @@ class _PaywallSheetState extends ConsumerState<_PaywallSheet> {
             style: FilledButton.styleFrom(
               minimumSize: const Size.fromHeight(52),
             ),
-            child: _loading
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text(
-                    'Subscribe — \$5 / month',
-                    style: TextStyle(fontSize: 16),
-                  ),
+            child:
+                _loading
+                    ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                    : const Text(
+                      'Subscribe — \$4.99 / month',
+                      style: TextStyle(fontSize: 16),
+                    ),
           ),
           const SizedBox(height: 12),
           TextButton(
@@ -132,9 +129,9 @@ class _PaywallSheetState extends ConsumerState<_PaywallSheet> {
           const SizedBox(height: 8),
           Text(
             'Subscription renews monthly. Cancel anytime.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: cs.onSurfaceVariant,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
             textAlign: TextAlign.center,
           ),
         ],
@@ -157,8 +154,7 @@ class _PaywallSheetState extends ConsumerState<_PaywallSheet> {
               children: [
                 Icon(f.$1, size: 20, color: cs.primary),
                 const SizedBox(width: 12),
-                Text(f.$2,
-                    style: Theme.of(context).textTheme.bodyMedium),
+                Text(f.$2, style: Theme.of(context).textTheme.bodyMedium),
               ],
             ),
           ),
