@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:threshold/core/services/subscription_service.dart';
 
@@ -37,7 +38,21 @@ class _PaywallSheetState extends ConsumerState<_PaywallSheet> {
       final ok = await ref.read(subscriptionProvider.notifier).purchase();
       if (mounted) Navigator.of(context).pop(ok);
     } catch (e) {
-      if (mounted) setState(() => _error = e.toString());
+      if (mounted) {
+        setState(() {
+          if (e is PlatformException &&
+              e.message != null &&
+              e.message!.contains('cancelled')) {
+            _error = 'Purchase cancelled.';
+            return;
+          }
+          if (e is Exception) {
+            _error = 'Purchase failed: ${e.toString()}';
+          } else {
+            _error = 'Purchase failed: $e';
+          }
+        });
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -142,8 +157,8 @@ class _PaywallSheetState extends ConsumerState<_PaywallSheet> {
   List<Widget> _features(ColorScheme cs) {
     const features = [
       (Icons.all_inclusive, 'Unlimited buyer agreements'),
-      (Icons.email_outlined, 'Auto-email via SendGrid'),
       (Icons.picture_as_pdf_outlined, 'PDF generation for every agreement'),
+      (Icons.email_outlined, 'Auto email delivery to you and your clients'),
       (Icons.history_outlined, 'Full agreement history on this device'),
     ];
     return features

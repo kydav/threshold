@@ -366,6 +366,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
             ),
             const SizedBox(height: 12),
+            const Divider(),
+            const SizedBox(height: 16),
 
             // Delete account
             FilledButton.icon(
@@ -467,7 +469,8 @@ class _SubscriptionTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
     final sub = ref.watch(subscriptionProvider);
-    final isPro = !kPaywallEnabled ||
+    final isPro =
+        !kPaywallEnabled ||
         (sub.valueOrNull?.entitlements.active.containsKey(kEntitlementId) ??
             false);
 
@@ -487,11 +490,14 @@ class _SubscriptionTile extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Threshold Pro',
-                      style: TextStyle(fontWeight: FontWeight.w600)),
-                  Text('Active subscription',
-                      style: TextStyle(
-                          fontSize: 12, color: cs.onSurfaceVariant)),
+                  const Text(
+                    'Threshold Pro',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  Text(
+                    'Active subscription',
+                    style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                  ),
                 ],
               ),
             ),
@@ -518,11 +524,17 @@ class _SubscriptionTile extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Free plan',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
-                    Text('$kFreeAgreementLimit agreements included',
-                        style: TextStyle(
-                            fontSize: 12, color: cs.onSurfaceVariant)),
+                    const Text(
+                      'Free plan',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    Text(
+                      '$kFreeAgreementLimit agreements included',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -534,9 +546,7 @@ class _SubscriptionTile extends ConsumerWidget {
           onPressed: () => showPaywall(context),
           icon: const Icon(Icons.star_outline),
           label: const Text('Upgrade to Threshold Pro'),
-          style: FilledButton.styleFrom(
-            minimumSize: const Size.fromHeight(48),
-          ),
+          style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
         ),
       ],
     );

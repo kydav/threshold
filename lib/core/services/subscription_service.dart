@@ -45,11 +45,7 @@ class SubscriptionNotifier extends AsyncNotifier<CustomerInfo?> {
         kEntitlementId,
       );
     } on PurchasesErrorCode catch (e) {
-      debugPrint('Purchase failed: $e');
       if (e == PurchasesErrorCode.purchaseCancelledError) return false;
-      rethrow;
-    } on Exception catch (e) {
-      debugPrint('Purchase failed');
       rethrow;
     }
   }
