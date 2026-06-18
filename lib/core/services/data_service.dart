@@ -14,6 +14,12 @@ class DataService {
     await _firestore.collection('users').doc(profile.uid).update(profile.toFirestore());
   }
 
+  Future<void> incrementAgreementsSent(String uid) async {
+    await _firestore.collection('users').doc(uid).update({
+      'agreementsSent': FieldValue.increment(1),
+    });
+  }
+
   Future<UserProfile?> getUserProfile(String uid) async {
     final doc = await _firestore.collection('users').doc(uid).get();
     if (!doc.exists) return null;

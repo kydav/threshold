@@ -6,12 +6,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:syncfusion_flutter_signaturepad/signaturepad.dart';
 import 'package:threshold/core/config/revenue_cat_config.dart';
+import 'package:threshold/core/services/data_service.dart';
 import 'package:threshold/core/services/subscription_service.dart';
 import 'package:threshold/features/agreement/data/agreement_model.dart';
 import 'package:threshold/features/agreement/data/agreement_repository.dart';
 import 'package:threshold/features/agreement/data/colorado_form_data.dart';
 import 'package:threshold/features/agreement/data/colorado_pdf_service.dart';
 import 'package:threshold/features/agreement/data/pdf_service.dart';
+import 'package:threshold/features/auth/data/user_profile.dart';
 import 'package:threshold/features/paywall/presentation/paywall_screen.dart';
 
 class SignatureScreen extends ConsumerStatefulWidget {
@@ -79,15 +81,11 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
   Future<void> _finalize() async {
     if (!_canFinalize || _agreement == null) return;
 
-    // Check paywall: count non-draft agreements the user has already sent.
     final isPro =
         !kPaywallEnabled || ref.read(subscriptionProvider.notifier).isProActive;
     if (!isPro) {
-      final allAgreements = await ref
-          .read(agreementRepositoryProvider)
-          .listForAgent(_agreement!.agentId);
-      final sentCount =
-          allAgreements.where((a) => a.status != AgreementStatus.draft).length;
+      final profile = ref.read(userProfileProvider);
+      final sentCount = profile?.agreementsSent ?? 0;
       if (sentCount >= kFreeAgreementLimit && mounted) {
         final subscribed = await showPaywall(context);
         if (!subscribed || !mounted) return;
@@ -147,6 +145,26 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
       }
 
       if (path != null && mounted) {
+        // Persist agreement count to Firestore so it survives reinstalls.
+        final uid = _agreement!.agentId;
+        await ref.read(dataServiceProvider).incrementAgreementsSent(uid);
+        final profile = ref.read(userProfileProvider);
+        if (profile != null) {
+          ref.read(userProfileProvider.notifier).state = UserProfile(
+            uid: profile.uid,
+            email: profile.email,
+            firstName: profile.firstName,
+            lastName: profile.lastName,
+            brokerageName: profile.brokerageName,
+            brokerageAddress: profile.brokerageAddress,
+            brokerageCityStateZip: profile.brokerageCityStateZip,
+            phone: profile.phone,
+            state: profile.state,
+            isMultiPersonFirm: profile.isMultiPersonFirm,
+            isBuyerAgency: profile.isBuyerAgency,
+            agreementsSent: profile.agreementsSent + 1,
+          );
+        }
         await ref.read(agreementListProvider.notifier).refresh();
         if (mounted) context.go('/agreements');
       }
