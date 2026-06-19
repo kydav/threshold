@@ -8,7 +8,6 @@ import 'package:threshold/features/agreement/presentation/colorado_form_screen.d
 import 'package:threshold/features/agreement/presentation/form_screen.dart';
 import 'package:threshold/features/agreement/presentation/history_screen.dart';
 import 'package:threshold/features/agreement/presentation/signature_screen.dart';
-import 'package:threshold/features/agreement/presentation/utah_form_screen.dart';
 import 'package:threshold/features/agreement/presentation/wisconsin_form_screen.dart';
 import 'package:threshold/features/auth/data/user_profile.dart';
 import 'package:threshold/features/auth/presentation/login_screen.dart';
@@ -55,23 +54,79 @@ final routerProvider = Provider<GoRouter>((ref) {
 
 /// Watches the agent profile and routes to the correct state-specific form.
 /// Shows a loader while the profile is still being fetched from Firestore.
-class _FormRouter extends ConsumerWidget {
+class _FormRouter extends ConsumerStatefulWidget {
   const _FormRouter();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_FormRouter> createState() => _FormRouterState();
+}
+
+class _FormRouterState extends ConsumerState<_FormRouter> {
+  bool _shownUnsupportedSheet = false;
+  Future<void> _showUnsupportedStateSheet(String state) async {
+    if (_shownUnsupportedSheet || !mounted) return;
+    _shownUnsupportedSheet = true;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder:
+          (_) => Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'State not supported yet',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 8),
+                Text('$state forms are not available yet.'),
+                const Text(
+                  'Please contact your local board, state association or broker and have them reach out to hello@auaha.app to get your state added to the platform.',
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('OK'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+    );
+
+    if (mounted) context.go('/agreements');
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final profile = ref.watch(userProfileProvider);
 
-    // Profile hasn't loaded from Firestore yet — wait for it.
     if (profile == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
+    final state = profile.state;
+    final approved = kSupportedStates.contains(state);
+
+    if (!approved) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showUnsupportedStateSheet(state);
+      });
+
+      // Hold a blank shell while the sheet is shown.
+      return const Scaffold(body: SizedBox.shrink());
+    }
     return switch (profile.state) {
       'Colorado' => const ColoradoFormScreen(),
-      'Utah' => const UtahFormScreen(),
+      //'Utah' => const UtahFormScreen(),
       'Wisconsin' => const WisconsinFormScreen(),
       _ => const FormScreen(),
     };
