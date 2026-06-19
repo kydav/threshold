@@ -196,13 +196,21 @@ class WisconsinPdfService {
       final f = _find(form, name);
       if (f is PdfRadioButtonListField) {
         for (int i = 0; i < f.items.count; i++) {
-          if (f.items[i].value == value) {
+          // Syncfusion doesn't decode #XX hex sequences beyond whitespace,
+          // so item.value may be e.g. "not#5Fsame#5Fagent". Decode it fully.
+          if (_decodePdfName(f.items[i].value) == value) {
             f.selectedIndex = i;
             break;
           }
         }
       }
     } catch (_) {}
+  }
+
+  String _decodePdfName(String name) {
+    return name.replaceAllMapped(RegExp(r'#([0-9A-Fa-f]{2})'), (m) {
+      return String.fromCharCode(int.parse(m.group(1)!, radix: 16));
+    });
   }
 
   void _setCheckbox(PdfForm form, String name, bool checked) {
