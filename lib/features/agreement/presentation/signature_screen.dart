@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:syncfusion_flutter_signaturepad/signaturepad.dart';
 import 'package:threshold/core/config/revenue_cat_config.dart';
+import 'package:threshold/core/services/analytics_service.dart';
 import 'package:threshold/core/services/data_service.dart';
 import 'package:threshold/core/services/subscription_service.dart';
 import 'package:threshold/features/agreement/data/agreement_model.dart';
@@ -145,6 +146,7 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
       }
 
       if (path != null && mounted) {
+        AnalyticsService.pdfGenerated(formState: _agreement!.formState);
         // Persist agreement count to Firestore so it survives reinstalls.
         final uid = _agreement!.agentId;
         await ref.read(dataServiceProvider).incrementAgreementsSent(uid);

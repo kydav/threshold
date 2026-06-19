@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:threshold/core/services/analytics_service.dart';
 import 'package:threshold/features/agreement/data/agreement_model.dart';
 import 'package:threshold/features/agreement/data/agreement_repository.dart';
 
@@ -60,6 +61,7 @@ class DeliveryService {
         deliveredAt: DateTime.now(),
       );
       await _repo.save(delivered);
+      AnalyticsService.agreementDelivered();
       return true;
     } on FirebaseFunctionsException catch (error) {
       debugPrint('Cloud Function error: ${error.code} - ${error.message}');

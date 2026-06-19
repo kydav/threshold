@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:threshold/core/services/analytics_service.dart';
 import 'package:threshold/core/services/data_service.dart';
 import 'package:threshold/features/auth/data/auth_service.dart';
 import 'package:threshold/features/auth/data/user_profile.dart';
@@ -129,6 +130,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       // completed and got null. The notifier is provider-scoped so this is
       // safe after widget disposal.
       profileNotifier.state = profile;
+      AnalyticsService.signUp(state: state);
     } on Exception catch (e) {
       debugPrint('signup _submit error: $e');
       if (mounted) setState(() => _error = _friendlyError(e.toString()));

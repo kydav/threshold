@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import 'package:threshold/core/services/analytics_service.dart';
 import 'package:threshold/features/agreement/data/agreement_repository.dart';
 import 'package:threshold/features/agreement/data/colorado_form_data.dart';
 import 'package:threshold/features/auth/data/user_profile.dart';
@@ -224,6 +225,7 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
             formData: coData.toJson(),
           );
 
+      AnalyticsService.formSubmitted(formState: 'Colorado');
       if (mounted) context.go('/agreements/${agreement.id}/sign');
     } finally {
       if (mounted) setState(() => _saving = false);

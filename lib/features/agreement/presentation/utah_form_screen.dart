@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import 'package:threshold/core/services/analytics_service.dart';
 import 'package:threshold/features/agreement/data/agreement_repository.dart';
 import 'package:threshold/features/auth/data/user_profile.dart';
 
@@ -223,6 +224,7 @@ class _UtahFormScreenState extends ConsumerState<UtahFormScreen> {
             },
           );
 
+      AnalyticsService.formSubmitted(formState: 'Utah');
       if (mounted) context.go('/agreements/${agreement.id}/sign');
     } finally {
       if (mounted) setState(() => _saving = false);
