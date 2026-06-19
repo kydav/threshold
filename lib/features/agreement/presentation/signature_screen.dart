@@ -1,6 +1,6 @@
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -65,8 +65,9 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
   String get _buyerDisplayName {
     if (_agreement == null) return '';
     // Colorado uses buyer1Name; Wisconsin uses buyer_name
-    final buyer1 = _agreement!.formData['buyer1Name'] as String?
-        ?? _agreement!.formData['buyer_name'] as String?;
+    final buyer1 =
+        _agreement!.formData['buyer1Name'] as String? ??
+        _agreement!.formData['buyer_name'] as String?;
     if (buyer1 != null && buyer1.isNotEmpty) return buyer1;
     return _agreement!.buyerName;
   }
@@ -93,7 +94,7 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
 
     final isPro =
         !kPaywallEnabled || ref.read(subscriptionProvider.notifier).isProActive;
-    if (!isPro) {
+    if (!isPro && !kDebugMode) {
       final profile = ref.read(userProfileProvider);
       final sentCount = profile?.agreementsSent ?? 0;
       if (sentCount >= kFreeAgreementLimit && mounted) {
