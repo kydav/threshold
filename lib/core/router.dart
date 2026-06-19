@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:threshold/features/agreement/presentation/colorado_form_screen.dart';
 import 'package:threshold/features/agreement/presentation/form_screen.dart';
 import 'package:threshold/features/agreement/presentation/history_screen.dart';
+import 'package:threshold/features/agreement/presentation/oklahoma_form_screen.dart';
 import 'package:threshold/features/agreement/presentation/signature_screen.dart';
 import 'package:threshold/features/agreement/presentation/utah_form_screen.dart';
 import 'package:threshold/features/auth/data/user_profile.dart';
@@ -71,6 +72,7 @@ class _FormRouter extends ConsumerWidget {
     return switch (profile.state) {
       'Colorado' => const ColoradoFormScreen(),
       'Utah' => const UtahFormScreen(),
+      'Oklahoma' => const OklahomaFormScreen(),
       _ => const FormScreen(),
     };
   }
