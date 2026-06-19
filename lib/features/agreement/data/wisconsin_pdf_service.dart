@@ -180,7 +180,7 @@ class WisconsinPdfService {
   void _setRadio(PdfForm form, String name, String value) {
     try {
       final f = _find(form, name);
-      if (f is PdfLoadedRadioButtonListField) {
+      if (f is PdfRadioButtonListField) {
         for (int i = 0; i < f.items.count; i++) {
           if (f.items[i].value == value) {
             f.selectedIndex = i;
