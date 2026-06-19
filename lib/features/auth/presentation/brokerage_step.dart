@@ -1,5 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:threshold/features/auth/data/user_profile.dart';
+
+const List<String> kAllUsStates = [
+  'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado',
+  'Connecticut', 'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho',
+  'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine',
+  'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi',
+  'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey',
+  'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio',
+  'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina',
+  'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia',
+  'Washington', 'West Virginia', 'Wisconsin', 'Wyoming',
+];
 
 class BrokerageStep extends StatelessWidget {
   const BrokerageStep({
@@ -95,7 +106,7 @@ class BrokerageStep extends StatelessWidget {
               border: OutlineInputBorder(),
             ),
             hint: const Text('Select your state'),
-            items: kSupportedStates
+            items: kAllUsStates
                 .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                 .toList(),
             onChanged: (v) {

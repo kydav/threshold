@@ -11,6 +11,7 @@ import 'package:threshold/core/services/data_service.dart';
 import 'package:threshold/core/services/subscription_service.dart';
 import 'package:threshold/features/auth/data/auth_service.dart';
 import 'package:threshold/features/auth/data/user_profile.dart';
+import 'package:threshold/features/auth/presentation/brokerage_step.dart';
 import 'package:threshold/features/paywall/presentation/paywall_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -283,7 +284,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
               hint: const Text('Select your state'),
               items:
-                  kSupportedStates
+                  kAllUsStates
                       .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                       .toList(),
               onChanged: (v) => setState(() => _state = v),
