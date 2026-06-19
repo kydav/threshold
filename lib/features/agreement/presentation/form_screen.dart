@@ -123,7 +123,7 @@ class _FormScreenState extends ConsumerState<FormScreen> {
             startDate: _startDate,
             endDate: _endDate,
           );
-      if (mounted) context.go('/agreements/${agreement.id}/sign');
+      if (mounted) context.push('/agreements/${agreement.id}/sign');
     } finally {
       if (mounted) setState(() => _saving = false);
     }

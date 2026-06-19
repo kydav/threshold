@@ -204,7 +204,7 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
             },
           );
 
-      if (mounted) context.go('/agreements/${agreement.id}/sign');
+      if (mounted) context.push('/agreements/${agreement.id}/sign');
     } finally {
       if (mounted) setState(() => _saving = false);
     }
