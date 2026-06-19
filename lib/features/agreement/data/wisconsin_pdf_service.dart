@@ -35,7 +35,11 @@ class WisconsinPdfService {
 
     // ── Buyer info ────────────────────────────────────────────────────────────
     _setText(form, 'buyer_address', fd['buyer_address'] as String? ?? '');
-    _setText(form, 'buyer_email', fd['buyer_email'] as String? ?? agreement.buyerEmail);
+    _setText(
+      form,
+      'buyer_email',
+      fd['buyer_email'] as String? ?? agreement.buyerEmail,
+    );
 
     // ── Firm representation ───────────────────────────────────────────────────
     // Values: not_same_agent = with designated agency,
@@ -67,7 +71,11 @@ class WisconsinPdfService {
       final start = DateTime.tryParse(termStartRaw);
       if (start != null) {
         _setText(form, 'term_start_day', start.day.toString().padLeft(2, '0'));
-        _setText(form, 'term_start_month', start.month.toString().padLeft(2, '0'));
+        _setText(
+          form,
+          'term_start_month',
+          start.month.toString().padLeft(2, '0'),
+        );
         _setText(form, 'term_start_year', start.year.toString());
       }
     }
@@ -89,13 +97,20 @@ class WisconsinPdfService {
     final otherCompLines = _lines(fd['other_compensation'] as String? ?? '', 2);
     _setText(form, 'other_compensation', otherCompLines[0]);
     _setText(form, 'other_compensation_line_2', otherCompLines[1]);
-    _setText(form, 'purchase_price_range', fd['purchase_price_range'] as String? ?? '');
+    _setText(
+      form,
+      'purchase_price_range',
+      fd['purchase_price_range'] as String? ?? '',
+    );
 
     // ── Excluded properties ───────────────────────────────────────────────────
     final exclLines = _lines(fd['excluded_properties'] as String? ?? '', 2);
     _setText(form, 'excluded_properties', exclLines[0]);
     _setText(form, 'excluded_properties_line_2', exclLines[1]);
-    final exclPriorLines = _lines(fd['excluded_properties_prior'] as String? ?? '', 2);
+    final exclPriorLines = _lines(
+      fd['excluded_properties_prior'] as String? ?? '',
+      2,
+    );
     _setText(form, 'excluded_properties_prior', exclPriorLines[0]);
     _setText(form, 'excluded_properties_prior_line_2', exclPriorLines[1]);
     _setText(form, 'exclusion_date', fd['exclusion_date'] as String? ?? '');
@@ -140,7 +155,10 @@ class WisconsinPdfService {
 
     // Save to device.
     final dir = await getApplicationDocumentsDirectory();
-    final safeName = agreement.buyerName.replaceAll(RegExp('[^a-zA-Z0-9]'), '_');
+    final safeName = agreement.buyerName.replaceAll(
+      RegExp('[^a-zA-Z0-9]'),
+      '_',
+    );
     final filename = 'WI_WB36_${safeName}_${agreement.id.substring(0, 8)}.pdf';
     final file = File('${dir.path}/$filename');
     await file.writeAsBytes(savedBytes);
@@ -162,7 +180,10 @@ class WisconsinPdfService {
         deliveredAt: now,
       );
       await _repo.save(signed);
-      await Printing.sharePdf(bytes: Uint8List.fromList(savedBytes), filename: filename);
+      await Printing.sharePdf(
+        bytes: Uint8List.fromList(savedBytes),
+        filename: filename,
+      );
     }
 
     return localPath;
@@ -199,6 +220,7 @@ class WisconsinPdfService {
           // Syncfusion doesn't decode #XX hex sequences beyond whitespace,
           // so item.value may be e.g. "not#5Fsame#5Fagent". Decode it fully.
           if (_decodePdfName(f.items[i].value) == value) {
+            f.items[i].style = PdfCheckBoxStyle.cross;
             f.selectedIndex = i;
             break;
           }
@@ -208,7 +230,7 @@ class WisconsinPdfService {
   }
 
   String _decodePdfName(String name) {
-    return name.replaceAllMapped(RegExp(r'#([0-9A-Fa-f]{2})'), (m) {
+    return name.replaceAllMapped(RegExp('#([0-9A-Fa-f]{2})'), (m) {
       return String.fromCharCode(int.parse(m.group(1)!, radix: 16));
     });
   }
@@ -220,7 +242,12 @@ class WisconsinPdfService {
     } catch (_) {}
   }
 
-  void _drawSignature(PdfDocument doc, PdfForm form, String name, Uint8List imageBytes) {
+  void _drawSignature(
+    PdfDocument doc,
+    PdfForm form,
+    String name,
+    Uint8List imageBytes,
+  ) {
     try {
       final f = _find(form, name);
       if (f == null) return;
