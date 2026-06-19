@@ -204,7 +204,7 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
             },
           );
 
-      if (mounted) context.push('/agreements/${agreement.id}/sign');
+      if (mounted) context.go('/agreements/${agreement.id}/sign');
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -305,20 +305,16 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
         children: [
           Text(
             'Buyer information',
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           Text(
             'Used to fill the WB-36 Buyer Agency Agreement form.',
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 24),
           TextField(
@@ -362,12 +358,9 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
           const SizedBox(height: 4),
           Text(
             'How the buyer prefers to receive notices.',
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           CheckboxListTile(
             contentPadding: EdgeInsets.zero,
@@ -390,46 +383,52 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
     final cs = Theme.of(context).colorScheme;
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Firm representation',
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Select how the buyer\'s brokerage may represent other parties in the same transaction.',
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: cs.onSurfaceVariant),
-          ),
-          const SizedBox(height: 24),
-          _radioOption(
-            value: 'not_same_agent',
-            title: 'Multiple representation — with designated agency',
-            subtitle:
-                'The brokerage may represent both buyer and seller, each with their own assigned agent.',
-          ),
-          const SizedBox(height: 12),
-          _radioOption(
-            value: 'neutral_firm',
-            title: 'Multiple representation — without designated agency',
-            subtitle:
-                'The brokerage may represent both buyer and seller without assigning separate agents.',
-          ),
-          const SizedBox(height: 12),
-          _radioOption(
-            value: 'no_same_firm',
-            title: 'I reject multiple representation',
-            subtitle:
-                'The brokerage may not represent both the buyer and the seller in the same transaction.',
-          ),
-        ],
+      child: RadioGroup<String>(
+        onChanged:
+            (v) => setState(() {
+              _firmRepresentation = v;
+              _stepError = null;
+            }),
+        groupValue: _firmRepresentation,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Firm representation',
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              "Select how the buyer's brokerage may represent other parties in the same transaction.",
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+            ),
+            const SizedBox(height: 24),
+            _radioOption(
+              value: 'not_same_agent',
+              title: 'Multiple representation — with designated agency',
+              subtitle:
+                  'The brokerage may represent both buyer and seller, each with their own assigned agent.',
+            ),
+            const SizedBox(height: 12),
+            _radioOption(
+              value: 'neutral_firm',
+              title: 'Multiple representation — without designated agency',
+              subtitle:
+                  'The brokerage may represent both buyer and seller without assigning separate agents.',
+            ),
+            const SizedBox(height: 12),
+            _radioOption(
+              value: 'no_same_firm',
+              title: 'I reject multiple representation',
+              subtitle:
+                  'The brokerage may not represent both the buyer and the seller in the same transaction.',
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -442,10 +441,11 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
     final cs = Theme.of(context).colorScheme;
     final selected = _firmRepresentation == value;
     return GestureDetector(
-      onTap: () => setState(() {
-        _firmRepresentation = value;
-        _stepError = null;
-      }),
+      onTap:
+          () => setState(() {
+            _firmRepresentation = value;
+            _stepError = null;
+          }),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.all(16),
@@ -455,19 +455,12 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
             width: selected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
-          color: selected ? cs.primaryContainer.withOpacity(0.3) : cs.surface,
+          color: selected ? cs.primaryContainer.withAlpha(30) : cs.surface,
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Radio<String>(
-              value: value,
-              groupValue: _firmRepresentation,
-              onChanged: (v) => setState(() {
-                _firmRepresentation = v;
-                _stepError = null;
-              }),
-            ),
+            Radio<String>(value: value),
             const SizedBox(width: 8),
             Expanded(
               child: Column(
@@ -476,18 +469,16 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
                   const SizedBox(height: 12),
                   Text(
                     title,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.copyWith(fontWeight: FontWeight.w600),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: cs.onSurfaceVariant),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -506,10 +497,9 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
         children: [
           Text(
             'Co-buyer',
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 24),
           CheckboxListTile(
@@ -547,10 +537,9 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
         children: [
           Text(
             'Agreement term',
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 24),
           Text('Start date', style: Theme.of(context).textTheme.labelLarge),
@@ -589,20 +578,16 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
         children: [
           Text(
             'Compensation',
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           Text(
             'Describe the commission and other compensation as they will appear on the form.',
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 20),
           Text('Commission *', style: Theme.of(context).textTheme.labelLarge),
@@ -661,20 +646,16 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
         children: [
           Text(
             'Excluded properties',
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           Text(
             'Properties that are excluded from this agreement.',
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 20),
           Text(
@@ -736,20 +717,16 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
         children: [
           Text(
             'Confidential info',
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           Text(
             'Information that may or may not be kept confidential under this agreement.',
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 20),
           Text(
@@ -797,20 +774,16 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
         children: [
           Text(
             'Additional provisions',
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           Text(
             'Optional. Any additional terms agreed upon by the parties.',
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 20),
           TextField(
