@@ -20,23 +20,28 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
   bool _saving = false;
   String? _stepError;
 
-  static const int _totalSteps = 7;
+  static const int _totalSteps = 8;
 
   // Step 0 — Buyer info
+  final _buyerNameCtrl = TextEditingController();
   final _buyerAddressCtrl = TextEditingController();
   final _buyerEmailCtrl = TextEditingController();
   bool _commEmail = true;
   bool _commMail = false;
 
-  // Step 1 — Co-buyer
+  // Step 1 — Firm representation
+  // Values map to PDF radio export names: not_same_agent, neutral_firm, no_same_firm
+  String? _firmRepresentation;
+
+  // Step 2 — Co-buyer
   bool _hasCoBuyer = false;
   final _buyer2NameCtrl = TextEditingController();
 
-  // Step 2 — Term
+  // Step 3 — Term
   DateTime _termStart = DateTime.now();
   DateTime _termEnd = DateTime.now().add(const Duration(days: 90));
 
-  // Step 3 — Compensation
+  // Step 4 — Compensation
   final _commissionCtrl = TextEditingController();
   final _commission2Ctrl = TextEditingController();
   final _commission3Ctrl = TextEditingController();
@@ -44,14 +49,14 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
   final _otherComp2Ctrl = TextEditingController();
   final _purchasePriceRangeCtrl = TextEditingController();
 
-  // Step 4 — Excluded properties
+  // Step 5 — Excluded properties
   final _excludedPropertiesCtrl = TextEditingController();
   final _excludedProperties2Ctrl = TextEditingController();
   final _excludedPropertiesPriorCtrl = TextEditingController();
   final _excludedPropertiesPrior2Ctrl = TextEditingController();
   final _exclusionDateCtrl = TextEditingController();
 
-  // Step 5 — Confidential / non-confidential
+  // Step 6 — Confidential / non-confidential
   final _confidentialCtrl = TextEditingController();
   final _confidential2Ctrl = TextEditingController();
   final _confidential3Ctrl = TextEditingController();
@@ -59,7 +64,7 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
   final _nonConfidential2Ctrl = TextEditingController();
   final _nonConfidential3Ctrl = TextEditingController();
 
-  // Step 6 — Additional provisions
+  // Step 7 — Additional provisions
   final _additionalProvisionsCtrl = TextEditingController();
   final _additionalProvisions2Ctrl = TextEditingController();
 
@@ -68,6 +73,7 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
   @override
   void dispose() {
     _pageController.dispose();
+    _buyerNameCtrl.dispose();
     _buyerAddressCtrl.dispose();
     _buyerEmailCtrl.dispose();
     _buyer2NameCtrl.dispose();
@@ -96,17 +102,26 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
   bool _validateStep() {
     switch (_step) {
       case 0:
+        if (_buyerNameCtrl.text.trim().isEmpty) {
+          setState(() => _stepError = "Buyer's full legal name is required.");
+          return false;
+        }
         final email = _buyerEmailCtrl.text.trim();
         if (!email.contains('@') || !email.contains('.')) {
           setState(() => _stepError = 'Enter a valid email address.');
           return false;
         }
       case 1:
+        if (_firmRepresentation == null) {
+          setState(() => _stepError = 'Please select a firm representation option.');
+          return false;
+        }
+      case 2:
         if (_hasCoBuyer && _buyer2NameCtrl.text.trim().isEmpty) {
           setState(() => _stepError = "Co-buyer's name is required.");
           return false;
         }
-      case 3:
+      case 4:
         if (_commissionCtrl.text.trim().isEmpty) {
           setState(() => _stepError = 'Commission description is required.');
           return false;
@@ -156,6 +171,11 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
       final agentName =
           '${profile?.firstName ?? ''} ${profile?.lastName ?? ''}'.trim();
 
+      final buyerName = _buyerNameCtrl.text.trim();
+      final displayBuyerName = _hasCoBuyer && _buyer2NameCtrl.text.trim().isNotEmpty
+          ? '$buyerName and ${_buyer2NameCtrl.text.trim()}'
+          : buyerName;
+
       final commission = _commissionCtrl.text.trim();
 
       final agreement = await ref
@@ -165,9 +185,7 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
             agentName: agentName.isNotEmpty ? agentName : user.displayName ?? '',
             agentEmail: profile?.email ?? user.email ?? '',
             brokerageName: profile?.brokerageName ?? '',
-            buyerName: _hasCoBuyer && _buyer2NameCtrl.text.trim().isNotEmpty
-                ? '${user.displayName ?? ''} and ${_buyer2NameCtrl.text.trim()}'
-                : user.displayName ?? '',
+            buyerName: displayBuyerName.isNotEmpty ? displayBuyerName : user.email ?? '',
             buyerEmail: _buyerEmailCtrl.text.trim(),
             propertyScope: 'Wisconsin',
             compensation: commission,
@@ -175,10 +193,12 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
             endDate: _termEnd,
             formState: 'Wisconsin',
             formData: {
+              'buyer_name': buyerName,
               'buyer_address': _buyerAddressCtrl.text.trim(),
               'buyer_email': _buyerEmailCtrl.text.trim(),
               'comm_email': _commEmail,
               'comm_mail': _commMail,
+              'firm_representation': _firmRepresentation ?? '',
               'has_co_buyer': _hasCoBuyer,
               'buyer_name_2': _hasCoBuyer ? _buyer2NameCtrl.text.trim() : '',
               'term_start': _termStart.toIso8601String(),
@@ -241,6 +261,7 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
           physics: const NeverScrollableScrollPhysics(),
           children: [
             _buyerInfoStep(),
+            _firmRepresentationStep(),
             _coBuyerStep(),
             _termStep(),
             _compensationStep(),
@@ -319,10 +340,21 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
           ),
           const SizedBox(height: 24),
           TextField(
-            controller: _buyerAddressCtrl,
+            controller: _buyerNameCtrl,
             textCapitalization: TextCapitalization.words,
             textInputAction: TextInputAction.next,
             autofocus: true,
+            decoration: const InputDecoration(
+              labelText: "Buyer's full legal name *",
+              hintText: 'As it appears on ID',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _buyerAddressCtrl,
+            textCapitalization: TextCapitalization.words,
+            textInputAction: TextInputAction.next,
             decoration: const InputDecoration(
               labelText: 'Buyer address',
               hintText: '123 Main St, City, WI 53000',
@@ -336,7 +368,7 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
             textInputAction: TextInputAction.done,
             autocorrect: false,
             decoration: const InputDecoration(
-              labelText: 'Buyer email',
+              labelText: 'Buyer email *',
               border: OutlineInputBorder(),
             ),
           ),
@@ -366,6 +398,118 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
             onChanged: (v) => setState(() => _commMail = v ?? false),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _firmRepresentationStep() {
+    final cs = Theme.of(context).colorScheme;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Firm representation',
+            style: Theme.of(context)
+                .textTheme
+                .headlineSmall
+                ?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Select how the buyer\'s brokerage may represent other parties in the same transaction.',
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall
+                ?.copyWith(color: cs.onSurfaceVariant),
+          ),
+          const SizedBox(height: 24),
+          _radioOption(
+            value: 'not_same_agent',
+            title: 'Multiple representation — with designated agency',
+            subtitle:
+                'The brokerage may represent both buyer and seller, each with their own assigned agent.',
+          ),
+          const SizedBox(height: 12),
+          _radioOption(
+            value: 'neutral_firm',
+            title: 'Multiple representation — without designated agency',
+            subtitle:
+                'The brokerage may represent both buyer and seller without assigning separate agents.',
+          ),
+          const SizedBox(height: 12),
+          _radioOption(
+            value: 'no_same_firm',
+            title: 'I reject multiple representation',
+            subtitle:
+                'The brokerage may not represent both the buyer and the seller in the same transaction.',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _radioOption({
+    required String value,
+    required String title,
+    required String subtitle,
+  }) {
+    final cs = Theme.of(context).colorScheme;
+    final selected = _firmRepresentation == value;
+    return GestureDetector(
+      onTap: () => setState(() {
+        _firmRepresentation = value;
+        _stepError = null;
+      }),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: selected ? cs.primary : cs.outline,
+            width: selected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          color: selected ? cs.primaryContainer.withOpacity(0.3) : cs.surface,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Radio<String>(
+              value: value,
+              groupValue: _firmRepresentation,
+              onChanged: (v) => setState(() {
+                _firmRepresentation = v;
+                _stepError = null;
+              }),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 12),
+                  Text(
+                    title,
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(color: cs.onSurfaceVariant),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -795,12 +939,13 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
 
   String _stepTitle(int step) => switch (step) {
         0 => 'Buyer info',
-        1 => 'Co-buyer',
-        2 => 'Agreement term',
-        3 => 'Compensation',
-        4 => 'Excluded properties',
-        5 => 'Confidential info',
-        6 => 'Additional provisions',
+        1 => 'Firm representation',
+        2 => 'Co-buyer',
+        3 => 'Agreement term',
+        4 => 'Compensation',
+        5 => 'Excluded properties',
+        6 => 'Confidential info',
+        7 => 'Additional provisions',
         _ => 'New agreement',
       };
 }

@@ -64,7 +64,9 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
 
   String get _buyerDisplayName {
     if (_agreement == null) return '';
-    final buyer1 = _agreement!.formData['buyer1Name'] as String?;
+    // Colorado uses buyer1Name; Wisconsin uses buyer_name
+    final buyer1 = _agreement!.formData['buyer1Name'] as String?
+        ?? _agreement!.formData['buyer_name'] as String?;
     if (buyer1 != null && buyer1.isNotEmpty) return buyer1;
     return _agreement!.buyerName;
   }

@@ -37,6 +37,13 @@ class WisconsinPdfService {
     _setText(form, 'buyer_address', fd['buyer_address'] as String? ?? '');
     _setText(form, 'buyer_email', fd['buyer_email'] as String? ?? agreement.buyerEmail);
 
+    // ── Firm representation ───────────────────────────────────────────────────
+    // Values: not_same_agent = with designated agency,
+    //         neutral_firm   = without designated agency,
+    //         no_same_firm   = reject multiple representation
+    final firmRep = fd['firm_representation'] as String? ?? '';
+    if (firmRep.isNotEmpty) _setRadio(form, 'radio_group_13pbw', firmRep);
+
     // Communication preferences
     final commEmail = (fd['comm_email'] as bool?) ?? true;
     final commMail = (fd['comm_mail'] as bool?) ?? false;
@@ -46,7 +53,8 @@ class WisconsinPdfService {
     // ── Co-buyer ──────────────────────────────────────────────────────────────
     final hasCoBuyer = (fd['has_co_buyer'] as bool?) ?? false;
     final buyer2Name = fd['buyer_name_2'] as String? ?? '';
-    _setText(form, 'buyer_name_1', agreement.buyerName);
+    final buyerName1 = fd['buyer_name'] as String? ?? agreement.buyerName;
+    _setText(form, 'buyer_name_1', buyerName1);
     if (hasCoBuyer && buyer2Name.isNotEmpty) {
       _setText(form, 'buyer_name_2', buyer2Name);
     }
@@ -166,6 +174,20 @@ class WisconsinPdfService {
     try {
       final f = _find(form, name);
       if (f is PdfTextBoxField) f.text = value;
+    } catch (_) {}
+  }
+
+  void _setRadio(PdfForm form, String name, String value) {
+    try {
+      final f = _find(form, name);
+      if (f is PdfLoadedRadioButtonListField) {
+        for (int i = 0; i < f.items.count; i++) {
+          if (f.items[i].value == value) {
+            f.selectedIndex = i;
+            break;
+          }
+        }
+      }
     } catch (_) {}
   }
 
