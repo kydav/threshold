@@ -42,11 +42,14 @@ class WisconsinPdfService {
     );
 
     // ── Firm representation ───────────────────────────────────────────────────
-    // Values: not_same_agent = with designated agency,
-    //         neutral_firm   = without designated agency,
-    //         no_same_firm   = reject multiple representation
+    // PDF now has three independent checkboxes instead of a radio group.
+    // Values: not_same_agent = with designated agency (multiple_designated),
+    //         neutral_firm   = without designated agency (multiple_no_designated),
+    //         no_same_firm   = reject multiple representation (no_multiple)
     final firmRep = fd['firm_representation'] as String? ?? '';
-    if (firmRep.isNotEmpty) _setRadio(form, 'radio_group_13pbw', firmRep);
+    _setCheckbox(form, 'multiple_designated', firmRep == 'not_same_agent');
+    _setCheckbox(form, 'multiple_no_designated', firmRep == 'neutral_firm');
+    _setCheckbox(form, 'no_multiple', firmRep == 'no_same_firm');
 
     // Communication preferences
     final commEmail = (fd['comm_email'] as bool?) ?? true;
