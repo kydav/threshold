@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:threshold/core/services/analytics_service.dart';
 import 'package:threshold/core/services/subscription_service.dart';
 
 /// Shows a modal bottom sheet paywall and returns true if the user
 /// successfully subscribes.
 Future<bool> showPaywall(BuildContext context) async {
+  AnalyticsService.paywallShown();
   final result = await showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
@@ -38,6 +40,7 @@ class _PaywallSheetState extends ConsumerState<_PaywallSheet> {
       final ok = await ref.read(subscriptionProvider.notifier).purchase();
       if (!mounted) return;
       if (ok) {
+        AnalyticsService.subscriptionPurchased();
         Navigator.of(context).pop(true);
       } else {
         // Cancelled returns false silently — just close without an error message.
@@ -72,6 +75,7 @@ class _PaywallSheetState extends ConsumerState<_PaywallSheet> {
       if (!mounted) return;
       final isPro = ref.read(subscriptionProvider.notifier).isProActive;
       if (isPro) {
+        AnalyticsService.subscriptionRestored();
         Navigator.of(context).pop(true);
       } else {
         setState(() => _error = 'No active subscription found for this Apple ID.');
