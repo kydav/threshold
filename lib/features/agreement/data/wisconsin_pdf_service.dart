@@ -221,7 +221,10 @@ class WisconsinPdfService {
           // so item.value may be e.g. "not#5Fsame#5Fagent". Decode it fully.
           if (_decodePdfName(f.items[i].value) == value) {
             f.items[i].style = PdfCheckBoxStyle.cross;
-            f.selectedIndex = i;
+            // Must use selectedValue with the raw (undecoded) item value.
+            // selectedIndex internally never updates _helper.selectedIndex,
+            // so the flatten renders nothing. selectedValue does update it.
+            f.selectedValue = f.items[i].value;
             break;
           }
         }
