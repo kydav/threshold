@@ -82,31 +82,38 @@ class WisconsinPdfService {
     }
 
     // ── Compensation ──────────────────────────────────────────────────────────
-    _setText(form, 'commission', fd['commission'] as String? ?? '');
-    _setText(form, 'commission_line_2', fd['commission_2'] as String? ?? '');
-    _setText(form, 'commissions_line_3', fd['commission_3'] as String? ?? '');
-    _setText(form, 'other_compensation', fd['other_compensation'] as String? ?? '');
-    _setText(form, 'other_compensation_line_2', fd['other_compensation_2'] as String? ?? '');
+    final commLines = _lines(fd['commission'] as String? ?? '', 3);
+    _setText(form, 'commission', commLines[0]);
+    _setText(form, 'commission_line_2', commLines[1]);
+    _setText(form, 'commissions_line_3', commLines[2]);
+    final otherCompLines = _lines(fd['other_compensation'] as String? ?? '', 2);
+    _setText(form, 'other_compensation', otherCompLines[0]);
+    _setText(form, 'other_compensation_line_2', otherCompLines[1]);
     _setText(form, 'purchase_price_range', fd['purchase_price_range'] as String? ?? '');
 
     // ── Excluded properties ───────────────────────────────────────────────────
-    _setText(form, 'excluded_properties', fd['excluded_properties'] as String? ?? '');
-    _setText(form, 'excluded_properties_line_2', fd['excluded_properties_2'] as String? ?? '');
-    _setText(form, 'excluded_properties_prior', fd['excluded_properties_prior'] as String? ?? '');
-    _setText(form, 'excluded_properties_prior_line_2', fd['excluded_properties_prior_2'] as String? ?? '');
+    final exclLines = _lines(fd['excluded_properties'] as String? ?? '', 2);
+    _setText(form, 'excluded_properties', exclLines[0]);
+    _setText(form, 'excluded_properties_line_2', exclLines[1]);
+    final exclPriorLines = _lines(fd['excluded_properties_prior'] as String? ?? '', 2);
+    _setText(form, 'excluded_properties_prior', exclPriorLines[0]);
+    _setText(form, 'excluded_properties_prior_line_2', exclPriorLines[1]);
     _setText(form, 'exclusion_date', fd['exclusion_date'] as String? ?? '');
 
     // ── Confidential / non-confidential ───────────────────────────────────────
-    _setText(form, 'confidential_info', fd['confidential_info'] as String? ?? '');
-    _setText(form, 'confidential_info_2', fd['confidential_info_2'] as String? ?? '');
-    _setText(form, 'confidential_info_3', fd['confidential_info_3'] as String? ?? '');
-    _setText(form, 'non_confidential', fd['non_confidential'] as String? ?? '');
-    _setText(form, 'non_confidential_2', fd['non_confidential_2'] as String? ?? '');
-    _setText(form, 'non_confidential_3', fd['non_confidential_3'] as String? ?? '');
+    final confLines = _lines(fd['confidential_info'] as String? ?? '', 3);
+    _setText(form, 'confidential_info', confLines[0]);
+    _setText(form, 'confidential_info_2', confLines[1]);
+    _setText(form, 'confidential_info_3', confLines[2]);
+    final nonConfLines = _lines(fd['non_confidential'] as String? ?? '', 3);
+    _setText(form, 'non_confidential', nonConfLines[0]);
+    _setText(form, 'non_confidential_2', nonConfLines[1]);
+    _setText(form, 'non_confidential_3', nonConfLines[2]);
 
     // ── Additional provisions ─────────────────────────────────────────────────
-    _setText(form, 'additional_provisions', fd['additional_provisions'] as String? ?? '');
-    _setText(form, 'additional_provisions_2', fd['additional_provisions_2'] as String? ?? '');
+    final provLines = _lines(fd['additional_provisions'] as String? ?? '', 2);
+    _setText(form, 'additional_provisions', provLines[0]);
+    _setText(form, 'additional_provisions_2', provLines[1]);
 
     // ── Firm info ─────────────────────────────────────────────────────────────
     _setText(form, 'agent_firm_name', agreement.brokerageName);
@@ -162,6 +169,13 @@ class WisconsinPdfService {
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
+
+  /// Splits [text] by newlines and returns exactly [count] strings,
+  /// padding with empty strings if there are fewer lines than [count].
+  List<String> _lines(String text, int count) {
+    final parts = text.split('\n');
+    return List.generate(count, (i) => i < parts.length ? parts[i].trim() : '');
+  }
 
   PdfField? _find(PdfForm form, String name) {
     for (int i = 0; i < form.fields.count; i++) {

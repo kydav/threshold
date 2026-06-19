@@ -11,7 +11,8 @@ class WisconsinFormScreen extends ConsumerStatefulWidget {
   const WisconsinFormScreen({super.key});
 
   @override
-  ConsumerState<WisconsinFormScreen> createState() => _WisconsinFormScreenState();
+  ConsumerState<WisconsinFormScreen> createState() =>
+      _WisconsinFormScreenState();
 }
 
 class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
@@ -41,32 +42,22 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
   DateTime _termStart = DateTime.now();
   DateTime _termEnd = DateTime.now().add(const Duration(days: 90));
 
-  // Step 4 — Compensation
+  // Step 4 — Compensation (each multiline; PDF service splits by \n into form lines)
   final _commissionCtrl = TextEditingController();
-  final _commission2Ctrl = TextEditingController();
-  final _commission3Ctrl = TextEditingController();
   final _otherCompCtrl = TextEditingController();
-  final _otherComp2Ctrl = TextEditingController();
   final _purchasePriceRangeCtrl = TextEditingController();
 
   // Step 5 — Excluded properties
   final _excludedPropertiesCtrl = TextEditingController();
-  final _excludedProperties2Ctrl = TextEditingController();
   final _excludedPropertiesPriorCtrl = TextEditingController();
-  final _excludedPropertiesPrior2Ctrl = TextEditingController();
   final _exclusionDateCtrl = TextEditingController();
 
   // Step 6 — Confidential / non-confidential
   final _confidentialCtrl = TextEditingController();
-  final _confidential2Ctrl = TextEditingController();
-  final _confidential3Ctrl = TextEditingController();
   final _nonConfidentialCtrl = TextEditingController();
-  final _nonConfidential2Ctrl = TextEditingController();
-  final _nonConfidential3Ctrl = TextEditingController();
 
   // Step 7 — Additional provisions
   final _additionalProvisionsCtrl = TextEditingController();
-  final _additionalProvisions2Ctrl = TextEditingController();
 
   static final _dateFmt = DateFormat('MMMM d, yyyy');
 
@@ -78,24 +69,14 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
     _buyerEmailCtrl.dispose();
     _buyer2NameCtrl.dispose();
     _commissionCtrl.dispose();
-    _commission2Ctrl.dispose();
-    _commission3Ctrl.dispose();
     _otherCompCtrl.dispose();
-    _otherComp2Ctrl.dispose();
     _purchasePriceRangeCtrl.dispose();
     _excludedPropertiesCtrl.dispose();
-    _excludedProperties2Ctrl.dispose();
     _excludedPropertiesPriorCtrl.dispose();
-    _excludedPropertiesPrior2Ctrl.dispose();
     _exclusionDateCtrl.dispose();
     _confidentialCtrl.dispose();
-    _confidential2Ctrl.dispose();
-    _confidential3Ctrl.dispose();
     _nonConfidentialCtrl.dispose();
-    _nonConfidential2Ctrl.dispose();
-    _nonConfidential3Ctrl.dispose();
     _additionalProvisionsCtrl.dispose();
-    _additionalProvisions2Ctrl.dispose();
     super.dispose();
   }
 
@@ -113,7 +94,9 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
         }
       case 1:
         if (_firmRepresentation == null) {
-          setState(() => _stepError = 'Please select a firm representation option.');
+          setState(
+            () => _stepError = 'Please select a firm representation option.',
+          );
           return false;
         }
       case 2:
@@ -172,9 +155,10 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
           '${profile?.firstName ?? ''} ${profile?.lastName ?? ''}'.trim();
 
       final buyerName = _buyerNameCtrl.text.trim();
-      final displayBuyerName = _hasCoBuyer && _buyer2NameCtrl.text.trim().isNotEmpty
-          ? '$buyerName and ${_buyer2NameCtrl.text.trim()}'
-          : buyerName;
+      final displayBuyerName =
+          _hasCoBuyer && _buyer2NameCtrl.text.trim().isNotEmpty
+              ? '$buyerName and ${_buyer2NameCtrl.text.trim()}'
+              : buyerName;
 
       final commission = _commissionCtrl.text.trim();
 
@@ -182,10 +166,14 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
           .read(agreementRepositoryProvider)
           .create(
             agentId: user.uid,
-            agentName: agentName.isNotEmpty ? agentName : user.displayName ?? '',
+            agentName:
+                agentName.isNotEmpty ? agentName : user.displayName ?? '',
             agentEmail: profile?.email ?? user.email ?? '',
             brokerageName: profile?.brokerageName ?? '',
-            buyerName: displayBuyerName.isNotEmpty ? displayBuyerName : user.email ?? '',
+            buyerName:
+                displayBuyerName.isNotEmpty
+                    ? displayBuyerName
+                    : user.email ?? '',
             buyerEmail: _buyerEmailCtrl.text.trim(),
             propertyScope: 'Wisconsin',
             compensation: commission,
@@ -204,24 +192,15 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
               'term_start': _termStart.toIso8601String(),
               'term_end': _termEnd.toIso8601String(),
               'commission': _commissionCtrl.text.trim(),
-              'commission_2': _commission2Ctrl.text.trim(),
-              'commission_3': _commission3Ctrl.text.trim(),
               'other_compensation': _otherCompCtrl.text.trim(),
-              'other_compensation_2': _otherComp2Ctrl.text.trim(),
               'purchase_price_range': _purchasePriceRangeCtrl.text.trim(),
               'excluded_properties': _excludedPropertiesCtrl.text.trim(),
-              'excluded_properties_2': _excludedProperties2Ctrl.text.trim(),
-              'excluded_properties_prior': _excludedPropertiesPriorCtrl.text.trim(),
-              'excluded_properties_prior_2': _excludedPropertiesPrior2Ctrl.text.trim(),
+              'excluded_properties_prior':
+                  _excludedPropertiesPriorCtrl.text.trim(),
               'exclusion_date': _exclusionDateCtrl.text.trim(),
               'confidential_info': _confidentialCtrl.text.trim(),
-              'confidential_info_2': _confidential2Ctrl.text.trim(),
-              'confidential_info_3': _confidential3Ctrl.text.trim(),
               'non_confidential': _nonConfidentialCtrl.text.trim(),
-              'non_confidential_2': _nonConfidential2Ctrl.text.trim(),
-              'non_confidential_3': _nonConfidential3Ctrl.text.trim(),
               'additional_provisions': _additionalProvisionsCtrl.text.trim(),
-              'additional_provisions_2': _additionalProvisions2Ctrl.text.trim(),
             },
           );
 
@@ -295,17 +274,18 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
                   style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(52),
                   ),
-                  child: _saving
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(
-                          _step < _totalSteps - 1
-                              ? 'Next'
-                              : 'Proceed to signatures',
-                        ),
+                  child:
+                      _saving
+                          ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                          : Text(
+                            _step < _totalSteps - 1
+                                ? 'Next'
+                                : 'Proceed to signatures',
+                          ),
                 ),
               ],
             ),
@@ -336,7 +316,9 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
             style: Theme.of(context)
                 .textTheme
                 .bodySmall
-                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                ?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
           ),
           const SizedBox(height: 24),
           TextField(
@@ -383,7 +365,9 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
             style: Theme.of(context)
                 .textTheme
                 .bodySmall
-                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                ?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
           ),
           CheckboxListTile(
             contentPadding: EdgeInsets.zero,
@@ -616,57 +600,38 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
             style: Theme.of(context)
                 .textTheme
                 .bodySmall
-                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                ?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
           ),
           const SizedBox(height: 20),
-          Text('Commission', style: Theme.of(context).textTheme.labelLarge),
+          Text('Commission *', style: Theme.of(context).textTheme.labelLarge),
           const SizedBox(height: 8),
           TextField(
             controller: _commissionCtrl,
-            textInputAction: TextInputAction.next,
+            maxLines: 3,
             autofocus: true,
+            textCapitalization: TextCapitalization.sentences,
             decoration: const InputDecoration(
-              labelText: 'Commission line 1 *',
               hintText: 'e.g. 2.5% of purchase price',
               border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _commission2Ctrl,
-            textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(
-              labelText: 'Commission line 2 (optional)',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _commission3Ctrl,
-            textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(
-              labelText: 'Commission line 3 (optional)',
-              border: OutlineInputBorder(),
+              alignLabelWithHint: true,
             ),
           ),
           const SizedBox(height: 20),
-          Text('Other compensation', style: Theme.of(context).textTheme.labelLarge),
+          Text(
+            'Other compensation',
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
           const SizedBox(height: 8),
           TextField(
             controller: _otherCompCtrl,
-            textInputAction: TextInputAction.next,
+            maxLines: 2,
+            textCapitalization: TextCapitalization.sentences,
             decoration: const InputDecoration(
-              labelText: 'Other compensation line 1 (optional)',
+              hintText: 'Optional',
               border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _otherComp2Ctrl,
-            textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(
-              labelText: 'Other compensation line 2 (optional)',
-              border: OutlineInputBorder(),
+              alignLabelWithHint: true,
             ),
           ),
           const SizedBox(height: 20),
@@ -679,8 +644,7 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
             controller: _purchasePriceRangeCtrl,
             textInputAction: TextInputAction.done,
             decoration: const InputDecoration(
-              labelText: "Buyer's target price range (optional)",
-              hintText: 'e.g. \$300,000 – \$400,000',
+              hintText: 'e.g. \$300,000 – \$400,000 (optional)',
               border: OutlineInputBorder(),
             ),
           ),
@@ -708,27 +672,25 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
             style: Theme.of(context)
                 .textTheme
                 .bodySmall
-                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                ?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
           ),
           const SizedBox(height: 20),
-          Text('Excluded properties', style: Theme.of(context).textTheme.labelLarge),
+          Text(
+            'Excluded properties',
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
           const SizedBox(height: 8),
           TextField(
             controller: _excludedPropertiesCtrl,
-            textInputAction: TextInputAction.next,
+            maxLines: 2,
             autofocus: true,
+            textCapitalization: TextCapitalization.sentences,
             decoration: const InputDecoration(
-              labelText: 'Line 1 (optional)',
+              hintText: 'Optional',
               border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _excludedProperties2Ctrl,
-            textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(
-              labelText: 'Line 2 (optional)',
-              border: OutlineInputBorder(),
+              alignLabelWithHint: true,
             ),
           ),
           const SizedBox(height: 20),
@@ -739,19 +701,12 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
           const SizedBox(height: 8),
           TextField(
             controller: _excludedPropertiesPriorCtrl,
-            textInputAction: TextInputAction.next,
+            maxLines: 2,
+            textCapitalization: TextCapitalization.sentences,
             decoration: const InputDecoration(
-              labelText: 'Line 1 (optional)',
+              hintText: 'Optional',
               border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _excludedPropertiesPrior2Ctrl,
-            textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(
-              labelText: 'Line 2 (optional)',
-              border: OutlineInputBorder(),
+              alignLabelWithHint: true,
             ),
           ),
           const SizedBox(height: 20),
@@ -764,8 +719,7 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
             controller: _exclusionDateCtrl,
             textInputAction: TextInputAction.done,
             decoration: const InputDecoration(
-              labelText: 'Date (optional)',
-              hintText: 'e.g. 12/31/2025',
+              hintText: 'e.g. 12/31/2025 (optional)',
               border: OutlineInputBorder(),
             ),
           ),
@@ -793,65 +747,41 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
             style: Theme.of(context)
                 .textTheme
                 .bodySmall
-                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                ?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
           ),
           const SizedBox(height: 20),
-          Text('Confidential information', style: Theme.of(context).textTheme.labelLarge),
+          Text(
+            'Confidential information',
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
           const SizedBox(height: 8),
           TextField(
             controller: _confidentialCtrl,
-            textInputAction: TextInputAction.next,
+            maxLines: 3,
             autofocus: true,
+            textCapitalization: TextCapitalization.sentences,
             decoration: const InputDecoration(
-              labelText: 'Line 1 (optional)',
+              hintText: 'Optional',
               border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _confidential2Ctrl,
-            textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(
-              labelText: 'Line 2 (optional)',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _confidential3Ctrl,
-            textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(
-              labelText: 'Line 3 (optional)',
-              border: OutlineInputBorder(),
+              alignLabelWithHint: true,
             ),
           ),
           const SizedBox(height: 20),
-          Text('Non-confidential information', style: Theme.of(context).textTheme.labelLarge),
+          Text(
+            'Non-confidential information',
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
           const SizedBox(height: 8),
           TextField(
             controller: _nonConfidentialCtrl,
-            textInputAction: TextInputAction.next,
+            maxLines: 3,
+            textCapitalization: TextCapitalization.sentences,
             decoration: const InputDecoration(
-              labelText: 'Line 1 (optional)',
+              hintText: 'Optional',
               border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _nonConfidential2Ctrl,
-            textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(
-              labelText: 'Line 2 (optional)',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _nonConfidential3Ctrl,
-            textInputAction: TextInputAction.done,
-            decoration: const InputDecoration(
-              labelText: 'Line 3 (optional)',
-              border: OutlineInputBorder(),
+              alignLabelWithHint: true,
             ),
           ),
         ],
@@ -878,30 +808,17 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
             style: Theme.of(context)
                 .textTheme
                 .bodySmall
-                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                ?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
           ),
           const SizedBox(height: 20),
           TextField(
             controller: _additionalProvisionsCtrl,
-            maxLines: 4,
+            maxLines: 6,
             autofocus: true,
             textCapitalization: TextCapitalization.sentences,
-            textInputAction: TextInputAction.next,
             decoration: const InputDecoration(
-              labelText: 'Line 1 (optional)',
-              hintText: 'Leave blank if none.',
-              border: OutlineInputBorder(),
-              alignLabelWithHint: true,
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _additionalProvisions2Ctrl,
-            maxLines: 4,
-            textCapitalization: TextCapitalization.sentences,
-            textInputAction: TextInputAction.done,
-            decoration: const InputDecoration(
-              labelText: 'Line 2 (optional)',
               hintText: 'Leave blank if none.',
               border: OutlineInputBorder(),
               alignLabelWithHint: true,
@@ -938,14 +855,14 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
   }
 
   String _stepTitle(int step) => switch (step) {
-        0 => 'Buyer info',
-        1 => 'Firm representation',
-        2 => 'Co-buyer',
-        3 => 'Agreement term',
-        4 => 'Compensation',
-        5 => 'Excluded properties',
-        6 => 'Confidential info',
-        7 => 'Additional provisions',
-        _ => 'New agreement',
-      };
+    0 => 'Buyer info',
+    1 => 'Firm representation',
+    2 => 'Co-buyer',
+    3 => 'Agreement term',
+    4 => 'Compensation',
+    5 => 'Excluded properties',
+    6 => 'Confidential info',
+    7 => 'Additional provisions',
+    _ => 'New agreement',
+  };
 }
