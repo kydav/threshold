@@ -118,4 +118,9 @@ final profileLoaderProvider = Provider<void>((ref) {
 });
 
 // Supported states — add more as forms are sourced
-const List<String> kSupportedStates = ['Colorado', 'Oklahoma', 'Wisconsin'];
+const List<String> kSupportedStates = [
+  'Colorado',
+  'Louisiana',
+  'Oklahoma',
+  'Wisconsin',
+];

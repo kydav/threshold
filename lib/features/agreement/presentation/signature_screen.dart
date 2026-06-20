@@ -13,6 +13,7 @@ import 'package:threshold/features/agreement/data/agreement_model.dart';
 import 'package:threshold/features/agreement/data/agreement_repository.dart';
 import 'package:threshold/features/agreement/data/colorado_form_data.dart';
 import 'package:threshold/features/agreement/data/colorado_pdf_service.dart';
+import 'package:threshold/features/agreement/data/louisiana_pdf_service.dart';
 import 'package:threshold/features/agreement/data/oklahoma_pdf_service.dart';
 import 'package:threshold/features/agreement/data/pdf_service.dart';
 import 'package:threshold/features/agreement/data/wisconsin_pdf_service.dart';
@@ -144,6 +145,16 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
               buyer2SignatureBytes: buyer2Bytes,
               autoEmail: _autoEmail,
             );
+      } else if (_agreement!.formState == 'Louisiana') {
+        path = await ref
+            .read(louisianaPdfServiceProvider)
+            .generate(
+              agreement: _agreement!,
+              agentSignatureBytes: agentBytes,
+              buyerSignatureBytes: buyerBytes,
+              buyer2SignatureBytes: buyer2Bytes,
+              autoEmail: _autoEmail,
+            );
       } else if (_agreement!.formState == 'Oklahoma') {
         path = await ref
             .read(oklahomaPdfServiceProvider)
@@ -200,6 +211,15 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
         }
         await ref.read(agreementListProvider.notifier).refresh();
         if (mounted) context.go('/agreements');
+      }
+    } on Exception catch (e) {
+      debugPrint('Error generating PDF: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to generate PDF. Please try again.'),
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _processing = false);
