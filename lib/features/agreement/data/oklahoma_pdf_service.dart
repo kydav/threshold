@@ -56,123 +56,102 @@ class OklahomaPdfService {
     final postTermDays = fd['postTerminationDays'] as String? ?? '60';
     final postExpDays = fd['postExpirationDays'] as String? ?? '60';
 
-    final agentLicense = fd['agentLicenseNumber'] as String? ?? '';
-    final brokerageLicense = fd['brokerageLicenseNumber'] as String? ?? '';
+    final agentLicenseNumber = fd['agentLicenseNumber'] as String? ?? '';
+    final brokerageLicenseNumber = fd['brokerageLicenseNumber'] as String? ?? '';
     final managingBrokerName = fd['managingBrokerName'] as String? ?? '';
     final managingBrokerPhone = fd['managingBrokerPhone'] as String? ?? '';
     final managingBrokerEmail = fd['managingBrokerEmail'] as String? ?? '';
     final additionalProvisions = fd['additionalProvisions'] as String? ?? '';
+    final agentPhone = fd['agentPhone'] as String? ?? '';
+    final brokerageAddress = fd['brokerageAddress'] as String? ?? '';
 
-    // ── Section 5 – Duration ─────────────────────────────────────────────────
-    // Start date: "entered into this _[day]_ day of _[month]_, 20_[year]_"
-    // Field 35 = start day (best guess), 34 = start month (confirmed),
-    // 33 = start year (best guess).
-    _setText(form, 'Text Field 35', _dayFmt.format(start));
-    _setText(form, 'Text Field 34', _monthFmt.format(start));
-    _setText(form, 'Text Field 33', _yearFmt.format(start));
-    // End date: "expire on the _[day]_ day of _[month]_, 20_[year]_"
-    // Field 38 = end day (confirmed), 35 = end month (best guess),
-    // 36 = end year (confirmed).
-    // NOTE: TF35 is shared with start day above — last write wins (end month).
-    // Both start-day and end-month cannot be filled simultaneously with this
-    // PDF's field names; a future PDF revision could split them.
-    _setText(form, 'Text Field 38', _dayFmt.format(end));
-    _setText(form, 'Text Field 36', _yearFmt.format(end));
-    // End month uses TF35, overwriting start day written above.
-    _setText(form, 'Text Field 35', _monthFmt.format(end));
+    // ── Section 5 – Duration (page 1) ────────────────────────────────────────
+    // Date(day/month/year) is a shared field reused on pages 1, 3, and 4 for
+    // the agreement entry date, buyer/broker execution dates, and disclosure
+    // receipt date. All show the same value — use the agreement start date.
+    _setText(form, 'Date(day)', _dayFmt.format(start));
+    _setText(form, 'Date(month)', _monthFmt.format(start));
+    _setText(form, 'Date(Last two digits year)', _yearFmt.format(start));
+    _setText(form, 'Expiration Day', _dayFmt.format(end));
+    _setText(form, 'Expiration Month', _monthFmt.format(end));
+    _setText(form, 'Expiration last two digits of year', _yearFmt.format(end));
 
     // ── Section 6 – Termination tail ─────────────────────────────────────────
-    _setText(form, 'Text Field 37', postTermDays.isEmpty ? '60' : postTermDays);
+    _setText(
+      form,
+      'days after expiration termination',
+      postTermDays.isEmpty ? '60' : postTermDays,
+    );
 
     // ── Section 7 – Compensation ─────────────────────────────────────────────
     final isTypeA = compType == 'percentage' || compType == 'dollar';
     final isTypeB = retainer.isNotEmpty;
     final isTypeC = compType == 'other';
 
-    _setCheckbox(form, 'Check Box 19', isTypeA);
-    if (compType == 'dollar') {
-      _setText(form, 'Text Field 39', compValue);
-    } else if (compType == 'percentage') {
-      _setText(form, 'Text Field 40', compValue);
+    _setCheckbox(form, 'Compensation checkbox', isTypeA);
+    if (compType == 'dollar') _setText(form, 'compensation amount', compValue);
+    if (compType == 'percentage') {
+      _setText(form, 'compensation percentage', compValue);
     }
 
-    _setCheckbox(form, 'Check Box 20', isTypeB);
-    if (isTypeB) _setText(form, 'Text Field 42', retainer);
+    _setCheckbox(form, 'checkbox_28kprp', isTypeB);
+    if (isTypeB) _setText(form, 'retainer fee amount', retainer);
 
-    if (isTypeC) _setText(form, 'Text Field 43', otherComp);
+    _setCheckbox(form, 'compensation other checkbox', isTypeC);
+    if (isTypeC) _setText(form, 'other compensation', otherComp);
 
     _setText(
       form,
-      'Text Field 41',
+      'compensation execution days',
       postExpDays.isEmpty ? '60' : postExpDays,
     );
 
-    // ── Section 15 – Additional provisions ───────────────────────────────────
-    final provLines = _lines(additionalProvisions, 3);
-    _setText(form, 'Text Field 52', provLines[0]);
-    _setText(form, 'Text Field 49', provLines[1]);
-    _setText(form, 'Text Field 50', provLines[2]);
+    // ── Section 15 – Additional provisions (page 3) ───────────────────────────
+    final provLines = _lines(additionalProvisions, 4);
+    _setText(form, 'additional provisions line 1', provLines[0]);
+    _setText(form, 'additional provisions line 2', provLines[1]);
+    _setText(form, 'additional provisions line 3', provLines[2]);
+    _setText(form, 'additional provisions line 4', provLines[3]);
 
-    // ── Buyer execution date (today) ──────────────────────────────────────────
-    // Fields: 54 = day (best guess), 53 = month (best guess), 51 = year.
-    _setText(form, 'Text Field 54', _dayFmt.format(now));
-    _setText(form, 'Text Field 53', _monthFmt.format(now));
-    _setText(form, 'Text Field 51', _yearFmt.format(now));
+    // ── Buyer 1 (page 3) ─────────────────────────────────────────────────────
+    _setText(form, 'buyer 1 name', buyer1Name);
+    _setText(form, 'buyer 1 email', buyer1Email);
+    _setText(form, 'buyer 1 cell phone', buyer1Cell);
+    _setText(form, 'buyer 1 work phone', buyer1Work);
+    _setText(form, 'buyer 1 initials', _initials(buyer1Name));
 
-    // ── Buyer 1 ───────────────────────────────────────────────────────────────
-    _setText(form, 'Text Field 57', buyer1Name);
-    _setText(form, 'Text Field 61', buyer1Email);
-    _setText(form, 'Text Field 63', buyer1Cell);
-    _setText(form, 'Text Field 77', buyer1Work);
-
-    // ── Buyer 2 (co-buyer) ────────────────────────────────────────────────────
+    // ── Buyer 2 (page 3) ─────────────────────────────────────────────────────
     if (hasCoBuyer) {
-      _setText(form, 'Text Field 56', buyer2Name);
-      _setText(form, 'Text Field 60', buyer2Email);
-      _setText(form, 'Text Field 62', buyer2Cell);
-      _setText(form, 'Text Field 76', buyer2Work);
+      _setText(form, 'buyer 2 name', buyer2Name);
+      _setText(form, 'buyer 2 email', buyer2Email);
+      _setText(form, 'buyer 2 cell phone', buyer2Cell);
+      _setText(form, 'buyer 2 work phone', buyer2Work);
+      _setText(form, 'buyer 2 initials', _initials(buyer2Name));
     }
 
-    // ── Broker execution date (today) ─────────────────────────────────────────
-    // Fields: 65 = month (confirmed), 64 = year (confirmed). Day unknown.
-    _setText(form, 'Text Field 65', _monthFmt.format(now));
-    _setText(form, 'Text Field 64', _yearFmt.format(now));
-
-    // ── Broker / agent info ───────────────────────────────────────────────────
-    final agentPhone = fd['agentPhone'] as String? ?? '';
-    final brokerageAddress = fd['brokerageAddress'] as String? ?? '';
-
-    _setText(form, 'Text Field 69', agreement.agentName);
-    _setText(form, 'Text Field 68', agentLicense);
-    _setText(form, 'Text Field 71', agentPhone);
-    _setText(form, 'Text Field 70', agreement.agentEmail);
-    _setText(form, 'Text Field 73', agreement.brokerageName);
-    _setText(form, 'Text Field 72', managingBrokerName);
-    _setText(form, 'Text Field 75', brokerageLicense);
-    _setText(form, 'Text Field 74', managingBrokerPhone);
-    _setText(form, 'Text Field 79', brokerageAddress);
-    _setText(form, 'Text Field 78', managingBrokerEmail);
-
-    // ── Signatures ────────────────────────────────────────────────────────────
-    // Text Field 59 = buyer 1 signature line (drawn over the field bounds).
-    // Text Field 58 = buyer 2 signature line.
-    // Text Field 67 = broker/associate signature line.
-    _drawSignature(doc, form, 'Text Field 59', buyerSignatureBytes);
-    _drawSignature(doc, form, 'Text Field 67', agentSignatureBytes);
-    if (hasCoBuyer && buyer2SignatureBytes != null) {
-      _drawSignature(doc, form, 'Text Field 58', buyer2SignatureBytes);
-    }
+    // ── Agent / broker info (page 3) ─────────────────────────────────────────
+    _setText(form, 'agent name', agreement.agentName);
+    _setText(form, 'agent cell phone', agentPhone);
+    _setText(form, 'agent email address', agreement.agentEmail);
+    _setText(form, 'agent license number', agentLicenseNumber);
+    _setText(form, 'brokerage name', agreement.brokerageName);
+    _setText(form, 'brokerage license number', brokerageLicenseNumber);
+    _setText(form, 'brokerage office address', brokerageAddress);
+    _setText(form, 'name of managing broker', managingBrokerName);
+    _setText(form, 'managing broker office number', managingBrokerPhone);
+    _setText(form, 'managing broker email', managingBrokerEmail);
 
     // ── Disclosure page (page 4) ──────────────────────────────────────────────
-    // Mark "Buyer Brokerage Agreement" checkbox.
-    _setCheckbox(form, 'Check Box 22', true);
-    // Disclosure receipt date.
-    _setText(form, 'Text Field 87', _dayFmt.format(now));
-    _setText(form, 'Text Field 88', _monthFmt.format(now));
-    _setText(form, 'Text Field 89', _yearFmt.format(now));
-    // Buyer printed names.
-    _setText(form, 'Text Field 83', buyer1Name);
-    if (hasCoBuyer) _setText(form, 'Text Field 84', buyer2Name);
+    _setCheckbox(form, 'buyer broker attach check', true);
+
+    // ── Signatures (drawn on page 3, index 2) ────────────────────────────────
+    // buyer 1 / 2 signature fields also have a widget on page 4, but drawing
+    // on page 3 covers the primary execution block.
+    _drawSignature(doc, form, 'buyer 1 signature', buyerSignatureBytes);
+    _drawSignature(doc, form, 'agent signature', agentSignatureBytes);
+    if (hasCoBuyer && buyer2SignatureBytes != null) {
+      _drawSignature(doc, form, 'buyer 2 signature', buyer2SignatureBytes);
+    }
 
     // ── Flatten all fields ────────────────────────────────────────────────────
     for (int i = 0; i < form.fields.count; i++) {
@@ -184,8 +163,7 @@ class OklahomaPdfService {
 
     final dir = await getApplicationDocumentsDirectory();
     final safeName = agreement.buyerName.replaceAll(RegExp('[^a-zA-Z0-9]'), '_');
-    final filename =
-        'OK_BBSA_${safeName}_${agreement.id.substring(0, 8)}.pdf';
+    final filename = 'OK_BBSA_${safeName}_${agreement.id.substring(0, 8)}.pdf';
     final file = File('${dir.path}/$filename');
     await file.writeAsBytes(savedBytes);
     final localPath = file.path;
@@ -225,6 +203,13 @@ class OklahomaPdfService {
     );
   }
 
+  String _initials(String name) {
+    final parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty || parts.first.isEmpty) return '';
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
+  }
+
   PdfField? _find(PdfForm form, String name) {
     for (int i = 0; i < form.fields.count; i++) {
       if (form.fields[i].name == name) return form.fields[i];
@@ -257,8 +242,7 @@ class OklahomaPdfService {
       if (f == null) return;
       final bounds = f.bounds;
       final image = PdfBitmap(imageBytes);
-      // Signatures are on page 3 (index 2).
-      final page = doc.pages[2];
+      final page = doc.pages[2]; // signatures are on page 3 (0-indexed)
       page.graphics.drawImage(
         image,
         Rect.fromLTWH(bounds.left, bounds.top, bounds.width, bounds.height),
