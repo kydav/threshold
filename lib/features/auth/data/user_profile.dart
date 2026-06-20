@@ -77,24 +77,24 @@ final userProfileProvider = StateProvider<UserProfile?>((_) => null);
 /// [userProfileProvider] — handles app restarts where Firebase silently
 /// restores an existing session without going through the login screen.
 final profileLoaderProvider = Provider<void>((ref) {
-  ref.listen<AsyncValue<dynamic>>(
-    currentUserProvider,
-    (_, next) {
-      final uid = next.valueOrNull?.uid as String?;
-      if (uid != null) {
-        ref.read(dataServiceProvider).getUserProfile(uid).then((profile) {
-          ref.read(userProfileProvider.notifier).state = profile;
-        }).catchError((e) {
-          debugPrint('profileLoaderProvider: failed to load profile — $e');
-        });
-      } else if (next.hasValue) {
-        // Definitive null = logged out; clear the cached profile.
-        ref.read(userProfileProvider.notifier).state = null;
-      }
-    },
-    fireImmediately: true,
-  );
+  ref.listen<AsyncValue<dynamic>>(currentUserProvider, (_, next) {
+    final uid = next.valueOrNull?.uid as String?;
+    if (uid != null) {
+      ref
+          .read(dataServiceProvider)
+          .getUserProfile(uid)
+          .then((profile) {
+            ref.read(userProfileProvider.notifier).state = profile;
+          })
+          .catchError((e) {
+            debugPrint('profileLoaderProvider: failed to load profile — $e');
+          });
+    } else if (next.hasValue) {
+      // Definitive null = logged out; clear the cached profile.
+      ref.read(userProfileProvider.notifier).state = null;
+    }
+  }, fireImmediately: true);
 });
 
 // Supported states — add more as forms are sourced
-const List<String> kSupportedStates = ['Colorado', 'Oklahoma'];
+const List<String> kSupportedStates = ['Colorado', 'Oklahoma', 'Wisconsin'];

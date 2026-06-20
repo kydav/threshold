@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:threshold/core/services/analytics_service.dart';
 import 'package:threshold/core/services/data_service.dart';
 import 'package:threshold/features/auth/data/auth_service.dart';
 import 'package:threshold/features/auth/data/user_profile.dart';
@@ -63,7 +66,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     return null;
   }
 
-  void _next() {
+  Future<void> _next() async {
     final err = _validateStep();
     if (err != null) {
       setState(() => _error = err);
@@ -72,13 +75,27 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     setState(() => _error = null);
     if (_step == 0) {
       setState(() => _step = 1);
-      _pageController.animateToPage(
+      unawaited(_pageController.animateToPage(
         1,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
-      );
+      ));
     } else {
-      _submit();
+      // Show a notice for agents in states without a digital form workflow,
+      // but still proceed with account creation after they dismiss.
+      final selectedState = _state ?? '';
+      if (!kSupportedStates.contains(selectedState)) {
+        if (!mounted) return;
+        await showModalBottomSheet<void>(
+          context: context,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          builder: (_) => _UnsupportedStateSheet(state: selectedState),
+        );
+        if (!mounted) return;
+      }
+      unawaited(_submit());
     }
   }
 
@@ -129,6 +146,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       // completed and got null. The notifier is provider-scoped so this is
       // safe after widget disposal.
       profileNotifier.state = profile;
+      AnalyticsService.signUp(state: state);
     } on Exception catch (e) {
       debugPrint('signup _submit error: $e');
       if (mounted) setState(() => _error = _friendlyError(e.toString()));
@@ -248,5 +266,58 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       return 'Password is too weak. Use at least 6 characters.';
     }
     return 'Sign-up failed. Please try again.';
+  }
+}
+
+class _UnsupportedStateSheet extends StatelessWidget {
+  const _UnsupportedStateSheet({required this.state});
+  final String state;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Forms coming soon for $state',
+            style: Theme.of(context)
+                .textTheme
+                .titleLarge
+                ?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          Text.rich(
+            TextSpan(
+              style: Theme.of(context).textTheme.bodyMedium,
+              children: const [
+                TextSpan(
+                  text:
+                      'We currently have digital form workflows for Colorado and Wisconsin. '
+                      'Have your local board or state association contact ',
+                ),
+                TextSpan(
+                  text: 'hello@auaha.app',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                TextSpan(text: ' to add support for your state.'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(48),
+              backgroundColor: cs.primary,
+            ),
+            child: const Text('Got it'),
+          ),
+        ],
+      ),
+    );
   }
 }

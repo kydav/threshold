@@ -1,11 +1,12 @@
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:syncfusion_flutter_signaturepad/signaturepad.dart';
 import 'package:threshold/core/config/revenue_cat_config.dart';
+import 'package:threshold/core/services/analytics_service.dart';
 import 'package:threshold/core/services/data_service.dart';
 import 'package:threshold/core/services/subscription_service.dart';
 import 'package:threshold/features/agreement/data/agreement_model.dart';
@@ -14,6 +15,7 @@ import 'package:threshold/features/agreement/data/colorado_form_data.dart';
 import 'package:threshold/features/agreement/data/colorado_pdf_service.dart';
 import 'package:threshold/features/agreement/data/oklahoma_pdf_service.dart';
 import 'package:threshold/features/agreement/data/pdf_service.dart';
+import 'package:threshold/features/agreement/data/wisconsin_pdf_service.dart';
 import 'package:threshold/features/auth/data/user_profile.dart';
 import 'package:threshold/features/paywall/presentation/paywall_screen.dart';
 
@@ -55,12 +57,18 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
     if (_agreement!.formState == 'Colorado') {
       return ColoradoFormData.fromJson(_agreement!.formData).hasCoBuyer;
     }
+    if (_agreement!.formState == 'Wisconsin') {
+      return (_agreement!.formData['has_co_buyer'] as bool?) ?? false;
+    }
     return (_agreement!.formData['buyer2Name'] as String? ?? '').isNotEmpty;
   }
 
   String get _buyerDisplayName {
     if (_agreement == null) return '';
-    final buyer1 = _agreement!.formData['buyer1Name'] as String?;
+    // Colorado uses buyer1Name; Wisconsin uses buyer_name
+    final buyer1 =
+        _agreement!.formData['buyer1Name'] as String? ??
+        _agreement!.formData['buyer_name'] as String?;
     if (buyer1 != null && buyer1.isNotEmpty) return buyer1;
     return _agreement!.buyerName;
   }
@@ -69,6 +77,9 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
     if (_agreement == null) return 'Co-buyer';
     if (_agreement!.formState == 'Colorado') {
       return ColoradoFormData.fromJson(_agreement!.formData).buyer2Name;
+    }
+    if (_agreement!.formState == 'Wisconsin') {
+      return _agreement!.formData['buyer_name_2'] as String? ?? 'Co-buyer';
     }
     return _agreement!.formData['buyer2Name'] as String? ?? 'Co-buyer';
   }
@@ -84,7 +95,7 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
 
     final isPro =
         !kPaywallEnabled || ref.read(subscriptionProvider.notifier).isProActive;
-    if (!isPro) {
+    if (!isPro && !kDebugMode) {
       final profile = ref.read(userProfileProvider);
       final sentCount = profile?.agreementsSent ?? 0;
       if (sentCount >= kFreeAgreementLimit && mounted) {
@@ -143,6 +154,16 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
               buyer2SignatureBytes: buyer2Bytes,
               autoEmail: _autoEmail,
             );
+      } else if (_agreement!.formState == 'Wisconsin') {
+        path = await ref
+            .read(wisconsinPdfServiceProvider)
+            .generate(
+              agreement: _agreement!,
+              agentSignatureBytes: agentBytes,
+              buyerSignatureBytes: buyerBytes,
+              buyer2SignatureBytes: buyer2Bytes,
+              autoEmail: _autoEmail,
+            );
       } else {
         path = await ref
             .read(pdfServiceProvider)
@@ -156,6 +177,7 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
       }
 
       if (path != null && mounted) {
+        AnalyticsService.pdfGenerated(formState: _agreement!.formState);
         // Persist agreement count to Firestore so it survives reinstalls.
         final uid = _agreement!.agentId;
         await ref.read(dataServiceProvider).incrementAgreementsSent(uid);

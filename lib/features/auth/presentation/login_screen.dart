@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:threshold/core/services/analytics_service.dart';
 import 'package:threshold/features/auth/data/auth_service.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -39,6 +40,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     try {
       await authService.signIn(email: email, password: password);
+      AnalyticsService.login();
       // profileLoaderProvider watches auth state and auto-loads the profile.
     } on Exception catch (e) {
       if (mounted) setState(() => _error = _friendlyError(e.toString()));

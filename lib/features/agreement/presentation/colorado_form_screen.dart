@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import 'package:threshold/core/services/analytics_service.dart';
 import 'package:threshold/features/agreement/data/agreement_repository.dart';
 import 'package:threshold/features/agreement/data/colorado_form_data.dart';
 import 'package:threshold/features/auth/data/user_profile.dart';
@@ -224,6 +225,7 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
             formData: coData.toJson(),
           );
 
+      AnalyticsService.formSubmitted(formState: 'Colorado');
       if (mounted) context.go('/agreements/${agreement.id}/sign');
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -236,83 +238,85 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
     final keyboard = MediaQuery.of(context).viewInsets.bottom;
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, _) { if (!didPop) _back(); },
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _back();
+      },
       child: Scaffold(
-      resizeToAvoidBottomInset: true,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: _back,
-        ),
-        title: Text(_stepTitle(_step)),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(4),
-          child: LinearProgressIndicator(
-            value: (_step + 1) / _totalSteps,
-            backgroundColor: cs.surfaceContainerHighest,
-            color: cs.primary,
+        resizeToAvoidBottomInset: true,
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: _back,
+          ),
+          title: Text(_stepTitle(_step)),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(4),
+            child: LinearProgressIndicator(
+              value: (_step + 1) / _totalSteps,
+              backgroundColor: cs.surfaceContainerHighest,
+              color: cs.primary,
+            ),
           ),
         ),
-      ),
-      body: PageView(
-        controller: _pageController,
-        physics: const NeverScrollableScrollPhysics(),
-        children: [
-          _buyerNameStep(),
-          _contactStep(),
-          _addressStep(),
-          _textStep(
-            prompt: 'What property are you showing?',
-            controller: _propertyCtrl,
-            hint:
-                'e.g. 123 Main St, Denver CO 80203\nor "Any residential property in Denver metro"',
-            maxLines: 3,
-            keyboardType: TextInputType.multiline,
-            capitalize: TextCapitalization.sentences,
-          ),
-          _compensationStep(),
-          _datesStep(),
-          _legalStep(),
-        ],
-      ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(20, 8, 20, 16 + keyboard),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (_stepError != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(
-                    _stepError!,
-                    style: TextStyle(color: cs.error, fontSize: 13),
-                    textAlign: TextAlign.center,
+        body: PageView(
+          controller: _pageController,
+          physics: const NeverScrollableScrollPhysics(),
+          children: [
+            _buyerNameStep(),
+            _contactStep(),
+            _addressStep(),
+            _textStep(
+              prompt: 'What property are you showing?',
+              controller: _propertyCtrl,
+              hint:
+                  'e.g. 123 Main St, Denver CO 80203\nor "Any residential property in Denver metro"',
+              maxLines: 3,
+              keyboardType: TextInputType.multiline,
+              capitalize: TextCapitalization.sentences,
+            ),
+            _compensationStep(),
+            _datesStep(),
+            _legalStep(),
+          ],
+        ),
+        bottomNavigationBar: SafeArea(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(20, 8, 20, 16 + keyboard),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_stepError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      _stepError!,
+                      style: TextStyle(color: cs.error, fontSize: 13),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
+                FilledButton(
+                  onPressed: _saving ? null : _next,
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(52),
+                  ),
+                  child:
+                      _saving
+                          ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                          : Text(
+                            _step < _totalSteps - 1
+                                ? 'Next'
+                                : 'Proceed to signatures',
+                          ),
                 ),
-              FilledButton(
-                onPressed: _saving ? null : _next,
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(52),
-                ),
-                child:
-                    _saving
-                        ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                        : Text(
-                          _step < _totalSteps - 1
-                              ? 'Next'
-                              : 'Proceed to signatures',
-                        ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
-    ),
     );
   }
 
