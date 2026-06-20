@@ -204,6 +204,11 @@ class _OklahomaFormScreenState extends ConsumerState<OklahomaFormScreen> {
               'managingBrokerPhone': _managingBrokerPhoneCtrl.text.trim(),
               'managingBrokerEmail': _managingBrokerEmailCtrl.text.trim(),
               'additionalProvisions': _additionalProvisionsCtrl.text.trim(),
+              // Profile-derived fields stored for PDF service access.
+              'agentPhone': profile?.phone ?? '',
+              'brokerageAddress':
+                  '${profile?.brokerageAddress ?? ''} ${profile?.brokerageCityStateZip ?? ''}'
+                      .trim(),
             },
           );
 
