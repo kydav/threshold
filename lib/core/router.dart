@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:threshold/features/agreement/presentation/colorado_form_screen.dart';
 import 'package:threshold/features/agreement/presentation/form_screen.dart';
 import 'package:threshold/features/agreement/presentation/history_screen.dart';
+import 'package:threshold/features/agreement/presentation/louisiana_form_screen.dart';
 import 'package:threshold/features/agreement/presentation/oklahoma_form_screen.dart';
 import 'package:threshold/features/agreement/presentation/signature_screen.dart';
 import 'package:threshold/features/agreement/presentation/wisconsin_form_screen.dart';
@@ -127,6 +128,7 @@ class _FormRouterState extends ConsumerState<_FormRouter> {
     }
     return switch (profile.state) {
       'Colorado' => const ColoradoFormScreen(),
+      'Louisiana' => const LouisianaFormScreen(),
       'Oklahoma' => const OklahomaFormScreen(),
       //'Utah' => const UtahFormScreen(),
       'Wisconsin' => const WisconsinFormScreen(),
