@@ -20,7 +20,7 @@ class _OklahomaFormScreenState extends ConsumerState<OklahomaFormScreen> {
   bool _saving = false;
   String? _stepError;
 
-  static const int _totalSteps = 6;
+  static const int _totalSteps = 5;
 
   // Step 0 — Buyer name(s)
   final _buyerNameCtrl = TextEditingController();
@@ -47,14 +47,7 @@ class _OklahomaFormScreenState extends ConsumerState<OklahomaFormScreen> {
   final _otherCompCtrl = TextEditingController();
   final _postExpDaysCtrl = TextEditingController(text: '60');
 
-  // Step 4 — Broker/license details (OK-specific, optional)
-  final _agentLicenseCtrl = TextEditingController();
-  final _brokerageLicenseCtrl = TextEditingController();
-  final _managingBrokerNameCtrl = TextEditingController();
-  final _managingBrokerPhoneCtrl = TextEditingController();
-  final _managingBrokerEmailCtrl = TextEditingController();
-
-  // Step 5 — Additional provisions
+  // Step 4 — Additional provisions
   final _additionalProvisionsCtrl = TextEditingController();
 
   static final _dateFmt = DateFormat('MMMM d, yyyy');
@@ -75,11 +68,6 @@ class _OklahomaFormScreenState extends ConsumerState<OklahomaFormScreen> {
     _retainerCtrl.dispose();
     _otherCompCtrl.dispose();
     _postExpDaysCtrl.dispose();
-    _agentLicenseCtrl.dispose();
-    _brokerageLicenseCtrl.dispose();
-    _managingBrokerNameCtrl.dispose();
-    _managingBrokerPhoneCtrl.dispose();
-    _managingBrokerEmailCtrl.dispose();
     _additionalProvisionsCtrl.dispose();
     super.dispose();
   }
@@ -198,11 +186,11 @@ class _OklahomaFormScreenState extends ConsumerState<OklahomaFormScreen> {
               'retainerFee': _retainerCtrl.text.trim(),
               'otherCompensation': _otherCompCtrl.text.trim(),
               'postExpirationDays': _postExpDaysCtrl.text.trim(),
-              'agentLicenseNumber': _agentLicenseCtrl.text.trim(),
-              'brokerageLicenseNumber': _brokerageLicenseCtrl.text.trim(),
-              'managingBrokerName': _managingBrokerNameCtrl.text.trim(),
-              'managingBrokerPhone': _managingBrokerPhoneCtrl.text.trim(),
-              'managingBrokerEmail': _managingBrokerEmailCtrl.text.trim(),
+              'agentLicenseNumber': profile?.agentLicenseNumber ?? '',
+              'brokerageLicenseNumber': profile?.brokerageLicenseNumber ?? '',
+              'managingBrokerName': profile?.managingBrokerName ?? '',
+              'managingBrokerPhone': profile?.managingBrokerPhone ?? '',
+              'managingBrokerEmail': profile?.managingBrokerEmail ?? '',
               'additionalProvisions': _additionalProvisionsCtrl.text.trim(),
               // Profile-derived fields stored for PDF service access.
               'agentPhone': profile?.phone ?? '',
@@ -251,7 +239,6 @@ class _OklahomaFormScreenState extends ConsumerState<OklahomaFormScreen> {
             _contactStep(),
             _termStep(),
             _compensationStep(),
-            _brokerDetailsStep(),
             _additionalProvisionsStep(),
           ],
         ),
@@ -636,89 +623,6 @@ class _OklahomaFormScreenState extends ConsumerState<OklahomaFormScreen> {
     );
   }
 
-  Widget _brokerDetailsStep() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Broker & license details',
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Required on the Oklahoma form signature block. All fields optional.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-          ),
-          const SizedBox(height: 20),
-          TextField(
-            controller: _agentLicenseCtrl,
-            textInputAction: TextInputAction.next,
-            autofocus: true,
-            decoration: const InputDecoration(
-              labelText: "Associate broker license number",
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _brokerageLicenseCtrl,
-            textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(
-              labelText: 'Brokerage license number',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'Managing broker',
-            style: Theme.of(context)
-                .textTheme
-                .titleMedium
-                ?.copyWith(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _managingBrokerNameCtrl,
-            textCapitalization: TextCapitalization.words,
-            textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(
-              labelText: 'Managing broker name',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _managingBrokerPhoneCtrl,
-            keyboardType: TextInputType.phone,
-            textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(
-              labelText: 'Managing broker office telephone',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _managingBrokerEmailCtrl,
-            keyboardType: TextInputType.emailAddress,
-            textInputAction: TextInputAction.done,
-            autocorrect: false,
-            decoration: const InputDecoration(
-              labelText: 'Managing broker email',
-              border: OutlineInputBorder(),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _additionalProvisionsStep() {
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
@@ -862,8 +766,7 @@ class _OklahomaFormScreenState extends ConsumerState<OklahomaFormScreen> {
         1 => 'Contact info',
         2 => 'Agreement term',
         3 => 'Compensation',
-        4 => 'Broker details',
-        5 => 'Additional provisions',
+        4 => 'Additional provisions',
         _ => 'New agreement',
       };
 }

@@ -24,6 +24,11 @@ class BrokerageStep extends StatelessWidget {
     required this.stateCallback,
     required this.multiPersonFirmCallback,
     required this.buyerAgencyCallback,
+    required this.agentLicenseCtrl,
+    required this.brokerageLicenseCtrl,
+    required this.managingBrokerNameCtrl,
+    required this.managingBrokerPhoneCtrl,
+    required this.managingBrokerEmailCtrl,
     super.key,
   });
 
@@ -37,6 +42,11 @@ class BrokerageStep extends StatelessWidget {
   final ValueChanged<String> stateCallback;
   final ValueChanged<bool> multiPersonFirmCallback;
   final ValueChanged<bool> buyerAgencyCallback;
+  final TextEditingController agentLicenseCtrl;
+  final TextEditingController brokerageLicenseCtrl;
+  final TextEditingController managingBrokerNameCtrl;
+  final TextEditingController managingBrokerPhoneCtrl;
+  final TextEditingController managingBrokerEmailCtrl;
 
   @override
   Widget build(BuildContext context) {
@@ -159,6 +169,75 @@ class BrokerageStep extends StatelessWidget {
                   'You assist the transaction without representing either party',
               selected: !isBuyerAgency,
               onTap: () => buyerAgencyCallback(false),
+            ),
+          ],
+          if (state == 'Oklahoma') ...[
+            const SizedBox(height: 24),
+            Text(
+              'Oklahoma license info',
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Pre-filled on every OREC form — no need to enter each time.',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: cs.onSurfaceVariant),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: agentLicenseCtrl,
+              textInputAction: TextInputAction.next,
+              decoration: const InputDecoration(
+                labelText: 'Associate broker license number',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: brokerageLicenseCtrl,
+              textInputAction: TextInputAction.next,
+              decoration: const InputDecoration(
+                labelText: 'Brokerage license number',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Managing broker',
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: managingBrokerNameCtrl,
+              textCapitalization: TextCapitalization.words,
+              textInputAction: TextInputAction.next,
+              decoration: const InputDecoration(
+                labelText: 'Managing broker name',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: managingBrokerPhoneCtrl,
+              keyboardType: TextInputType.phone,
+              textInputAction: TextInputAction.next,
+              decoration: const InputDecoration(
+                labelText: 'Managing broker office telephone',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: managingBrokerEmailCtrl,
+              keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.done,
+              autocorrect: false,
+              decoration: const InputDecoration(
+                labelText: 'Managing broker email',
+                border: OutlineInputBorder(),
+              ),
             ),
           ],
         ],

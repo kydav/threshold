@@ -28,6 +28,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   late final TextEditingController _brokerageNameCtrl;
   late final TextEditingController _brokerageAddressCtrl;
   late final TextEditingController _brokerageCityStateZipCtrl;
+  late final TextEditingController _agentLicenseCtrl;
+  late final TextEditingController _brokerageLicenseCtrl;
+  late final TextEditingController _managingBrokerNameCtrl;
+  late final TextEditingController _managingBrokerPhoneCtrl;
+  late final TextEditingController _managingBrokerEmailCtrl;
   String? _state;
   bool _isMultiPersonFirm = true;
   bool _isBuyerAgency = true;
@@ -51,6 +56,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _brokerageCityStateZipCtrl = TextEditingController(
       text: p?.brokerageCityStateZip ?? '',
     );
+    _agentLicenseCtrl = TextEditingController(text: p?.agentLicenseNumber ?? '');
+    _brokerageLicenseCtrl = TextEditingController(text: p?.brokerageLicenseNumber ?? '');
+    _managingBrokerNameCtrl = TextEditingController(text: p?.managingBrokerName ?? '');
+    _managingBrokerPhoneCtrl = TextEditingController(text: p?.managingBrokerPhone ?? '');
+    _managingBrokerEmailCtrl = TextEditingController(text: p?.managingBrokerEmail ?? '');
     final s = p?.state ?? '';
     _state = s.isEmpty ? null : s;
     _isMultiPersonFirm = p?.isMultiPersonFirm ?? true;
@@ -65,6 +75,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _brokerageNameCtrl.dispose();
     _brokerageAddressCtrl.dispose();
     _brokerageCityStateZipCtrl.dispose();
+    _agentLicenseCtrl.dispose();
+    _brokerageLicenseCtrl.dispose();
+    _managingBrokerNameCtrl.dispose();
+    _managingBrokerPhoneCtrl.dispose();
+    _managingBrokerEmailCtrl.dispose();
     super.dispose();
   }
 
@@ -93,6 +108,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         state: _state ?? '',
         isMultiPersonFirm: _isMultiPersonFirm,
         isBuyerAgency: _isBuyerAgency,
+        agentLicenseNumber: _agentLicenseCtrl.text.trim(),
+        brokerageLicenseNumber: _brokerageLicenseCtrl.text.trim(),
+        managingBrokerName: _managingBrokerNameCtrl.text.trim(),
+        managingBrokerPhone: _managingBrokerPhoneCtrl.text.trim(),
+        managingBrokerEmail: _managingBrokerEmailCtrl.text.trim(),
       );
       await ref.read(dataServiceProvider).updateUserProfile(updated);
       ref.read(userProfileProvider.notifier).state = updated;
@@ -289,6 +309,70 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       .toList(),
               onChanged: (v) => setState(() => _state = v),
             ),
+
+            if (_state == 'Oklahoma') ...[
+              const SizedBox(height: 24),
+              _sectionLabel('Oklahoma license info'),
+              const SizedBox(height: 4),
+              Text(
+                'Pre-filled on every OREC form — no need to enter each time.',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: cs.onSurfaceVariant),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _agentLicenseCtrl,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(
+                  labelText: 'Associate broker license number',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _brokerageLicenseCtrl,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(
+                  labelText: 'Brokerage license number',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              _sectionLabel('Managing broker'),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _managingBrokerNameCtrl,
+                textCapitalization: TextCapitalization.words,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(
+                  labelText: 'Managing broker name',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _managingBrokerPhoneCtrl,
+                keyboardType: TextInputType.phone,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(
+                  labelText: 'Managing broker office telephone',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _managingBrokerEmailCtrl,
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.done,
+                autocorrect: false,
+                decoration: const InputDecoration(
+                  labelText: 'Managing broker email',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
 
             if (_state == 'Colorado') ...[
               const SizedBox(height: 24),

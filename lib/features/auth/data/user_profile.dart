@@ -18,6 +18,11 @@ class UserProfile {
     required this.isMultiPersonFirm,
     this.isBuyerAgency = true,
     this.agreementsSent = 0,
+    this.agentLicenseNumber = '',
+    this.brokerageLicenseNumber = '',
+    this.managingBrokerName = '',
+    this.managingBrokerPhone = '',
+    this.managingBrokerEmail = '',
   });
 
   final String uid;
@@ -32,6 +37,12 @@ class UserProfile {
   final bool isMultiPersonFirm;
   final bool isBuyerAgency;
   final int agreementsSent;
+  // Oklahoma-specific: pre-filled on every OREC form signature block
+  final String agentLicenseNumber;
+  final String brokerageLicenseNumber;
+  final String managingBrokerName;
+  final String managingBrokerPhone;
+  final String managingBrokerEmail;
 
   String get fullName => '$firstName $lastName'.trim();
 
@@ -53,6 +64,11 @@ class UserProfile {
       isMultiPersonFirm: d['isMultiPersonFirm'] as bool? ?? false,
       isBuyerAgency: d['isBuyerAgency'] as bool? ?? true,
       agreementsSent: d['agreementsSent'] as int? ?? 0,
+      agentLicenseNumber: d['agentLicenseNumber'] as String? ?? '',
+      brokerageLicenseNumber: d['brokerageLicenseNumber'] as String? ?? '',
+      managingBrokerName: d['managingBrokerName'] as String? ?? '',
+      managingBrokerPhone: d['managingBrokerPhone'] as String? ?? '',
+      managingBrokerEmail: d['managingBrokerEmail'] as String? ?? '',
     );
   }
 
@@ -67,6 +83,11 @@ class UserProfile {
     'state': state,
     'isMultiPersonFirm': isMultiPersonFirm,
     'isBuyerAgency': isBuyerAgency,
+    'agentLicenseNumber': agentLicenseNumber,
+    'brokerageLicenseNumber': brokerageLicenseNumber,
+    'managingBrokerName': managingBrokerName,
+    'managingBrokerPhone': managingBrokerPhone,
+    'managingBrokerEmail': managingBrokerEmail,
     'createdAt': FieldValue.serverTimestamp(),
   };
 }
