@@ -37,6 +37,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   String? _state;
   bool _isMultiPersonFirm = true;
   bool _isBuyerAgency = true;
+  // Oklahoma-specific (shown when state == 'Oklahoma')
+  final _agentLicenseCtrl = TextEditingController();
+  final _brokerageLicenseCtrl = TextEditingController();
+  final _managingBrokerNameCtrl = TextEditingController();
+  final _managingBrokerPhoneCtrl = TextEditingController();
+  final _managingBrokerEmailCtrl = TextEditingController();
 
   @override
   void dispose() {
@@ -48,6 +54,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     _brokerageAddressCtrl.dispose();
     _brokerageCityStateZipCtrl.dispose();
     _agentPhoneCtrl.dispose();
+    _agentLicenseCtrl.dispose();
+    _brokerageLicenseCtrl.dispose();
+    _managingBrokerNameCtrl.dispose();
+    _managingBrokerPhoneCtrl.dispose();
+    _managingBrokerEmailCtrl.dispose();
     super.dispose();
   }
 
@@ -118,6 +129,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     final state = _state ?? '';
     final isMultiPersonFirm = _isMultiPersonFirm;
     final isBuyerAgency = _isBuyerAgency;
+    final agentLicenseNumber = _agentLicenseCtrl.text.trim();
+    final brokerageLicenseNumber = _brokerageLicenseCtrl.text.trim();
+    final managingBrokerName = _managingBrokerNameCtrl.text.trim();
+    final managingBrokerPhone = _managingBrokerPhoneCtrl.text.trim();
+    final managingBrokerEmail = _managingBrokerEmailCtrl.text.trim();
 
     setState(() => _loading = true);
     try {
@@ -140,6 +156,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         state: state,
         isMultiPersonFirm: isMultiPersonFirm,
         isBuyerAgency: isBuyerAgency,
+        agentLicenseNumber: agentLicenseNumber,
+        brokerageLicenseNumber: brokerageLicenseNumber,
+        managingBrokerName: managingBrokerName,
+        managingBrokerPhone: managingBrokerPhone,
+        managingBrokerEmail: managingBrokerEmail,
       );
       await dataService.saveUserProfile(profile);
       // Set directly — profileLoaderProvider raced ahead before the save
@@ -213,6 +234,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             multiPersonFirmCallback:
                 (val) => setState(() => _isMultiPersonFirm = val),
             buyerAgencyCallback: (val) => setState(() => _isBuyerAgency = val),
+            agentLicenseCtrl: _agentLicenseCtrl,
+            brokerageLicenseCtrl: _brokerageLicenseCtrl,
+            managingBrokerNameCtrl: _managingBrokerNameCtrl,
+            managingBrokerPhoneCtrl: _managingBrokerPhoneCtrl,
+            managingBrokerEmailCtrl: _managingBrokerEmailCtrl,
           ),
         ],
       ),

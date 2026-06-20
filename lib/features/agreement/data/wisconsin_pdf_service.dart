@@ -215,32 +215,6 @@ class WisconsinPdfService {
     } catch (_) {}
   }
 
-  void _setRadio(PdfForm form, String name, String value) {
-    try {
-      final f = _find(form, name);
-      if (f is PdfRadioButtonListField) {
-        for (int i = 0; i < f.items.count; i++) {
-          // Syncfusion doesn't decode #XX hex sequences beyond whitespace,
-          // so item.value may be e.g. "not#5Fsame#5Fagent". Decode it fully.
-          if (_decodePdfName(f.items[i].value) == value) {
-            f.items[i].style = PdfCheckBoxStyle.cross;
-            // Must use selectedValue with the raw (undecoded) item value.
-            // selectedIndex internally never updates _helper.selectedIndex,
-            // so the flatten renders nothing. selectedValue does update it.
-            f.selectedValue = f.items[i].value;
-            break;
-          }
-        }
-      }
-    } catch (_) {}
-  }
-
-  String _decodePdfName(String name) {
-    return name.replaceAllMapped(RegExp('#([0-9A-Fa-f]{2})'), (m) {
-      return String.fromCharCode(int.parse(m.group(1)!, radix: 16));
-    });
-  }
-
   void _setCheckbox(PdfForm form, String name, bool checked) {
     try {
       final f = _find(form, name);
