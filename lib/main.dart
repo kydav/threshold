@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:threshold/core/router.dart';
 import 'package:threshold/core/services/connectivity_watcher.dart';
+import 'package:threshold/core/services/remote_config_service.dart';
 import 'package:threshold/core/services/subscription_service.dart';
 import 'package:threshold/features/auth/data/user_profile.dart';
 import 'package:threshold/firebase_options.dart';
@@ -27,7 +28,13 @@ void main() {
     }
 
     await configureRevenueCat();
-    runApp(const ProviderScope(child: ThresholdApp()));
+    final remoteConfig = await RemoteConfigService.init();
+    runApp(ProviderScope(
+      overrides: [
+        remoteConfigProvider.overrideWithValue(remoteConfig),
+      ],
+      child: const ThresholdApp(),
+    ));
   }, (error, stack) {
     if (!kDebugMode) {
       FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);

@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:syncfusion_flutter_signaturepad/signaturepad.dart';
 import 'package:threshold/core/config/revenue_cat_config.dart';
 import 'package:threshold/core/services/analytics_service.dart';
+import 'package:threshold/core/services/remote_config_service.dart';
 import 'package:threshold/core/services/data_service.dart';
 import 'package:threshold/core/services/subscription_service.dart';
 import 'package:threshold/features/agreement/data/agreement_model.dart';
@@ -94,8 +95,11 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
   Future<void> _finalize() async {
     if (!_canFinalize || _agreement == null) return;
 
-    final isPro =
-        !kPaywallEnabled || ref.read(subscriptionProvider.notifier).isProActive;
+    final remotePaywallEnabled =
+        ref.read(remoteConfigProvider).paywallEnabled;
+    final isPro = !kPaywallEnabled ||
+        !remotePaywallEnabled ||
+        ref.read(subscriptionProvider.notifier).isProActive;
     if (!isPro && !kDebugMode) {
       final profile = ref.read(userProfileProvider);
       final sentCount = profile?.agreementsSent ?? 0;
