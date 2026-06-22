@@ -7,7 +7,7 @@
 // Single key used for both platforms (legacy shared key format).
 // Move to dart-defines before going to production.
 const kRevenueCatIosKey = 'appl_cHSXBAlGposupBWyTsMCVtHiusw';
-const kRevenueCatAndroidKey = 'goog_TmOtUITUlWMUBFggwqQsSOmDKxs';
+const kRevenueCatAndroidKey = 'goog_EmEhGKBBnLmeyjFHamTABZjmkOa';
 
 // Must match the Entitlement identifier exactly (case-sensitive) in RevenueCat.
 const kEntitlementId = 'Threshold Pro';
@@ -17,4 +17,7 @@ const kFreeAgreementLimit = 2;
 
 // Set to false via --dart-define=PAYWALL_ENABLED=false to bypass the paywall
 // for beta/internal builds without touching source code.
-const kPaywallEnabled = bool.fromEnvironment('PAYWALL_ENABLED', defaultValue: true);
+const kPaywallEnabled = bool.fromEnvironment(
+  'PAYWALL_ENABLED',
+  defaultValue: true,
+);

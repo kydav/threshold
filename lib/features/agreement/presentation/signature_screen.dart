@@ -7,8 +7,8 @@ import 'package:go_router/go_router.dart';
 import 'package:syncfusion_flutter_signaturepad/signaturepad.dart';
 import 'package:threshold/core/config/revenue_cat_config.dart';
 import 'package:threshold/core/services/analytics_service.dart';
-import 'package:threshold/core/services/remote_config_service.dart';
 import 'package:threshold/core/services/data_service.dart';
+import 'package:threshold/core/services/remote_config_service.dart';
 import 'package:threshold/core/services/subscription_service.dart';
 import 'package:threshold/features/agreement/data/agreement_model.dart';
 import 'package:threshold/features/agreement/data/agreement_repository.dart';
@@ -95,10 +95,10 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
   Future<void> _finalize() async {
     if (!_canFinalize || _agreement == null) return;
 
-    final remotePaywallEnabled =
-        ref.read(remoteConfigProvider).paywallEnabled;
+    final remotePaywallEnabled = ref.read(remoteConfigProvider).paywallEnabled;
     final customerInfo = await ref.read(subscriptionProvider.future);
-    final isPro = !kPaywallEnabled ||
+    final isPro =
+        !kPaywallEnabled ||
         !remotePaywallEnabled ||
         (customerInfo?.entitlements.active.containsKey(kEntitlementId) ??
             false);
