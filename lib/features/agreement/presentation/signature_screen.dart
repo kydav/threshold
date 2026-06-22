@@ -97,9 +97,11 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
 
     final remotePaywallEnabled =
         ref.read(remoteConfigProvider).paywallEnabled;
+    final customerInfo = await ref.read(subscriptionProvider.future);
     final isPro = !kPaywallEnabled ||
         !remotePaywallEnabled ||
-        ref.read(subscriptionProvider.notifier).isProActive;
+        (customerInfo?.entitlements.active.containsKey(kEntitlementId) ??
+            false);
     if (!isPro && !kDebugMode) {
       final profile = ref.read(userProfileProvider);
       final sentCount = profile?.agreementsSent ?? 0;
