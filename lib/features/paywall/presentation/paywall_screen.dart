@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:threshold/core/services/analytics_service.dart';
 import 'package:threshold/core/services/subscription_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Shows a modal bottom sheet paywall and returns true if the user
 /// successfully subscribes.
@@ -173,6 +174,54 @@ class _PaywallSheetState extends ConsumerState<_PaywallSheet> {
               context,
             ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
             textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextButton(
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                onPressed: () => launchUrl(
+                  Uri.parse('https://auaha.app/threshold/terms'),
+                  mode: LaunchMode.externalApplication,
+                ),
+                child: Text(
+                  'Terms of Use',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: cs.onSurfaceVariant,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+              Text(
+                '·',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+              ),
+              TextButton(
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                onPressed: () => launchUrl(
+                  Uri.parse('https://auaha.app/threshold/privacy'),
+                  mode: LaunchMode.externalApplication,
+                ),
+                child: Text(
+                  'Privacy Policy',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: cs.onSurfaceVariant,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
