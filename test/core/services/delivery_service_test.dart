@@ -1,11 +1,10 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:threshold/core/services/delivery_service.dart';
 import 'package:threshold/features/agreement/data/agreement_model.dart';
 import 'package:threshold/features/agreement/data/agreement_repository.dart';
-import 'package:threshold/core/services/delivery_service.dart';
 
 class MockAgreementRepository extends Mock implements AgreementRepository {}
 
@@ -18,8 +17,8 @@ class _TestableDeliveryService extends DeliveryService {
     required this.shouldThrowSocketException,
     required this.callSucceeds,
     this.fileExists = true,
-    this.tempFile,
-  }) : super(_mockRepo);
+  }) : tempFile = null,
+       super(_mockRepo);
 
   final AgreementRepository _mockRepo;
   final bool shouldThrowSocketException;
@@ -64,10 +63,10 @@ AgreementModel _buildAgreement({
     buyerEmail: 'john@example.com',
     propertyScope: 'Any home in Denver',
     compensation: '2.5%',
-    startDate: DateTime(2025, 1, 1),
-    endDate: DateTime(2025, 4, 1),
+    startDate: DateTime(2025),
+    endDate: DateTime(2025, 4),
     status: status,
-    createdAt: DateTime(2025, 1, 1),
+    createdAt: DateTime(2025),
     localPdfPath: localPdfPath,
     formData: formData,
   );
@@ -96,7 +95,7 @@ void main() {
         shouldThrowSocketException: false,
         callSucceeds: true,
       );
-      final agreement = _buildAgreement(localPdfPath: null);
+      final agreement = _buildAgreement();
       final result = await service.deliver(agreement);
       expect(result, isFalse);
     });
@@ -118,7 +117,6 @@ void main() {
         mockRepo,
         shouldThrowSocketException: true,
         callSucceeds: false,
-        fileExists: true,
       );
       final agreement = _buildAgreement(localPdfPath: '/some/path.pdf');
       final result = await service.deliver(agreement);
@@ -130,7 +128,6 @@ void main() {
         mockRepo,
         shouldThrowSocketException: false,
         callSucceeds: false,
-        fileExists: true,
       );
       final agreement = _buildAgreement(localPdfPath: '/some/path.pdf');
       final result = await service.deliver(agreement);
@@ -142,7 +139,6 @@ void main() {
         mockRepo,
         shouldThrowSocketException: false,
         callSucceeds: true,
-        fileExists: true,
       );
       final agreement = _buildAgreement(localPdfPath: '/some/path.pdf');
       final result = await service.deliver(agreement);
@@ -170,8 +166,9 @@ void main() {
         _buildAgreement(localPdfPath: '/a.pdf'),
         _buildAgreement(localPdfPath: '/b.pdf'),
       ];
-      when(() => mockRepo.listPending('agent-1'))
-          .thenAnswer((_) async => pending);
+      when(
+        () => mockRepo.listPending('agent-1'),
+      ).thenAnswer((_) async => pending);
 
       int deliverCount = 0;
       final service = _CountingDeliveryService(
@@ -187,8 +184,7 @@ void main() {
     });
 
     test('does nothing when there are no pending agreements', () async {
-      when(() => mockRepo.listPending('agent-1'))
-          .thenAnswer((_) async => []);
+      when(() => mockRepo.listPending('agent-1')).thenAnswer((_) async => []);
       int deliverCount = 0;
       final service = _CountingDeliveryService(
         mockRepo,

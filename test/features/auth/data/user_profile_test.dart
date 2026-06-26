@@ -1,14 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:threshold/features/auth/data/user_profile.dart';
 
-// Minimal stub that mimics DocumentSnapshot without pulling in firebase_core.
-class _FakeDoc {
-  _FakeDoc(this.id, this._data);
-  final String id;
-  final Map<String, dynamic>? _data;
-  Object? data() => _data;
-}
-
 // Helper to build a UserProfile directly (bypasses Firestore).
 UserProfile _build({
   String uid = 'uid-1',
@@ -53,7 +45,7 @@ UserProfile _build({
 void main() {
   group('UserProfile.fullName', () {
     test('concatenates firstName and lastName with a space', () {
-      final profile = _build(firstName: 'Jane', lastName: 'Smith');
+      final profile = _build();
       expect(profile.fullName, 'Jane Smith');
     });
 
@@ -63,7 +55,7 @@ void main() {
     });
 
     test('trims result when firstName is empty', () {
-      final profile = _build(firstName: '', lastName: 'Smith');
+      final profile = _build(firstName: '');
       expect(profile.fullName, 'Smith');
     });
 
@@ -111,13 +103,7 @@ void main() {
     });
 
     test('values match the profile fields', () {
-      final profile = _build(
-        email: 'agent@test.com',
-        firstName: 'Jane',
-        lastName: 'Smith',
-        state: 'Oklahoma',
-        isMultiPersonFirm: true,
-      );
+      final profile = _build(state: 'Oklahoma', isMultiPersonFirm: true);
       final map = profile.toFirestore();
       expect(map['email'], 'agent@test.com');
       expect(map['firstName'], 'Jane');

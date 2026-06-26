@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:threshold/features/agreement/data/colorado_form_data.dart';
 
 void main() {
-  ColoradoFormData _buildData({
+  ColoradoFormData buildData({
     String compensationType = 'percentage',
     String compensationValue = '2.5',
     String buyerPhone = '303-555-1234',
@@ -42,23 +42,23 @@ void main() {
 
   group('ColoradoFormData.hasCoBuyer', () {
     test('returns false when buyer2Name is empty', () {
-      expect(_buildData().hasCoBuyer, isFalse);
+      expect(buildData().hasCoBuyer, isFalse);
     });
 
     test('returns true when buyer2Name is non-empty', () {
-      expect(_buildData(buyer2Name: 'Jane Co-buyer').hasCoBuyer, isTrue);
+      expect(buildData(buyer2Name: 'Jane Co-buyer').hasCoBuyer, isTrue);
     });
 
     test('returns false when buyer2Name is whitespace only', () {
       // Whitespace-only name still satisfies isNotEmpty so hasCoBuyer would be
       // true — this is a known inconsistency in the current implementation.
       // Documenting the actual behaviour here so a future fix is explicit.
-      expect(_buildData(buyer2Name: '   ').hasCoBuyer, isTrue);
+      expect(buildData(buyer2Name: '   ').hasCoBuyer, isTrue);
     });
   });
 
   group('ColoradoFormData.fromJson', () {
-    final _baseJson = <String, dynamic>{
+    final baseJson = <String, dynamic>{
       'compensationType': 'percentage',
       'compensationValue': '2.5',
       'buyerPhone': '303-555-1234',
@@ -78,7 +78,7 @@ void main() {
     };
 
     test('parses all fields from complete JSON', () {
-      final data = ColoradoFormData.fromJson(_baseJson);
+      final data = ColoradoFormData.fromJson(baseJson);
       expect(data.compensationType, 'percentage');
       expect(data.compensationValue, '2.5');
       expect(data.buyerPhone, '303-555-1234');
@@ -106,10 +106,11 @@ void main() {
     });
 
     test('parses co-buyer fields', () {
-      final json = Map<String, dynamic>.from(_baseJson)
-        ..['buyer2Name'] = 'Jane Co'
-        ..['buyer2Email'] = 'jane@co.com'
-        ..['buyer2Phone'] = '720-555-9999';
+      final json =
+          Map<String, dynamic>.from(baseJson)
+            ..['buyer2Name'] = 'Jane Co'
+            ..['buyer2Email'] = 'jane@co.com'
+            ..['buyer2Phone'] = '720-555-9999';
       final data = ColoradoFormData.fromJson(json);
       expect(data.buyer2Name, 'Jane Co');
       expect(data.buyer2Email, 'jane@co.com');
@@ -118,9 +119,10 @@ void main() {
     });
 
     test('parses dollar compensationType', () {
-      final json = Map<String, dynamic>.from(_baseJson)
-        ..['compensationType'] = 'dollar'
-        ..['compensationValue'] = '15000';
+      final json =
+          Map<String, dynamic>.from(baseJson)
+            ..['compensationType'] = 'dollar'
+            ..['compensationValue'] = '15000';
       final data = ColoradoFormData.fromJson(json);
       expect(data.compensationType, 'dollar');
       expect(data.compensationValue, '15000');
@@ -129,7 +131,7 @@ void main() {
 
   group('ColoradoFormData.toJson', () {
     test('round-trips through fromJson without loss', () {
-      final original = _buildData(
+      final original = buildData(
         buyer2Name: 'Co-buyer',
         additionalProvisions: 'Some extra text',
         compensationType: 'dollar',
@@ -147,7 +149,7 @@ void main() {
     });
 
     test('includes all boolean fields', () {
-      final data = _buildData(
+      final data = buildData(
         isBuyerAgency: false,
         computationWillExtend: true,
         buyerIsPartyToOtherAgreement: true,

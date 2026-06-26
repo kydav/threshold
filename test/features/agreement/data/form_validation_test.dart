@@ -124,10 +124,10 @@ void main() {
   });
 
   group('validateDateRange', () {
-    final start = DateTime(2025, 1, 1);
+    final start = DateTime(2025);
 
     test('returns null when end is strictly after start', () {
-      expect(validateDateRange(start, DateTime(2025, 4, 1)), isNull);
+      expect(validateDateRange(start, DateTime(2025, 4)), isNull);
     });
 
     test('returns error when end equals start', () {
@@ -135,10 +135,7 @@ void main() {
     });
 
     test('returns error when end is before start', () {
-      expect(
-        validateDateRange(start, DateTime(2024, 12, 31)),
-        isNotNull,
-      );
+      expect(validateDateRange(start, DateTime(2024, 12, 31)), isNotNull);
     });
 
     test('error message is correct', () {

@@ -23,10 +23,10 @@ AgreementModel _buildAgreement({
     buyerEmail: 'john@example.com',
     propertyScope: 'Denver metro',
     compensation: '2.5%',
-    startDate: DateTime(2025, 1, 1),
-    endDate: DateTime(2025, 4, 1),
+    startDate: DateTime(2025),
+    endDate: DateTime(2025, 4),
     status: status,
-    createdAt: DateTime(2025, 1, 1),
+    createdAt: DateTime(2025),
     localPdfPath: localPdfPath,
     formData: formData,
   );
@@ -45,13 +45,13 @@ void main() {
   });
 
   // A testable repo that uses the temp directory instead of the device docs dir.
-  AgreementRepository _makeRepo() {
+  AgreementRepository makeRepo() {
     return _TempDirRepository(tempDir);
   }
 
   group('AgreementRepository.save and get', () {
     test('saves a model and retrieves it by id', () async {
-      final repo = _makeRepo();
+      final repo = makeRepo();
       final model = _buildAgreement();
       await repo.save(model);
       final retrieved = await repo.get(model.id);
@@ -61,13 +61,13 @@ void main() {
     });
 
     test('get returns null for unknown id', () async {
-      final repo = _makeRepo();
+      final repo = makeRepo();
       final result = await repo.get('nonexistent-id');
       expect(result, isNull);
     });
 
     test('save overwrites existing agreement with updated fields', () async {
-      final repo = _makeRepo();
+      final repo = makeRepo();
       final original = _buildAgreement();
       await repo.save(original);
 
@@ -81,7 +81,7 @@ void main() {
 
   group('AgreementRepository.listForAgent', () {
     test('returns only agreements belonging to the specified agent', () async {
-      final repo = _makeRepo();
+      final repo = makeRepo();
       final a1 = _buildAgreement(id: 'id-1', agentId: 'agent-A');
       final a2 = _buildAgreement(id: 'id-2', agentId: 'agent-B');
       final a3 = _buildAgreement(id: 'id-3', agentId: 'agent-A');
@@ -95,13 +95,13 @@ void main() {
     });
 
     test('returns empty list when agent has no agreements', () async {
-      final repo = _makeRepo();
+      final repo = makeRepo();
       final results = await repo.listForAgent('no-one');
       expect(results, isEmpty);
     });
 
     test('returns agreements sorted newest-first by createdAt', () async {
-      final repo = _makeRepo();
+      final repo = makeRepo();
       final older = AgreementModel(
         id: 'older',
         agentId: 'agent-1',
@@ -112,10 +112,10 @@ void main() {
         buyerEmail: 'old@test.com',
         propertyScope: '',
         compensation: '',
-        startDate: DateTime(2025, 1, 1),
-        endDate: DateTime(2025, 4, 1),
+        startDate: DateTime(2025),
+        endDate: DateTime(2025, 4),
         status: AgreementStatus.draft,
-        createdAt: DateTime(2025, 1, 1),
+        createdAt: DateTime(2025),
       );
       final newer = AgreementModel(
         id: 'newer',
@@ -127,10 +127,10 @@ void main() {
         buyerEmail: 'new@test.com',
         propertyScope: '',
         compensation: '',
-        startDate: DateTime(2025, 2, 1),
-        endDate: DateTime(2025, 5, 1),
+        startDate: DateTime(2025, 2),
+        endDate: DateTime(2025, 5),
         status: AgreementStatus.draft,
-        createdAt: DateTime(2025, 2, 1),
+        createdAt: DateTime(2025, 2),
       );
       await repo.save(older);
       await repo.save(newer);
@@ -141,7 +141,7 @@ void main() {
     });
 
     test('skips malformed JSON files without crashing', () async {
-      final repo = _makeRepo();
+      final repo = makeRepo();
       // Write a corrupt JSON file directly into the temp agreements dir.
       final dir = Directory('${tempDir.path}/agreements');
       dir.createSync(recursive: true);
@@ -154,16 +154,19 @@ void main() {
 
   group('AgreementRepository.listPending', () {
     test('returns only pendingDelivery agreements', () async {
-      final repo = _makeRepo();
-      final draft = _buildAgreement(
-          id: 'draft-1', agentId: 'a', status: AgreementStatus.draft);
+      final repo = makeRepo();
+      final draft = _buildAgreement(id: 'draft-1', agentId: 'a');
       final pending = _buildAgreement(
-          id: 'pend-1',
-          agentId: 'a',
-          status: AgreementStatus.pendingDelivery,
-          localPdfPath: '/some.pdf');
+        id: 'pend-1',
+        agentId: 'a',
+        status: AgreementStatus.pendingDelivery,
+        localPdfPath: '/some.pdf',
+      );
       final delivered = _buildAgreement(
-          id: 'del-1', agentId: 'a', status: AgreementStatus.delivered);
+        id: 'del-1',
+        agentId: 'a',
+        status: AgreementStatus.delivered,
+      );
       await repo.save(draft);
       await repo.save(pending);
       await repo.save(delivered);
@@ -174,7 +177,7 @@ void main() {
     });
 
     test('returns empty list when no pending agreements', () async {
-      final repo = _makeRepo();
+      final repo = makeRepo();
       await repo.save(_buildAgreement(agentId: 'a'));
       final results = await repo.listPending('a');
       expect(results, isEmpty);
@@ -183,7 +186,7 @@ void main() {
 
   group('AgreementRepository.create', () {
     test('creates a draft agreement and persists it', () async {
-      final repo = _makeRepo();
+      final repo = makeRepo();
       final model = await repo.create(
         agentId: 'agent-1',
         agentName: 'Jane',
@@ -193,8 +196,8 @@ void main() {
         buyerEmail: 'bob@test.com',
         propertyScope: '123 Main St',
         compensation: '2%',
-        startDate: DateTime(2025, 1, 1),
-        endDate: DateTime(2025, 4, 1),
+        startDate: DateTime(2025),
+        endDate: DateTime(2025, 4),
       );
 
       expect(model.status, AgreementStatus.draft);
@@ -208,7 +211,7 @@ void main() {
     });
 
     test('assigns a unique UUID on each create call', () async {
-      final repo = _makeRepo();
+      final repo = makeRepo();
       final m1 = await repo.create(
         agentId: 'a',
         agentName: '',
@@ -218,8 +221,8 @@ void main() {
         buyerEmail: 'a@t.com',
         propertyScope: '',
         compensation: '',
-        startDate: DateTime(2025, 1, 1),
-        endDate: DateTime(2025, 4, 1),
+        startDate: DateTime(2025),
+        endDate: DateTime(2025, 4),
       );
       final m2 = await repo.create(
         agentId: 'a',
@@ -230,8 +233,8 @@ void main() {
         buyerEmail: 'b@t.com',
         propertyScope: '',
         compensation: '',
-        startDate: DateTime(2025, 1, 1),
-        endDate: DateTime(2025, 4, 1),
+        startDate: DateTime(2025),
+        endDate: DateTime(2025, 4),
       );
       expect(m1.id, isNot(m2.id));
     });
@@ -255,13 +258,15 @@ class _TempDirRepository extends AgreementRepository {
     final file = File('${_agreementsDir.path}/$id.json');
     if (!file.existsSync()) return null;
     return AgreementModel.fromJson(
-        jsonDecode(await file.readAsString()) as Map<String, dynamic>);
+      jsonDecode(await file.readAsString()) as Map<String, dynamic>,
+    );
   }
 
   @override
   Future<void> save(AgreementModel model) async {
-    await File('${_agreementsDir.path}/${model.id}.json')
-        .writeAsString(jsonEncode(model.toJson()));
+    await File(
+      '${_agreementsDir.path}/${model.id}.json',
+    ).writeAsString(jsonEncode(model.toJson()));
   }
 
   @override
@@ -271,7 +276,8 @@ class _TempDirRepository extends AgreementRepository {
     for (final f in files) {
       try {
         final model = AgreementModel.fromJson(
-            jsonDecode(await f.readAsString()) as Map<String, dynamic>);
+          jsonDecode(await f.readAsString()) as Map<String, dynamic>,
+        );
         if (model.agentId == agentId) results.add(model);
       } catch (_) {}
     }
