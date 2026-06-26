@@ -13,6 +13,7 @@ import 'package:threshold/features/auth/data/auth_service.dart';
 import 'package:threshold/features/auth/data/user_profile.dart';
 import 'package:threshold/features/auth/presentation/brokerage_step.dart';
 import 'package:threshold/features/paywall/presentation/paywall_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -471,6 +472,54 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 foregroundColor: cs.onError,
                 minimumSize: const Size.fromHeight(48),
               ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                TextButton(
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  onPressed: () => launchUrl(
+                    Uri.parse('https://auaha.app/threshold/terms'),
+                    mode: LaunchMode.externalApplication,
+                  ),
+                  child: Text(
+                    'Terms of Use',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: cs.onSurfaceVariant,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+                Text(
+                  '·',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: cs.onSurfaceVariant,
+                  ),
+                ),
+                TextButton(
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  onPressed: () => launchUrl(
+                    Uri.parse('https://auaha.app/threshold/privacy'),
+                    mode: LaunchMode.externalApplication,
+                  ),
+                  child: Text(
+                    'Privacy Policy',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: cs.onSurfaceVariant,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

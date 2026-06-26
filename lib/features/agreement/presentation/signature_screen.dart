@@ -102,7 +102,7 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
         !remotePaywallEnabled ||
         (customerInfo?.entitlements.active.containsKey(kEntitlementId) ??
             false);
-    if (!isPro && !kDebugMode) {
+    if (!isPro) {
       final profile = ref.read(userProfileProvider);
       final sentCount = profile?.agreementsSent ?? 0;
       if (sentCount >= kFreeAgreementLimit && mounted) {
