@@ -50,10 +50,7 @@ void main() {
     });
 
     test('returns false when buyer2Name is whitespace only', () {
-      // Whitespace-only name still satisfies isNotEmpty so hasCoBuyer would be
-      // true — this is a known inconsistency in the current implementation.
-      // Documenting the actual behaviour here so a future fix is explicit.
-      expect(buildData(buyer2Name: '   ').hasCoBuyer, isTrue);
+      expect(buildData(buyer2Name: '   ').hasCoBuyer, isFalse);
     });
   });
 

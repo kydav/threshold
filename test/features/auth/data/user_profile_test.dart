@@ -85,6 +85,12 @@ void main() {
       expect(map.containsKey('managingBrokerName'), isTrue);
       expect(map.containsKey('managingBrokerPhone'), isTrue);
       expect(map.containsKey('managingBrokerEmail'), isTrue);
+      expect(map.containsKey('createdAt'), isFalse);
+    });
+
+    test('includes createdAt when isNew is true', () {
+      final profile = _build();
+      final map = profile.toFirestore(isNew: true);
       expect(map.containsKey('createdAt'), isTrue);
     });
 

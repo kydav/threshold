@@ -72,7 +72,7 @@ class UserProfile {
     );
   }
 
-  Map<String, dynamic> toFirestore() => {
+  Map<String, dynamic> toFirestore({bool isNew = false}) => {
     'email': email,
     'firstName': firstName,
     'lastName': lastName,
@@ -88,7 +88,7 @@ class UserProfile {
     'managingBrokerName': managingBrokerName,
     'managingBrokerPhone': managingBrokerPhone,
     'managingBrokerEmail': managingBrokerEmail,
-    'createdAt': FieldValue.serverTimestamp(),
+    if (isNew) 'createdAt': FieldValue.serverTimestamp(),
   };
 }
 

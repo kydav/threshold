@@ -7,11 +7,17 @@ class DataService {
   final FirebaseFirestore _firestore;
 
   Future<void> saveUserProfile(UserProfile profile) async {
-    await _firestore.collection('users').doc(profile.uid).set(profile.toFirestore());
+    await _firestore
+        .collection('users')
+        .doc(profile.uid)
+        .set(profile.toFirestore(isNew: true));
   }
 
   Future<void> updateUserProfile(UserProfile profile) async {
-    await _firestore.collection('users').doc(profile.uid).update(profile.toFirestore());
+    await _firestore
+        .collection('users')
+        .doc(profile.uid)
+        .update(profile.toFirestore());
   }
 
   Future<void> incrementAgreementsSent(String uid) async {
@@ -27,4 +33,6 @@ class DataService {
   }
 }
 
-final dataServiceProvider = Provider<DataService>((ref) => DataService(FirebaseFirestore.instance));
+final dataServiceProvider = Provider<DataService>(
+  (ref) => DataService(FirebaseFirestore.instance),
+);
