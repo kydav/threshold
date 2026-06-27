@@ -34,7 +34,7 @@ class ColoradoFormData {
   final String buyer2StreetAddress;
   final String buyer2CityStateZip;
 
-  bool get hasCoBuyer => buyer2Name.isNotEmpty;
+  bool get hasCoBuyer => buyer2Name.trim().isNotEmpty;
 
   // Section 4: brokerage relationship
   final bool isBuyerAgency;
@@ -51,44 +51,43 @@ class ColoradoFormData {
 
   final String additionalProvisions;
 
-  factory ColoradoFormData.fromJson(Map<String, dynamic> d) =>
-      ColoradoFormData(
-        compensationType: d['compensationType'] as String? ?? 'percentage',
-        compensationValue: d['compensationValue'] as String? ?? '',
-        buyerPhone: d['buyerPhone'] as String? ?? '',
-        buyerStreetAddress: d['buyerStreetAddress'] as String? ?? '',
-        buyerCityStateZip: d['buyerCityStateZip'] as String? ?? '',
-        isBuyerAgency: d['isBuyerAgency'] as bool? ?? true,
-        holdoverDays: d['holdoverDays'] as String? ?? '30',
-        computationWillExtend: d['computationWillExtend'] as bool? ?? false,
-        buyerIsPartyToOtherAgreement:
-            d['buyerIsPartyToOtherAgreement'] as bool? ?? false,
-        buyerHasReceivedSubmittedList:
-            d['buyerHasReceivedSubmittedList'] as bool? ?? false,
-        additionalProvisions: d['additionalProvisions'] as String? ?? '',
-        buyer2Name: d['buyer2Name'] as String? ?? '',
-        buyer2Email: d['buyer2Email'] as String? ?? '',
-        buyer2Phone: d['buyer2Phone'] as String? ?? '',
-        buyer2StreetAddress: d['buyer2StreetAddress'] as String? ?? '',
-        buyer2CityStateZip: d['buyer2CityStateZip'] as String? ?? '',
-      );
+  factory ColoradoFormData.fromJson(Map<String, dynamic> d) => ColoradoFormData(
+    compensationType: d['compensationType'] as String? ?? 'percentage',
+    compensationValue: d['compensationValue'] as String? ?? '',
+    buyerPhone: d['buyerPhone'] as String? ?? '',
+    buyerStreetAddress: d['buyerStreetAddress'] as String? ?? '',
+    buyerCityStateZip: d['buyerCityStateZip'] as String? ?? '',
+    isBuyerAgency: d['isBuyerAgency'] as bool? ?? true,
+    holdoverDays: d['holdoverDays'] as String? ?? '30',
+    computationWillExtend: d['computationWillExtend'] as bool? ?? false,
+    buyerIsPartyToOtherAgreement:
+        d['buyerIsPartyToOtherAgreement'] as bool? ?? false,
+    buyerHasReceivedSubmittedList:
+        d['buyerHasReceivedSubmittedList'] as bool? ?? false,
+    additionalProvisions: d['additionalProvisions'] as String? ?? '',
+    buyer2Name: d['buyer2Name'] as String? ?? '',
+    buyer2Email: d['buyer2Email'] as String? ?? '',
+    buyer2Phone: d['buyer2Phone'] as String? ?? '',
+    buyer2StreetAddress: d['buyer2StreetAddress'] as String? ?? '',
+    buyer2CityStateZip: d['buyer2CityStateZip'] as String? ?? '',
+  );
 
   Map<String, dynamic> toJson() => {
-        'compensationType': compensationType,
-        'compensationValue': compensationValue,
-        'buyerPhone': buyerPhone,
-        'buyerStreetAddress': buyerStreetAddress,
-        'buyerCityStateZip': buyerCityStateZip,
-        'isBuyerAgency': isBuyerAgency,
-        'holdoverDays': holdoverDays,
-        'computationWillExtend': computationWillExtend,
-        'buyerIsPartyToOtherAgreement': buyerIsPartyToOtherAgreement,
-        'buyerHasReceivedSubmittedList': buyerHasReceivedSubmittedList,
-        'additionalProvisions': additionalProvisions,
-        'buyer2Name': buyer2Name,
-        'buyer2Email': buyer2Email,
-        'buyer2Phone': buyer2Phone,
-        'buyer2StreetAddress': buyer2StreetAddress,
-        'buyer2CityStateZip': buyer2CityStateZip,
-      };
+    'compensationType': compensationType,
+    'compensationValue': compensationValue,
+    'buyerPhone': buyerPhone,
+    'buyerStreetAddress': buyerStreetAddress,
+    'buyerCityStateZip': buyerCityStateZip,
+    'isBuyerAgency': isBuyerAgency,
+    'holdoverDays': holdoverDays,
+    'computationWillExtend': computationWillExtend,
+    'buyerIsPartyToOtherAgreement': buyerIsPartyToOtherAgreement,
+    'buyerHasReceivedSubmittedList': buyerHasReceivedSubmittedList,
+    'additionalProvisions': additionalProvisions,
+    'buyer2Name': buyer2Name,
+    'buyer2Email': buyer2Email,
+    'buyer2Phone': buyer2Phone,
+    'buyer2StreetAddress': buyer2StreetAddress,
+    'buyer2CityStateZip': buyer2CityStateZip,
+  };
 }
