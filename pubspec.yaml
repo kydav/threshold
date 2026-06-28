@@ -10,9 +10,9 @@ dependencies:
   cloud_firestore: ^5.6.12
   cloud_functions: ^5.3.0
   connectivity_plus: ^6.1.4
+  crypto: ^3.0.6
   cupertino_icons: ^1.0.8
   firebase_analytics: ^11.6.0
-  crypto: ^3.0.6
   firebase_auth: ^5.5.3
   google_sign_in: ^6.2.2
   sign_in_with_apple: ^6.1.4
