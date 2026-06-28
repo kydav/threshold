@@ -1,6 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:threshold/core/services/analytics_service.dart';
 import 'package:threshold/features/auth/data/auth_service.dart';
 
@@ -77,6 +79,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         );
       }
       // Returning users: router redirect handles navigation to /agreements.
+    } on FirebaseAuthException catch (e) {
+      if (mounted) setState(() => _error = _friendlySocialError(e.code));
     } on Exception catch (e) {
       final msg = e.toString();
       if (mounted && !msg.contains('cancelled')) {
@@ -101,9 +105,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           extra: {'displayName': result.displayName, 'email': result.email},
         );
       }
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (e.code != AuthorizationErrorCode.canceled && mounted) {
+        setState(() => _error = 'Apple sign-in was interrupted. Please try again.');
+      }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) setState(() => _error = _friendlySocialError(e.code));
     } on Exception catch (e) {
       final msg = e.toString();
-      if (mounted && !msg.contains('cancelled') && !msg.contains('AuthorizationErrorCode.canceled')) {
+      if (mounted && !msg.contains('cancelled') && !msg.contains('cancel')) {
         setState(() => _error = 'Apple sign-in failed. Please try again.');
       }
     } finally {
@@ -273,5 +283,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return 'Too many attempts. Try again later.';
     }
     return 'Sign-in failed. Please try again.';
+  }
+
+  String _friendlySocialError(String code) {
+    switch (code) {
+      case 'account-exists-with-different-credential':
+        return 'An account already exists with this email. Sign in with your email and password instead — use "Forgot password?" if needed.';
+      case 'user-disabled':
+        return 'This account has been disabled. Please contact support.';
+      case 'operation-not-allowed':
+        return "This sign-in method isn't enabled. Please contact support.";
+      case 'too-many-requests':
+        return 'Too many attempts. Try again later.';
+      case 'network-request-failed':
+        return 'Network error. Check your connection and try again.';
+      default:
+        return 'Sign-in failed. Please try again.';
+    }
   }
 }
