@@ -14,6 +14,7 @@ import 'package:threshold/features/agreement/presentation/wisconsin_form_screen.
 import 'package:threshold/features/auth/data/user_profile.dart';
 import 'package:threshold/features/auth/presentation/login_screen.dart';
 import 'package:threshold/features/auth/presentation/profile_screen.dart';
+import 'package:threshold/features/auth/presentation/setup_screen.dart';
 import 'package:threshold/features/auth/presentation/signup_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -25,17 +26,30 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: notifier,
     redirect: (context, state) {
       final loggedIn = FirebaseAuth.instance.currentUser != null;
-      final onAuthPage =
-          state.matchedLocation == '/login' ||
-          state.matchedLocation == '/signup';
+      final loc = state.matchedLocation;
+      final onAuthPage = loc == '/login' || loc == '/signup';
+      final onSetupPage = loc == '/setup';
 
       if (!loggedIn && !onAuthPage) return '/login';
       if (loggedIn && onAuthPage) return '/agreements';
+      // Keep new social users on /setup until they save their profile.
+      // The SetupScreen itself navigates to /agreements after saving.
+      if (loggedIn && onSetupPage) return null;
       return null;
     },
     routes: [
       GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
       GoRoute(path: '/signup', builder: (_, _) => const SignupScreen()),
+      GoRoute(
+        path: '/setup',
+        builder: (_, state) {
+          final extra = state.extra as Map<String, String>? ?? {};
+          return SetupScreen(
+            displayName: extra['displayName'] ?? '',
+            email: extra['email'] ?? '',
+          );
+        },
+      ),
       GoRoute(
         path: '/agreements',
         builder: (_, _) => const HistoryScreen(),

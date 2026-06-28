@@ -16,6 +16,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   bool _loading = false;
+  bool _socialLoading = false;
   String? _error;
   bool _obscure = true;
 
@@ -32,8 +33,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _loading = true;
       _error = null;
     });
-    // Capture before first await — widget may be disposed after signIn triggers
-    // the auth state change and the router navigates away.
     final authService = ref.read(authServiceProvider);
     final email = _emailCtrl.text.trim();
     final password = _passwordCtrl.text;
@@ -41,7 +40,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       await authService.signIn(email: email, password: password);
       AnalyticsService.login();
-      // profileLoaderProvider watches auth state and auto-loads the profile.
     } on Exception catch (e) {
       if (mounted) setState(() => _error = _friendlyError(e.toString()));
     } finally {
@@ -61,6 +59,55 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Password reset email sent.')),
       );
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    setState(() {
+      _socialLoading = true;
+      _error = null;
+    });
+    try {
+      final result = await ref.read(authServiceProvider).signInWithGoogle();
+      if (!mounted) return;
+      if (result.isNewUser) {
+        context.go(
+          '/setup',
+          extra: {'displayName': result.displayName, 'email': result.email},
+        );
+      }
+      // Returning users: router redirect handles navigation to /agreements.
+    } on Exception catch (e) {
+      final msg = e.toString();
+      if (mounted && !msg.contains('cancelled')) {
+        setState(() => _error = 'Google sign-in failed. Please try again.');
+      }
+    } finally {
+      if (mounted) setState(() => _socialLoading = false);
+    }
+  }
+
+  Future<void> _signInWithApple() async {
+    setState(() {
+      _socialLoading = true;
+      _error = null;
+    });
+    try {
+      final result = await ref.read(authServiceProvider).signInWithApple();
+      if (!mounted) return;
+      if (result.isNewUser) {
+        context.go(
+          '/setup',
+          extra: {'displayName': result.displayName, 'email': result.email},
+        );
+      }
+    } on Exception catch (e) {
+      final msg = e.toString();
+      if (mounted && !msg.contains('cancelled') && !msg.contains('AuthorizationErrorCode.canceled')) {
+        setState(() => _error = 'Apple sign-in failed. Please try again.');
+      }
+    } finally {
+      if (mounted) setState(() => _socialLoading = false);
     }
   }
 
@@ -105,11 +152,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       labelText: 'Email',
                       border: OutlineInputBorder(),
                     ),
-                    validator:
-                        (v) =>
-                            (v == null || !v.contains('@'))
-                                ? 'Enter a valid email'
-                                : null,
+                    validator: (v) =>
+                        (v == null || !v.contains('@'))
+                            ? 'Enter a valid email'
+                            : null,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -128,11 +174,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         onPressed: () => setState(() => _obscure = !_obscure),
                       ),
                     ),
-                    validator:
-                        (v) =>
-                            (v == null || v.length < 6)
-                                ? 'Min 6 characters'
-                                : null,
+                    validator: (v) =>
+                        (v == null || v.length < 6) ? 'Min 6 characters' : null,
                   ),
                   if (_error != null) ...[
                     const SizedBox(height: 12),
@@ -144,22 +187,67 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ],
                   const SizedBox(height: 24),
                   FilledButton(
-                    onPressed: _loading ? null : _submit,
-                    child:
-                        _loading
-                            ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                            : const Text('Log in'),
+                    onPressed: (_loading || _socialLoading) ? null : _submit,
+                    child: _loading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('Log in'),
                   ),
                   const SizedBox(height: 16),
-
                   TextButton(
                     onPressed: _resetPassword,
                     child: const Text('Forgot password?'),
                   ),
+
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Expanded(child: Divider()),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          'or',
+                          style: TextStyle(color: cs.onSurfaceVariant),
+                        ),
+                      ),
+                      const Expanded(child: Divider()),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+
+                  OutlinedButton.icon(
+                    onPressed: (_loading || _socialLoading) ? null : _signInWithGoogle,
+                    icon: _socialLoading
+                        ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Image.asset(
+                            'assets/icon/google_logo.png',
+                            height: 18,
+                            width: 18,
+                            errorBuilder: (ctx, err, stack) =>
+                                const Icon(Icons.login, size: 18),
+                          ),
+                    label: const Text('Continue with Google'),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  OutlinedButton.icon(
+                    onPressed: (_loading || _socialLoading) ? null : _signInWithApple,
+                    icon: const Icon(Icons.apple, size: 20),
+                    label: const Text('Continue with Apple'),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48),
+                    ),
+                  ),
+
                   const SizedBox(height: 10),
                   TextButton(
                     onPressed: () => context.go('/signup'),
