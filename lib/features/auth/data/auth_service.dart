@@ -71,6 +71,12 @@ class AuthService {
       nonce: nonce,
     );
 
+    if (appleCredential.identityToken == null) {
+      throw FirebaseAuthException(
+        code: 'invalid-credential',
+        message: 'Apple identity token was null.',
+      );
+    }
     final oauthCredential = OAuthProvider('apple.com').credential(
       idToken: appleCredential.identityToken,
       rawNonce: rawNonce,

@@ -110,8 +110,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         setState(() => _error = 'Apple sign-in was interrupted. Please try again.');
       }
     } on FirebaseAuthException catch (e) {
+      debugPrint('Apple FirebaseAuthException: ${e.code} — ${e.message}');
       if (mounted) setState(() => _error = _friendlySocialError(e.code));
     } on Exception catch (e) {
+      debugPrint('Apple sign-in Exception: $e');
       final msg = e.toString();
       if (mounted && !msg.contains('cancelled') && !msg.contains('cancel')) {
         setState(() => _error = 'Apple sign-in failed. Please try again.');
@@ -289,6 +291,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     switch (code) {
       case 'account-exists-with-different-credential':
         return 'An account already exists with this email. Sign in with your email and password instead — use "Forgot password?" if needed.';
+      case 'invalid-credential':
+      case 'invalid-verification-code':
+      case 'invalid-verification-id':
+        return 'Apple sign-in failed. Sign out of your Apple ID in Settings, sign back in, then try again.';
+      case 'credential-already-in-use':
+        return 'This Apple ID is already linked to a different account.';
       case 'user-disabled':
         return 'This account has been disabled. Please contact support.';
       case 'operation-not-allowed':
