@@ -36,10 +36,7 @@ class AuthService {
     await cred.user!.updateDisplayName(displayName);
   }
 
-  Future<void> signIn({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> signIn({required String email, required String password}) async {
     await _auth.signInWithEmailAndPassword(email: email, password: password);
   }
 
@@ -80,6 +77,7 @@ class AuthService {
     final oauthCredential = OAuthProvider('apple.com').credential(
       idToken: appleCredential.identityToken,
       rawNonce: rawNonce,
+      accessToken: appleCredential.authorizationCode,
     );
 
     final cred = await _auth.signInWithCredential(oauthCredential);
@@ -92,10 +90,7 @@ class AuthService {
       await cred.user!.updateDisplayName(displayName);
     }
 
-    final email =
-        appleCredential.email ??
-        cred.user?.email ??
-        '';
+    final email = appleCredential.email ?? cred.user?.email ?? '';
 
     return SocialSignInResult(
       isNewUser: cred.additionalUserInfo?.isNewUser ?? false,
@@ -126,8 +121,10 @@ String _sha256ofString(String input) {
   return digest.toString();
 }
 
-final authServiceProvider =
-    Provider<AuthService>((ref) => AuthService(FirebaseAuth.instance));
+final authServiceProvider = Provider<AuthService>(
+  (ref) => AuthService(FirebaseAuth.instance),
+);
 
-final currentUserProvider =
-    StreamProvider<User?>((ref) => FirebaseAuth.instance.authStateChanges());
+final currentUserProvider = StreamProvider<User?>(
+  (ref) => FirebaseAuth.instance.authStateChanges(),
+);

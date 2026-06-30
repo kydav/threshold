@@ -107,7 +107,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     } on SignInWithAppleAuthorizationException catch (e) {
       if (e.code != AuthorizationErrorCode.canceled && mounted) {
-        setState(() => _error = 'Apple sign-in was interrupted. Please try again.');
+        setState(
+          () => _error = 'Apple sign-in was interrupted. Please try again.',
+        );
       }
     } on FirebaseAuthException catch (e) {
       debugPrint('Apple FirebaseAuthException: ${e.code} — ${e.message}');
@@ -164,10 +166,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       labelText: 'Email',
                       border: OutlineInputBorder(),
                     ),
-                    validator: (v) =>
-                        (v == null || !v.contains('@'))
-                            ? 'Enter a valid email'
-                            : null,
+                    validator:
+                        (v) =>
+                            (v == null || !v.contains('@'))
+                                ? 'Enter a valid email'
+                                : null,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -186,8 +189,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         onPressed: () => setState(() => _obscure = !_obscure),
                       ),
                     ),
-                    validator: (v) =>
-                        (v == null || v.length < 6) ? 'Min 6 characters' : null,
+                    validator:
+                        (v) =>
+                            (v == null || v.length < 6)
+                                ? 'Min 6 characters'
+                                : null,
                   ),
                   if (_error != null) ...[
                     const SizedBox(height: 12),
@@ -200,13 +206,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   const SizedBox(height: 24),
                   FilledButton(
                     onPressed: (_loading || _socialLoading) ? null : _submit,
-                    child: _loading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('Log in'),
+                    child:
+                        _loading
+                            ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                            : const Text('Log in'),
                   ),
                   const SizedBox(height: 16),
                   TextButton(
@@ -231,20 +238,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   const SizedBox(height: 8),
 
                   OutlinedButton.icon(
-                    onPressed: (_loading || _socialLoading) ? null : _signInWithGoogle,
-                    icon: _socialLoading
-                        ? const SizedBox(
-                            height: 18,
-                            width: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Image.asset(
-                            'assets/icon/google_logo.png',
-                            height: 18,
-                            width: 18,
-                            errorBuilder: (ctx, err, stack) =>
-                                const Icon(Icons.login, size: 18),
-                          ),
+                    onPressed:
+                        (_loading || _socialLoading) ? null : _signInWithGoogle,
+                    icon: Image.asset(
+                      'assets/icon/google.png',
+                      height: 18,
+                      width: 18,
+                      errorBuilder:
+                          (ctx, err, stack) =>
+                              const Icon(Icons.login, size: 18),
+                    ),
                     label: const Text('Continue with Google'),
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size.fromHeight(48),
@@ -252,8 +255,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   const SizedBox(height: 10),
                   OutlinedButton.icon(
-                    onPressed: (_loading || _socialLoading) ? null : _signInWithApple,
-                    icon: const Icon(Icons.apple, size: 20),
+                    onPressed:
+                        (_loading || _socialLoading) ? null : _signInWithApple,
+                    icon: const Icon(
+                      Icons.apple,
+                      size: 25,
+                      color: Colors.black,
+                    ),
                     label: const Text('Continue with Apple'),
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size.fromHeight(48),
