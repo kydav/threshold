@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
@@ -41,6 +42,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     try {
       await authService.signIn(email: email, password: password);
+      TextInput.finishAutofillContext();
       AnalyticsService.login();
     } on Exception catch (e) {
       if (mounted) setState(() => _error = _friendlyError(e.toString()));
@@ -146,7 +148,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 28),
                 child: Form(
                   key: _formKey,
-                  child: Column(
+                  child: AutofillGroup(
+                    child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Image.asset(
@@ -301,6 +304,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                       const SizedBox(height: 32),
                     ],
+                  ),
                   ),
                 ),
               ),
