@@ -89,8 +89,7 @@ class _LouisianaFormScreenState extends ConsumerState<LouisianaFormScreen> {
         }
         if (_compType == 'other' && _otherCompCtrl.text.trim().isEmpty) {
           setState(
-            () => _stepError =
-                'Please describe the compensation arrangement.',
+            () => _stepError = 'Please describe the compensation arrangement.',
           );
           return false;
         }
@@ -126,7 +125,11 @@ class _LouisianaFormScreenState extends ConsumerState<LouisianaFormScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      context.go('/agreements');
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/home');
+      }
     }
   }
 
@@ -137,7 +140,8 @@ class _LouisianaFormScreenState extends ConsumerState<LouisianaFormScreen> {
       final profile = ref.read(userProfileProvider);
 
       final compensation = switch (_compType) {
-        'percentage' => '${_compValueCtrl.text.trim()}% of gross purchase price',
+        'percentage' =>
+          '${_compValueCtrl.text.trim()}% of gross purchase price',
         'flat' => '\$${_compValueCtrl.text.trim()}',
         _ => _otherCompCtrl.text.trim(),
       };
@@ -196,7 +200,7 @@ class _LouisianaFormScreenState extends ConsumerState<LouisianaFormScreen> {
         resizeToAvoidBottomInset: true,
         appBar: AppBar(
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
+            icon: const Icon(Icons.chevron_left),
             onPressed: _back,
           ),
           title: Text(_stepTitle(_step)),
@@ -275,10 +279,9 @@ class _LouisianaFormScreenState extends ConsumerState<LouisianaFormScreen> {
         children: [
           Text(
             "Buyer's full legal name",
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 24),
           TextField(
@@ -328,10 +331,9 @@ class _LouisianaFormScreenState extends ConsumerState<LouisianaFormScreen> {
         children: [
           Text(
             "Buyer's contact",
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 20),
           TextField(
@@ -361,10 +363,9 @@ class _LouisianaFormScreenState extends ConsumerState<LouisianaFormScreen> {
             const SizedBox(height: 8),
             Text(
               "Co-buyer's contact",
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w600),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -402,10 +403,9 @@ class _LouisianaFormScreenState extends ConsumerState<LouisianaFormScreen> {
         children: [
           Text(
             'Agreement term',
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 24),
           Text('Start date', style: Theme.of(context).textTheme.labelLarge),
@@ -440,10 +440,9 @@ class _LouisianaFormScreenState extends ConsumerState<LouisianaFormScreen> {
           Text(
             'Calendar days after expiration that commission still applies '
             '(default 180 if left blank).',
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: cs.onSurfaceVariant),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
           ),
           const SizedBox(height: 8),
           TextField(
@@ -470,10 +469,9 @@ class _LouisianaFormScreenState extends ConsumerState<LouisianaFormScreen> {
         children: [
           Text(
             'Compensation',
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 24),
           _radioTile(
@@ -507,14 +505,14 @@ class _LouisianaFormScreenState extends ConsumerState<LouisianaFormScreen> {
             TextField(
               controller: _compValueCtrl,
               autofocus: true,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               textInputAction: TextInputAction.done,
               onSubmitted: (_) => _next(),
               decoration: InputDecoration(
-                labelText: _compType == 'percentage'
-                    ? 'Percentage'
-                    : 'Dollar amount',
+                labelText:
+                    _compType == 'percentage' ? 'Percentage' : 'Dollar amount',
                 prefixText: _compType == 'flat' ? '\$ ' : null,
                 suffixText: _compType == 'percentage' ? '%' : null,
                 hintText: _compType == 'percentage' ? '3' : '10000',
@@ -559,9 +557,10 @@ class _LouisianaFormScreenState extends ConsumerState<LouisianaFormScreen> {
             width: selected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
-          color: selected
-              ? cs.primary.withValues(alpha: 0.06)
-              : Colors.transparent,
+          color:
+              selected
+                  ? cs.primary.withValues(alpha: 0.06)
+                  : Colors.transparent,
         ),
         child: Row(
           children: [
@@ -575,18 +574,19 @@ class _LouisianaFormScreenState extends ConsumerState<LouisianaFormScreen> {
                   width: 2,
                 ),
               ),
-              child: selected
-                  ? Center(
-                      child: Container(
-                        width: 10,
-                        height: 10,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: cs.primary,
+              child:
+                  selected
+                      ? Center(
+                        child: Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: cs.primary,
+                          ),
                         ),
-                      ),
-                    )
-                  : null,
+                      )
+                      : null,
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -602,10 +602,9 @@ class _LouisianaFormScreenState extends ConsumerState<LouisianaFormScreen> {
                   ),
                   Text(
                     subtitle,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: cs.onSurfaceVariant),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                   ),
                 ],
               ),

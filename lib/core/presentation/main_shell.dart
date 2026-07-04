@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 class MainShell extends StatelessWidget {
@@ -40,7 +41,7 @@ class MainShell extends StatelessWidget {
             profileActive: _profileActive,
             onHomeTap: () => context.go('/home'),
             onAgreementsTap: () => context.go('/agreements'),
-            onAddTap: () => context.go('/agreements/new'),
+            onAddTap: () => context.push('/agreements/new'),
             onProfileTap: () => context.go('/profile'),
           ),
         ),
@@ -94,7 +95,10 @@ class _FloatingNav extends StatelessWidget {
               activeIcon: Icons.home_rounded,
               label: 'Home',
               isActive: homeActive,
-              onTap: onHomeTap,
+              onTap: () {
+                HapticFeedback.lightImpact();
+                onHomeTap();
+              },
             ),
           ),
           // Expanded(
@@ -109,7 +113,10 @@ class _FloatingNav extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: GestureDetector(
-              onTap: onAddTap,
+              onTap: () {
+                HapticFeedback.lightImpact();
+                onAddTap();
+              },
               child: Container(
                 width: 52,
                 height: 52,
@@ -117,11 +124,7 @@ class _FloatingNav extends StatelessWidget {
                   color: cs.primary,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.add_rounded,
-                  color: Colors.white,
-                  size: 35,
-                ),
+                child: Icon(Icons.add_rounded, color: cs.onPrimary, size: 35),
               ),
             ),
           ),
@@ -131,7 +134,10 @@ class _FloatingNav extends StatelessWidget {
               activeIcon: Icons.person_rounded,
               label: 'Profile',
               isActive: profileActive,
-              onTap: onProfileTap,
+              onTap: () {
+                HapticFeedback.lightImpact();
+                onProfileTap();
+              },
             ),
           ),
           //const Expanded(child: SizedBox.shrink()),

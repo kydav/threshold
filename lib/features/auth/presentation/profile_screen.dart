@@ -211,14 +211,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: const Text(
+        title: Text(
           'Profile',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(fontWeight: FontWeight.bold, color: cs.onSurface),
         ),
         actions: [
           TextButton(
             onPressed: _saving ? null : _save,
-            style: TextButton.styleFrom(foregroundColor: Colors.white),
+            style: TextButton.styleFrom(foregroundColor: cs.onSurface),
             child:
                 _saving
                     ? const SizedBox(
@@ -229,7 +229,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         color: Colors.white,
                       ),
                     )
-                    : const Text('Save'),
+                    : Text('Save', style: TextStyle(color: cs.onSurface)),
           ),
         ],
       ),

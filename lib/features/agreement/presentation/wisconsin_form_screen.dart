@@ -141,7 +141,11 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      context.go('/agreements');
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/home');
+      }
     }
   }
 
@@ -222,7 +226,7 @@ class _WisconsinFormScreenState extends ConsumerState<WisconsinFormScreen> {
         resizeToAvoidBottomInset: true,
         appBar: AppBar(
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
+            icon: const Icon(Icons.chevron_left),
             onPressed: _back,
           ),
           title: Text(_stepTitle(_step)),

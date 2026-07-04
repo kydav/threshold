@@ -85,7 +85,7 @@ class _DashboardContent extends StatelessWidget {
                       style: Theme.of(
                         context,
                       ).textTheme.headlineSmall?.copyWith(
-                        color: Colors.white,
+                        //color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -93,15 +93,15 @@ class _DashboardContent extends StatelessWidget {
                     Text(
                       'Welcome, $firstName',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.9),
+                        //color: Colors.white.withValues(alpha: 0.9),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Manage your buyer broker agreements\nwith confidence.',
+                      'Manage your agreements with confidence.',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.7),
+                        //color: Colors.white.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -250,39 +250,34 @@ class _DashboardContent extends StatelessWidget {
               ),
             ),
           ] else ...[
-            Container(
-              padding: const EdgeInsets.all(32),
-              decoration: BoxDecoration(
-                color: cs.surface,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.12),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
+            GestureDetector(
+              onTap: () => context.go('/agreements'),
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.description_outlined,
+                        size: 48,
+                        color: cs.outlineVariant,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'No agreements yet',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Tap + to start one at a showing',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: cs.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.description_outlined,
-                    size: 48,
-                    color: cs.outlineVariant,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'No agreements yet',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Tap + to start one at a showing',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                  ),
-                ],
+                ),
               ),
             ),
           ],

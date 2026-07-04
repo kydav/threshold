@@ -86,11 +86,13 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     setState(() => _error = null);
     if (_step == 0) {
       setState(() => _step = 1);
-      unawaited(_pageController.animateToPage(
-        1,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      ));
+      unawaited(
+        _pageController.animateToPage(
+          1,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        ),
+      );
     } else {
       // Show a notice for agents in states without a digital form workflow,
       // but still proceed with account creation after they dismiss.
@@ -186,7 +188,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         leading:
             _step == 1
                 ? IconButton(
-                  icon: const Icon(Icons.arrow_back),
+                  icon: const Icon(Icons.chevron_left),
                   onPressed: () {
                     setState(() {
                       _step = 0;
@@ -310,10 +312,9 @@ class _UnsupportedStateSheet extends StatelessWidget {
         children: [
           Text(
             'Forms coming soon for $state',
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           Text.rich(

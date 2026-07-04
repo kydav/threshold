@@ -157,7 +157,11 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      context.go('/agreements');
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/home');
+      }
     }
   }
 
@@ -245,7 +249,7 @@ class _ColoradoFormScreenState extends ConsumerState<ColoradoFormScreen> {
         resizeToAvoidBottomInset: true,
         appBar: AppBar(
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
+            icon: const Icon(Icons.chevron_left),
             onPressed: _back,
           ),
           title: Text(_stepTitle(_step)),

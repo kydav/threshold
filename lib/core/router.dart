@@ -51,7 +51,35 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       // Non-shell routes — no bottom nav shown
-      GoRoute(path: '/agreements/new', builder: (_, _) => const _FormRouter()),
+      GoRoute(
+        path: '/agreements/new',
+        pageBuilder:
+            (_, state) => CustomTransitionPage<void>(
+              key: state.pageKey,
+              child: const _FormRouter(),
+              transitionDuration: const Duration(milliseconds: 260),
+              reverseTransitionDuration: const Duration(milliseconds: 260),
+              transitionsBuilder: (
+                context,
+                animation,
+                secondaryAnimation,
+                child,
+              ) {
+                final curved = CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                  reverseCurve: Curves.easeInCubic,
+                );
+                return SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(1, 0),
+                    end: Offset.zero,
+                  ).animate(curved),
+                  child: child,
+                );
+              },
+            ),
+      ),
       GoRoute(
         path: '/agreements/:id/sign',
         builder:

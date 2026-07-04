@@ -95,7 +95,9 @@ class _UtahFormScreenState extends ConsumerState<UtahFormScreen> {
         }
         if (_buyerPhoneCtrl.text.trim().isEmpty &&
             _buyerAddressCtrl.text.trim().isEmpty) {
-          setState(() => _stepError = 'Phone number or street address is required.');
+          setState(
+            () => _stepError = 'Phone number or street address is required.',
+          );
           return false;
         }
       case 2:
@@ -152,7 +154,11 @@ class _UtahFormScreenState extends ConsumerState<UtahFormScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      context.go('/agreements');
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/home');
+      }
     }
   }
 
@@ -236,86 +242,88 @@ class _UtahFormScreenState extends ConsumerState<UtahFormScreen> {
     final cs = Theme.of(context).colorScheme;
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, _) { if (!didPop) _back(); },
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _back();
+      },
       child: Scaffold(
-      resizeToAvoidBottomInset: true,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: _back,
-        ),
-        title: Text(_stepTitle(_step)),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(4),
-          child: LinearProgressIndicator(
-            value: (_step + 1) / _totalSteps,
-            backgroundColor: cs.surfaceContainerHighest,
-            color: cs.primary,
+        resizeToAvoidBottomInset: true,
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.chevron_left),
+            onPressed: _back,
+          ),
+          title: Text(_stepTitle(_step)),
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(4),
+            child: LinearProgressIndicator(
+              value: (_step + 1) / _totalSteps,
+              backgroundColor: cs.surfaceContainerHighest,
+              color: cs.primary,
+            ),
           ),
         ),
-      ),
-      body: Column(
-        children: [
-          _DisclaimerBanner(),
-          Expanded(
-            child: PageView(
-              controller: _pageController,
-              physics: const NeverScrollableScrollPhysics(),
+        body: Column(
+          children: [
+            _DisclaimerBanner(),
+            Expanded(
+              child: PageView(
+                controller: _pageController,
+                physics: const NeverScrollableScrollPhysics(),
+                children: [
+                  _buyerNameStep(),
+                  _contactStep(),
+                  _locationStep(),
+                  _feeStep(),
+                  _termStep(),
+                  _disputeStep(),
+                ],
+              ),
+            ),
+          ],
+        ),
+        bottomNavigationBar: SafeArea(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              8,
+              20,
+              16 + MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                _buyerNameStep(),
-                _contactStep(),
-                _locationStep(),
-                _feeStep(),
-                _termStep(),
-                _disputeStep(),
+                if (_stepError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      _stepError!,
+                      style: TextStyle(color: cs.error, fontSize: 13),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                FilledButton(
+                  onPressed: _saving ? null : _next,
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(52),
+                  ),
+                  child:
+                      _saving
+                          ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                          : Text(
+                            _step < _totalSteps - 1
+                                ? 'Next'
+                                : 'Proceed to signatures',
+                          ),
+                ),
               ],
             ),
           ),
-        ],
-      ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            20,
-            8,
-            20,
-            16 + MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (_stepError != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(
-                    _stepError!,
-                    style: TextStyle(color: cs.error, fontSize: 13),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              FilledButton(
-                onPressed: _saving ? null : _next,
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(52),
-                ),
-                child:
-                    _saving
-                        ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                        : Text(
-                          _step < _totalSteps - 1
-                              ? 'Next'
-                              : 'Proceed to signatures',
-                        ),
-              ),
-            ],
-          ),
         ),
       ),
-    ),
     );
   }
 

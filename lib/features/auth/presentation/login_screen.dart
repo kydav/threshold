@@ -78,7 +78,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           extra: {'displayName': result.displayName, 'email': result.email},
         );
       }
-      // Returning users: router redirect handles navigation to /agreements.
+      // Returning users: router redirect handles navigation to /home.
     } on FirebaseAuthException catch (e) {
       if (mounted) setState(() => _error = _friendlySocialError(e.code));
     } on Exception catch (e) {

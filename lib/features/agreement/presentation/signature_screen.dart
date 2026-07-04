@@ -216,7 +216,7 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
           );
         }
         await ref.read(agreementListProvider.notifier).refresh();
-        if (mounted) context.go('/agreements');
+        if (mounted) context.go('/home');
       }
     } on Exception catch (e) {
       debugPrint('Error generating PDF: $e');

@@ -99,7 +99,11 @@ class _FormScreenState extends ConsumerState<FormScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      context.go('/agreements');
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/home');
+      }
     }
   }
 
@@ -138,7 +142,7 @@ class _FormScreenState extends ConsumerState<FormScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.chevron_left),
           onPressed: _back,
         ),
         title: Text(_stepTitle(_step)),

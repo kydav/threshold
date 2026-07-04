@@ -1,8 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 
@@ -10,75 +11,98 @@ import 'package:threshold/core/services/delivery_service.dart';
 import 'package:threshold/features/agreement/data/agreement_model.dart';
 import 'package:threshold/features/agreement/data/agreement_repository.dart';
 
-class HistoryScreen extends ConsumerWidget {
+class HistoryScreen extends HookConsumerWidget {
   const HistoryScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final agreements = ref.watch(agreementListProvider);
     final cs = Theme.of(context).colorScheme;
+    final loading = useState(false);
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
+        leading: IconButton(
+          icon: Icon(Icons.chevron_left, color: cs.onSurface),
+          onPressed: () => context.go('/home'),
+        ),
+        title: Text(
           'Agreements',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.bold),
         ),
       ),
       body: agreements.when(
         loading:
-            () => const Center(
-              child: CircularProgressIndicator(color: Colors.white),
-            ),
+            () => Center(child: CircularProgressIndicator(color: cs.primary)),
         error:
             (e, _) => Center(
-              child: Text(
-                'Error: $e',
-                style: const TextStyle(color: Colors.white),
-              ),
+              child: Text('Error: $e', style: TextStyle(color: cs.onSurface)),
             ),
         data: (list) {
           if (list.isEmpty) {
-            return Center(
-              child: Container(
-                margin: const EdgeInsets.all(24),
-                padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(
-                  color: cs.surface,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.description_outlined,
-                      size: 64,
-                      color: cs.outlineVariant,
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 200),
+              child: Center(
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.description_outlined,
+                          size: 48,
+                          color: cs.outlineVariant,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'No agreements yet',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Tap + to start one at a showing',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: cs.onSurfaceVariant),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    const Text('No agreements yet'),
-                    const SizedBox(height: 8),
-                    const Text('Tap + to start a new one'),
-                  ],
+                  ),
                 ),
               ),
             );
           }
-          return RefreshIndicator(
-            onRefresh: () => ref.read(agreementListProvider.notifier).refresh(),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 110),
-              child: Card(
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  padding: const EdgeInsets.only(bottom: 110),
-                  itemCount: list.length,
-                  separatorBuilder: (_, _) => const Divider(height: 1),
-                  itemBuilder:
-                      (context, i) => _AgreementTile(agreement: list[i]),
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+            child: Card(
+              child: RefreshIndicator(
+                onRefresh:
+                    () => ref.read(agreementListProvider.notifier).refresh(),
+                child: Stack(
+                  children: [
+                    if (loading.value)
+                      const Positioned.fill(
+                        child: Card(
+                          child: Center(child: CircularProgressIndicator()),
+                        ),
+                      ),
+                    ListView.separated(
+                      shrinkWrap: true,
+                      primary: false,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: EdgeInsets.zero,
+                      itemCount: list.length,
+                      separatorBuilder: (_, _) => const Divider(height: 1),
+                      itemBuilder:
+                          (context, i) => _AgreementTile(
+                            agreement: list[i],
+                            loading: loading,
+                          ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -90,8 +114,9 @@ class HistoryScreen extends ConsumerWidget {
 }
 
 class _AgreementTile extends ConsumerWidget {
-  const _AgreementTile({required this.agreement});
+  const _AgreementTile({required this.agreement, required this.loading});
   final AgreementModel agreement;
+  final ValueNotifier<bool> loading;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -115,7 +140,7 @@ class _AgreementTile extends ConsumerWidget {
         context.go('/agreements/${agreement.id}/sign');
 
       case AgreementStatus.delivered:
-        await _sharePdf(context);
+        await _sharePdf(context, loading);
 
       case AgreementStatus.signed:
       case AgreementStatus.pendingDelivery:
@@ -123,9 +148,17 @@ class _AgreementTile extends ConsumerWidget {
     }
   }
 
-  Future<void> _sharePdf(BuildContext context) async {
+  Future<void> _sharePdf(
+    BuildContext context,
+    ValueNotifier<bool> loading,
+  ) async {
+    loading.value = true;
+    await Future.delayed(
+      const Duration(milliseconds: 1000),
+    ); // allow loading indicator to show
     final path = agreement.localPdfPath;
     if (path == null || !File(path).existsSync()) {
+      loading.value = false;
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('PDF not found on this device.')),
@@ -136,6 +169,7 @@ class _AgreementTile extends ConsumerWidget {
     final bytes = await File(path).readAsBytes();
     final filename = path.split('/').last;
     await Printing.sharePdf(bytes: bytes, filename: filename);
+    loading.value = false;
   }
 
   Future<void> _showDeliverySheet(BuildContext context, WidgetRef ref) async {
@@ -223,7 +257,7 @@ class _AgreementTile extends ConsumerWidget {
                         hasPdf
                             ? () {
                               Navigator.pop(ctx);
-                              _sharePdf(context);
+                              _sharePdf(context, loading);
                             }
                             : null,
                   ),

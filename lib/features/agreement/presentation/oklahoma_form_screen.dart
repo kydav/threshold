@@ -99,7 +99,9 @@ class _OklahomaFormScreenState extends ConsumerState<OklahomaFormScreen> {
           return false;
         }
         if (_compType == 'other' && _otherCompCtrl.text.trim().isEmpty) {
-          setState(() => _stepError = 'Please describe the compensation arrangement.');
+          setState(
+            () => _stepError = 'Please describe the compensation arrangement.',
+          );
           return false;
         }
     }
@@ -134,7 +136,11 @@ class _OklahomaFormScreenState extends ConsumerState<OklahomaFormScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      context.go('/agreements');
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/home');
+      }
     }
   }
 
@@ -218,7 +224,7 @@ class _OklahomaFormScreenState extends ConsumerState<OklahomaFormScreen> {
         resizeToAvoidBottomInset: true,
         appBar: AppBar(
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
+            icon: const Icon(Icons.chevron_left),
             onPressed: _back,
           ),
           title: Text(_stepTitle(_step)),
@@ -298,10 +304,9 @@ class _OklahomaFormScreenState extends ConsumerState<OklahomaFormScreen> {
         children: [
           Text(
             "Buyer's full legal name",
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 24),
           TextField(
@@ -351,10 +356,9 @@ class _OklahomaFormScreenState extends ConsumerState<OklahomaFormScreen> {
         children: [
           Text(
             "Buyer's contact",
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 20),
           TextField(
@@ -394,10 +398,9 @@ class _OklahomaFormScreenState extends ConsumerState<OklahomaFormScreen> {
             const SizedBox(height: 8),
             Text(
               "Co-buyer's contact",
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w600),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -445,10 +448,9 @@ class _OklahomaFormScreenState extends ConsumerState<OklahomaFormScreen> {
         children: [
           Text(
             'Agreement term',
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 24),
           Text('Start date', style: Theme.of(context).textTheme.labelLarge),
@@ -463,7 +465,10 @@ class _OklahomaFormScreenState extends ConsumerState<OklahomaFormScreen> {
             if (d != null) setState(() => _startDate = d);
           }, cs),
           const SizedBox(height: 20),
-          Text('Expiration date', style: Theme.of(context).textTheme.labelLarge),
+          Text(
+            'Expiration date',
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
           const SizedBox(height: 8),
           _dateTile(_dateFmt.format(_endDate), () async {
             final d = await showDatePicker(
@@ -483,10 +488,9 @@ class _OklahomaFormScreenState extends ConsumerState<OklahomaFormScreen> {
           Text(
             'Days after expiration during which the fee still applies '
             '(default 60 if left blank).',
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: cs.onSurfaceVariant),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
           ),
           const SizedBox(height: 8),
           TextField(
@@ -513,10 +517,9 @@ class _OklahomaFormScreenState extends ConsumerState<OklahomaFormScreen> {
         children: [
           Text(
             'Compensation',
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 24),
           _radioTile(
@@ -550,10 +553,13 @@ class _OklahomaFormScreenState extends ConsumerState<OklahomaFormScreen> {
             TextField(
               controller: _compValueCtrl,
               autofocus: true,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               textInputAction: TextInputAction.next,
               decoration: InputDecoration(
-                labelText: _compType == 'percentage' ? 'Percentage' : 'Dollar amount',
+                labelText:
+                    _compType == 'percentage' ? 'Percentage' : 'Dollar amount',
                 prefixText: _compType == 'dollar' ? '\$ ' : null,
                 suffixText: _compType == 'percentage' ? '%' : null,
                 hintText: _compType == 'percentage' ? '3' : '10000',
@@ -579,10 +585,9 @@ class _OklahomaFormScreenState extends ConsumerState<OklahomaFormScreen> {
           const SizedBox(height: 4),
           Text(
             'Non-refundable retainer credited toward the compensation.',
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: cs.onSurfaceVariant),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
           ),
           const SizedBox(height: 8),
           TextField(
@@ -603,10 +608,9 @@ class _OklahomaFormScreenState extends ConsumerState<OklahomaFormScreen> {
           const SizedBox(height: 4),
           Text(
             'Days after agreement expires during which commission applies (default 60).',
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: cs.onSurfaceVariant),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
           ),
           const SizedBox(height: 8),
           TextField(
@@ -631,17 +635,16 @@ class _OklahomaFormScreenState extends ConsumerState<OklahomaFormScreen> {
         children: [
           Text(
             'Additional provisions',
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           Text(
             'Optional. Any additional terms agreed upon by the parties (§15).',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 20),
           TextField(
@@ -683,7 +686,9 @@ class _OklahomaFormScreenState extends ConsumerState<OklahomaFormScreen> {
           ),
           borderRadius: BorderRadius.circular(12),
           color:
-              selected ? cs.primary.withValues(alpha: 0.06) : Colors.transparent,
+              selected
+                  ? cs.primary.withValues(alpha: 0.06)
+                  : Colors.transparent,
         ),
         child: Row(
           children: [
@@ -697,18 +702,19 @@ class _OklahomaFormScreenState extends ConsumerState<OklahomaFormScreen> {
                   width: 2,
                 ),
               ),
-              child: selected
-                  ? Center(
-                      child: Container(
-                        width: 10,
-                        height: 10,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: cs.primary,
+              child:
+                  selected
+                      ? Center(
+                        child: Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: cs.primary,
+                          ),
                         ),
-                      ),
-                    )
-                  : null,
+                      )
+                      : null,
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -724,10 +730,9 @@ class _OklahomaFormScreenState extends ConsumerState<OklahomaFormScreen> {
                   ),
                   Text(
                     subtitle,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: cs.onSurfaceVariant),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -762,11 +767,11 @@ class _OklahomaFormScreenState extends ConsumerState<OklahomaFormScreen> {
   }
 
   String _stepTitle(int step) => switch (step) {
-        0 => 'Buyer name',
-        1 => 'Contact info',
-        2 => 'Agreement term',
-        3 => 'Compensation',
-        4 => 'Additional provisions',
-        _ => 'New agreement',
-      };
+    0 => 'Buyer name',
+    1 => 'Contact info',
+    2 => 'Agreement term',
+    3 => 'Compensation',
+    4 => 'Additional provisions',
+    _ => 'New agreement',
+  };
 }
