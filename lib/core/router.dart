@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:threshold/core/presentation/main_shell.dart';
 import 'package:threshold/features/agreement/presentation/colorado_form_screen.dart';
 import 'package:threshold/features/agreement/presentation/form_screen.dart';
 import 'package:threshold/features/agreement/presentation/history_screen.dart';
@@ -16,6 +17,7 @@ import 'package:threshold/features/auth/presentation/login_screen.dart';
 import 'package:threshold/features/auth/presentation/profile_screen.dart';
 import 'package:threshold/features/auth/presentation/setup_screen.dart';
 import 'package:threshold/features/auth/presentation/signup_screen.dart';
+import 'package:threshold/features/dashboard/presentation/dashboard_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final notifier = _AuthNotifier();
@@ -31,9 +33,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final onSetupPage = loc == '/setup';
 
       if (!loggedIn && !onAuthPage) return '/login';
-      if (loggedIn && onAuthPage) return '/agreements';
-      // Keep new social users on /setup until they save their profile.
-      // The SetupScreen itself navigates to /agreements after saving.
+      if (loggedIn && onAuthPage) return '/home';
       if (loggedIn && onSetupPage) return null;
       return null;
     },
@@ -50,17 +50,34 @@ final routerProvider = Provider<GoRouter>((ref) {
           );
         },
       ),
+      // Non-shell routes — no bottom nav shown
+      GoRoute(path: '/agreements/new', builder: (_, _) => const _FormRouter()),
       GoRoute(
-        path: '/agreements',
-        builder: (_, _) => const HistoryScreen(),
+        path: '/agreements/:id/sign',
+        builder:
+            (_, state) =>
+                SignatureScreen(agreementId: state.pathParameters['id']!),
+      ),
+      // Shell routes — wrapped with floating bottom nav
+      ShellRoute(
+        builder:
+            (context, state, child) =>
+                MainShell(location: state.matchedLocation, child: child),
         routes: [
-          GoRoute(path: 'new', builder: (_, _) => const _FormRouter()),
-          GoRoute(path: 'profile', builder: (_, _) => const ProfileScreen()),
           GoRoute(
-            path: ':id/sign',
-            builder:
-                (_, state) =>
-                    SignatureScreen(agreementId: state.pathParameters['id']!),
+            path: '/home',
+            pageBuilder:
+                (_, _) => const NoTransitionPage(child: DashboardScreen()),
+          ),
+          GoRoute(
+            path: '/agreements',
+            pageBuilder:
+                (_, _) => const NoTransitionPage(child: HistoryScreen()),
+          ),
+          GoRoute(
+            path: '/profile',
+            pageBuilder:
+                (_, _) => const NoTransitionPage(child: ProfileScreen()),
           ),
         ],
       ),

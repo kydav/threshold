@@ -11,6 +11,7 @@ Future<bool> showPaywall(BuildContext context) async {
   AnalyticsService.paywallShown();
   final result = await showModalBottomSheet<bool>(
     context: context,
+    useRootNavigator: true,
     isScrollControlled: true,
     useSafeArea: true,
     shape: const RoundedRectangleBorder(
@@ -54,13 +55,16 @@ class _PaywallSheetState extends ConsumerState<_PaywallSheet> {
         if (msg.toLowerCase().contains('network') ||
             msg.toLowerCase().contains('internet') ||
             msg.toLowerCase().contains('connection')) {
-          _error = 'No internet connection. Check your connection and try again.';
+          _error =
+              'No internet connection. Check your connection and try again.';
         } else {
           _error = 'Something went wrong. Please try again.';
         }
       });
     } catch (e) {
-      if (mounted) setState(() => _error = 'Something went wrong. Please try again.');
+      if (mounted) {
+        setState(() => _error = 'Something went wrong. Please try again.');
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -79,7 +83,9 @@ class _PaywallSheetState extends ConsumerState<_PaywallSheet> {
         AnalyticsService.subscriptionRestored();
         Navigator.of(context).pop(true);
       } else {
-        setState(() => _error = 'No active subscription found for this Apple ID.');
+        setState(
+          () => _error = 'No active subscription found for this Apple ID.',
+        );
       }
     } on PlatformException catch (e) {
       if (!mounted) return;
@@ -88,7 +94,8 @@ class _PaywallSheetState extends ConsumerState<_PaywallSheet> {
         if (msg.toLowerCase().contains('network') ||
             msg.toLowerCase().contains('internet') ||
             msg.toLowerCase().contains('connection')) {
-          _error = 'No internet connection. Check your connection and try again.';
+          _error =
+              'No internet connection. Check your connection and try again.';
         } else {
           _error = 'Restore failed. Please try again.';
         }
@@ -185,10 +192,11 @@ class _PaywallSheetState extends ConsumerState<_PaywallSheet> {
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                onPressed: () => launchUrl(
-                  Uri.parse('https://auaha.app/threshold/terms'),
-                  mode: LaunchMode.externalApplication,
-                ),
+                onPressed:
+                    () => launchUrl(
+                      Uri.parse('https://auaha.app/threshold/terms'),
+                      mode: LaunchMode.externalApplication,
+                    ),
                 child: Text(
                   'Terms of Use',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -209,10 +217,11 @@ class _PaywallSheetState extends ConsumerState<_PaywallSheet> {
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                onPressed: () => launchUrl(
-                  Uri.parse('https://auaha.app/threshold/privacy'),
-                  mode: LaunchMode.externalApplication,
-                ),
+                onPressed:
+                    () => launchUrl(
+                      Uri.parse('https://auaha.app/threshold/privacy'),
+                      mode: LaunchMode.externalApplication,
+                    ),
                 child: Text(
                   'Privacy Policy',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(

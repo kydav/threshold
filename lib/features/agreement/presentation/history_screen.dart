@@ -16,68 +16,74 @@ class HistoryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final agreements = ref.watch(agreementListProvider);
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A1F6B),
+        backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
-        leading: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Image.asset('assets/icon/icon_transparent.png'),
-        ),
+        elevation: 0,
         title: const Text(
-          'Threshold',
-          style: TextStyle(
-            fontSize: 20,
-            fontFamily: 'helvetica',
-            letterSpacing: 2,
-            color: Colors.white,
-          ),
+          'Agreements',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.menu),
-            tooltip: 'Profile',
-            onPressed: () => context.go('/agreements/profile'),
-          ),
-        ],
       ),
       body: agreements.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        loading:
+            () => const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            ),
+        error:
+            (e, _) => Center(
+              child: Text(
+                'Error: $e',
+                style: const TextStyle(color: Colors.white),
+              ),
+            ),
         data: (list) {
           if (list.isEmpty) {
             return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.description_outlined,
-                    size: 64,
-                    color: Theme.of(context).colorScheme.outlineVariant,
-                  ),
-                  const SizedBox(height: 16),
-                  const Text('No agreements yet'),
-                  const SizedBox(height: 8),
-                  const Text('Tap + to start one at a showing'),
-                ],
+              child: Container(
+                margin: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  color: cs.surface,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.description_outlined,
+                      size: 64,
+                      color: cs.outlineVariant,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text('No agreements yet'),
+                    const SizedBox(height: 8),
+                    const Text('Tap + to start a new one'),
+                  ],
+                ),
               ),
             );
           }
           return RefreshIndicator(
             onRefresh: () => ref.read(agreementListProvider.notifier).refresh(),
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              itemCount: list.length,
-              separatorBuilder: (_, _) => const Divider(height: 1),
-              itemBuilder: (context, i) => _AgreementTile(agreement: list[i]),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 110),
+              child: Card(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.only(bottom: 110),
+                  itemCount: list.length,
+                  separatorBuilder: (_, _) => const Divider(height: 1),
+                  itemBuilder:
+                      (context, i) => _AgreementTile(agreement: list[i]),
+                ),
+              ),
             ),
           );
         },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.go('/agreements/new'),
-        icon: const Icon(Icons.add),
-        label: const Text('New agreement'),
       ),
     );
   }
