@@ -97,15 +97,15 @@ class _FloatingNav extends StatelessWidget {
               onTap: onHomeTap,
             ),
           ),
-          Expanded(
-            child: _NavItem(
-              icon: Icons.description_outlined,
-              activeIcon: Icons.description_rounded,
-              label: 'Agreements',
-              isActive: agreementsActive,
-              onTap: onAgreementsTap,
-            ),
-          ),
+          // Expanded(
+          //   child: _NavItem(
+          //     icon: Icons.description_outlined,
+          //     activeIcon: Icons.description_rounded,
+          //     label: 'Agreements',
+          //     isActive: agreementsActive,
+          //     onTap: onAgreementsTap,
+          //   ),
+          // ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: GestureDetector(
@@ -116,18 +116,11 @@ class _FloatingNav extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: cs.primary,
                   shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: cs.primary.withValues(alpha: 0.45),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
                 ),
                 child: const Icon(
                   Icons.add_rounded,
                   color: Colors.white,
-                  size: 28,
+                  size: 35,
                 ),
               ),
             ),
@@ -141,7 +134,7 @@ class _FloatingNav extends StatelessWidget {
               onTap: onProfileTap,
             ),
           ),
-          const Expanded(child: SizedBox.shrink()),
+          //const Expanded(child: SizedBox.shrink()),
         ],
       ),
     );
