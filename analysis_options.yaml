@@ -4,6 +4,9 @@ analyzer:
   exclude:
     - "**.g.dart"
     - "generated_plugin_registrant.dart"
+    - "**/cache/**"
+    - "**/.dart_tool/**"
+    - "ios/build/**"
 
 linter:
   rules:

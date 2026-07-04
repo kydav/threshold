@@ -14,32 +14,37 @@ import 'package:threshold/features/auth/data/user_profile.dart';
 import 'package:threshold/firebase_options.dart';
 
 void main() {
-  runZonedGuarded(() async {
-    WidgetsFlutterBinding.ensureInitialized();
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  runZonedGuarded(
+    () async {
+      WidgetsFlutterBinding.ensureInitialized();
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
 
-    if (!kDebugMode) {
-      FlutterError.onError =
-          FirebaseCrashlytics.instance.recordFlutterFatalError;
-      PlatformDispatcher.instance.onError = (error, stack) {
+      if (!kDebugMode) {
+        FlutterError.onError =
+            FirebaseCrashlytics.instance.recordFlutterFatalError;
+        PlatformDispatcher.instance.onError = (error, stack) {
+          FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+          return true;
+        };
+      }
+
+      await configureRevenueCat();
+      final remoteConfig = await RemoteConfigService.init();
+      runApp(
+        ProviderScope(
+          overrides: [remoteConfigProvider.overrideWithValue(remoteConfig)],
+          child: const ThresholdApp(),
+        ),
+      );
+    },
+    (error, stack) {
+      if (!kDebugMode) {
         FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-        return true;
-      };
-    }
-
-    await configureRevenueCat();
-    final remoteConfig = await RemoteConfigService.init();
-    runApp(ProviderScope(
-      overrides: [
-        remoteConfigProvider.overrideWithValue(remoteConfig),
-      ],
-      child: const ThresholdApp(),
-    ));
-  }, (error, stack) {
-    if (!kDebugMode) {
-      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-    }
-  });
+      }
+    },
+  );
 }
 
 class ThresholdApp extends ConsumerWidget {
@@ -55,12 +60,12 @@ class ThresholdApp extends ConsumerWidget {
       title: 'Threshold',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF0131A9)),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1E56B2)),
         useMaterial3: true,
       ),
       darkTheme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF011A5F),
+          seedColor: const Color(0xFF0D3B66),
           brightness: Brightness.dark,
         ),
         useMaterial3: true,
