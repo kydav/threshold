@@ -135,6 +135,35 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
+  Future<void> _confirmSignOut() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('Sign out?'),
+            content: const Text(
+              'This will sign you out of your Threshold account.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: Theme.of(ctx).colorScheme.primary,
+                ),
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Sign out'),
+              ),
+            ],
+          ),
+    );
+    if ((confirmed ?? false) && mounted) {
+      await ref.read(authServiceProvider).signOut();
+    }
+  }
+
   Future<void> _confirmDeleteAccount() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -245,7 +274,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 _sectionLabel('Account'),
                 const SizedBox(height: 8),
                 _readOnlyTile(Icons.email_outlined, profile?.email ?? ''),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
+
+                // Sign out
+                OutlinedButton.icon(
+                  onPressed: () => _confirmSignOut(),
+                  icon: const Icon(Icons.logout),
+                  label: const Text('Sign out'),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Divider(),
 
                 // Name
                 _sectionLabel('Your name'),
@@ -469,19 +510,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 _SubscriptionTile(),
                 const SizedBox(height: 24),
                 const Divider(),
-                const SizedBox(height: 16),
 
-                // Sign out
-                OutlinedButton.icon(
-                  onPressed: () => ref.read(authServiceProvider).signOut(),
-                  icon: const Icon(Icons.logout),
-                  label: const Text('Sign out'),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(48),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                const Divider(),
                 const SizedBox(height: 16),
 
                 // Delete account
