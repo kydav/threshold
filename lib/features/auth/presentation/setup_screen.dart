@@ -118,7 +118,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
 
     // Navigate once profile is saved
     ref.listen(userProfileProvider, (_, profile) {
-      if (profile != null && mounted) context.go('/agreements');
+      if (profile != null && mounted) context.go('/home');
     });
 
     return Scaffold(
