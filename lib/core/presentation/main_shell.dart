@@ -124,7 +124,11 @@ class _FloatingNav extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
+                child: const Icon(
+                  Icons.add_rounded,
+                  color: Colors.white,
+                  size: 28,
+                ),
               ),
             ),
           ),
@@ -137,6 +141,7 @@ class _FloatingNav extends StatelessWidget {
               onTap: onProfileTap,
             ),
           ),
+          const Expanded(child: SizedBox.shrink()),
         ],
       ),
     );

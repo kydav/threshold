@@ -29,12 +29,17 @@ class HistoryScreen extends ConsumerWidget {
         ),
       ),
       body: agreements.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: Colors.white),
-        ),
-        error: (e, _) => Center(
-          child: Text('Error: $e', style: const TextStyle(color: Colors.white)),
-        ),
+        loading:
+            () => const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            ),
+        error:
+            (e, _) => Center(
+              child: Text(
+                'Error: $e',
+                style: const TextStyle(color: Colors.white),
+              ),
+            ),
         data: (list) {
           if (list.isEmpty) {
             return Center(
@@ -64,25 +69,17 @@ class HistoryScreen extends ConsumerWidget {
           }
           return RefreshIndicator(
             onRefresh: () => ref.read(agreementListProvider.notifier).refresh(),
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: cs.surface,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.12),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: ListView.separated(
-                padding: const EdgeInsets.only(bottom: 110),
-                itemCount: list.length,
-                separatorBuilder: (_, _) => const Divider(height: 1),
-                itemBuilder: (context, i) => _AgreementTile(agreement: list[i]),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 110),
+              child: Card(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.only(bottom: 110),
+                  itemCount: list.length,
+                  separatorBuilder: (_, _) => const Divider(height: 1),
+                  itemBuilder:
+                      (context, i) => _AgreementTile(agreement: list[i]),
+                ),
               ),
             ),
           );

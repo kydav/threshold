@@ -61,17 +61,24 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Shell routes — wrapped with floating bottom nav
       ShellRoute(
         builder:
-            (context, state, child) => MainShell(
-              location: state.matchedLocation,
-              child: child,
-            ),
+            (context, state, child) =>
+                MainShell(location: state.matchedLocation, child: child),
         routes: [
-          GoRoute(path: '/home', builder: (_, _) => const DashboardScreen()),
+          GoRoute(
+            path: '/home',
+            pageBuilder:
+                (_, _) => const NoTransitionPage(child: DashboardScreen()),
+          ),
           GoRoute(
             path: '/agreements',
-            builder: (_, _) => const HistoryScreen(),
+            pageBuilder:
+                (_, _) => const NoTransitionPage(child: HistoryScreen()),
           ),
-          GoRoute(path: '/profile', builder: (_, _) => const ProfileScreen()),
+          GoRoute(
+            path: '/profile',
+            pageBuilder:
+                (_, _) => const NoTransitionPage(child: ProfileScreen()),
+          ),
         ],
       ),
     ],

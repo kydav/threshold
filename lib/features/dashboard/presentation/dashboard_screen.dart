@@ -19,12 +19,17 @@ class DashboardScreen extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       body: SafeArea(
         child: agreements.when(
-          loading: () => const Center(
-            child: CircularProgressIndicator(color: Colors.white),
-          ),
-          error: (e, _) => Center(
-            child: Text('Error: $e', style: const TextStyle(color: Colors.white)),
-          ),
+          loading:
+              () => const Center(
+                child: CircularProgressIndicator(color: Colors.white),
+              ),
+          error:
+              (e, _) => Center(
+                child: Text(
+                  'Error: $e',
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
           data: (list) => _DashboardContent(profile: profile, agreements: list),
         ),
       ),
@@ -77,7 +82,9 @@ class _DashboardContent extends StatelessWidget {
                   children: [
                     Text(
                       'Dashboard',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      style: Theme.of(
+                        context,
+                      ).textTheme.headlineSmall?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
@@ -100,36 +107,13 @@ class _DashboardContent extends StatelessWidget {
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.notifications_outlined,
-                  color: Colors.white,
-                  size: 22,
-                ),
-              ),
             ],
           ),
 
           const SizedBox(height: 24),
 
           // Overview card
-          Container(
-            decoration: BoxDecoration(
-              color: cs.surface,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.12),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
+          Card(
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -294,9 +278,9 @@ class _DashboardContent extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     'Tap + to start one at a showing',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: cs.onSurfaceVariant,
-                    ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -370,7 +354,9 @@ class _RecentAgreementTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final dateStr = DateFormat('MMM d, yyyy').format(agreement.createdAt.toLocal());
+    final dateStr = DateFormat(
+      'MMM d, yyyy',
+    ).format(agreement.createdAt.toLocal());
     final (label, color) = switch (agreement.status) {
       AgreementStatus.draft => ('Draft', Colors.orange),
       AgreementStatus.signed => ('Signed', Colors.green),
@@ -388,16 +374,16 @@ class _RecentAgreementTile extends StatelessWidget {
               children: [
                 Text(
                   agreement.buyerName,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   '${agreement.propertyScope} · $dateStr',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: cs.onSurfaceVariant,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),

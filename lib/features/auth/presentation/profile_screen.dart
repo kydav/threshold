@@ -57,11 +57,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _brokerageCityStateZipCtrl = TextEditingController(
       text: p?.brokerageCityStateZip ?? '',
     );
-    _agentLicenseCtrl = TextEditingController(text: p?.agentLicenseNumber ?? '');
-    _brokerageLicenseCtrl = TextEditingController(text: p?.brokerageLicenseNumber ?? '');
-    _managingBrokerNameCtrl = TextEditingController(text: p?.managingBrokerName ?? '');
-    _managingBrokerPhoneCtrl = TextEditingController(text: p?.managingBrokerPhone ?? '');
-    _managingBrokerEmailCtrl = TextEditingController(text: p?.managingBrokerEmail ?? '');
+    _agentLicenseCtrl = TextEditingController(
+      text: p?.agentLicenseNumber ?? '',
+    );
+    _brokerageLicenseCtrl = TextEditingController(
+      text: p?.brokerageLicenseNumber ?? '',
+    );
+    _managingBrokerNameCtrl = TextEditingController(
+      text: p?.managingBrokerName ?? '',
+    );
+    _managingBrokerPhoneCtrl = TextEditingController(
+      text: p?.managingBrokerPhone ?? '',
+    );
+    _managingBrokerEmailCtrl = TextEditingController(
+      text: p?.managingBrokerEmail ?? '',
+    );
     final s = p?.state ?? '';
     _state = s.isEmpty ? null : s;
     _isMultiPersonFirm = p?.isMultiPersonFirm ?? true;
@@ -224,316 +234,327 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(24, 24, 24, 120),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Account info (read-only)
-            _sectionLabel('Account'),
-            const SizedBox(height: 8),
-            _readOnlyTile(Icons.email_outlined, profile?.email ?? ''),
-            const SizedBox(height: 24),
-
-            // Name
-            _sectionLabel('Your name'),
-            const SizedBox(height: 8),
-            Row(
+        padding: const EdgeInsets.fromLTRB(8, 8, 8, 120),
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _firstNameCtrl,
-                    textCapitalization: TextCapitalization.words,
+                // Account info (read-only)
+                _sectionLabel('Account'),
+                const SizedBox(height: 8),
+                _readOnlyTile(Icons.email_outlined, profile?.email ?? ''),
+                const SizedBox(height: 24),
+
+                // Name
+                _sectionLabel('Your name'),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _firstNameCtrl,
+                        textCapitalization: TextCapitalization.words,
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration(
+                          labelText: 'First name',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextField(
+                        controller: _lastNameCtrl,
+                        textCapitalization: TextCapitalization.words,
+                        textInputAction: TextInputAction.next,
+                        decoration: const InputDecoration(
+                          labelText: 'Last name',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _phoneCtrl,
+                  keyboardType: TextInputType.phone,
+                  textInputAction: TextInputAction.next,
+                  decoration: const InputDecoration(
+                    labelText: 'Phone',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Brokerage
+                _sectionLabel('Brokerage'),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _brokerageNameCtrl,
+                  textCapitalization: TextCapitalization.words,
+                  textInputAction: TextInputAction.next,
+                  decoration: const InputDecoration(
+                    labelText: 'Brokerage name',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _brokerageAddressCtrl,
+                  textCapitalization: TextCapitalization.words,
+                  textInputAction: TextInputAction.next,
+                  decoration: const InputDecoration(
+                    labelText: 'Street address (optional)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _brokerageCityStateZipCtrl,
+                  textCapitalization: TextCapitalization.words,
+                  textInputAction: TextInputAction.next,
+                  decoration: const InputDecoration(
+                    labelText: 'City, State, Zip (optional)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: _state,
+                  decoration: const InputDecoration(
+                    labelText: 'State',
+                    border: OutlineInputBorder(),
+                  ),
+                  hint: const Text('Select your state'),
+                  items:
+                      kAllUsStates
+                          .map(
+                            (s) => DropdownMenuItem(value: s, child: Text(s)),
+                          )
+                          .toList(),
+                  onChanged: (v) => setState(() => _state = v),
+                ),
+
+                if (_state == 'Oklahoma') ...[
+                  const SizedBox(height: 24),
+                  _sectionLabel('Oklahoma license info'),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Pre-filled on every OREC form — no need to enter each time.',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _agentLicenseCtrl,
                     textInputAction: TextInputAction.next,
                     decoration: const InputDecoration(
-                      labelText: 'First name',
+                      labelText: 'Associate broker license number',
                       border: OutlineInputBorder(),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextField(
-                    controller: _lastNameCtrl,
-                    textCapitalization: TextCapitalization.words,
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _brokerageLicenseCtrl,
                     textInputAction: TextInputAction.next,
                     decoration: const InputDecoration(
-                      labelText: 'Last name',
+                      labelText: 'Brokerage license number',
                       border: OutlineInputBorder(),
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _phoneCtrl,
-              keyboardType: TextInputType.phone,
-              textInputAction: TextInputAction.next,
-              decoration: const InputDecoration(
-                labelText: 'Phone',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Brokerage
-            _sectionLabel('Brokerage'),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _brokerageNameCtrl,
-              textCapitalization: TextCapitalization.words,
-              textInputAction: TextInputAction.next,
-              decoration: const InputDecoration(
-                labelText: 'Brokerage name',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _brokerageAddressCtrl,
-              textCapitalization: TextCapitalization.words,
-              textInputAction: TextInputAction.next,
-              decoration: const InputDecoration(
-                labelText: 'Street address (optional)',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _brokerageCityStateZipCtrl,
-              textCapitalization: TextCapitalization.words,
-              textInputAction: TextInputAction.next,
-              decoration: const InputDecoration(
-                labelText: 'City, State, Zip (optional)',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              initialValue: _state,
-              decoration: const InputDecoration(
-                labelText: 'State',
-                border: OutlineInputBorder(),
-              ),
-              hint: const Text('Select your state'),
-              items:
-                  kAllUsStates
-                      .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                      .toList(),
-              onChanged: (v) => setState(() => _state = v),
-            ),
-
-            if (_state == 'Oklahoma') ...[
-              const SizedBox(height: 24),
-              _sectionLabel('Oklahoma license info'),
-              const SizedBox(height: 4),
-              Text(
-                'Pre-filled on every OREC form — no need to enter each time.',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: cs.onSurfaceVariant),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _agentLicenseCtrl,
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: 'Associate broker license number',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _brokerageLicenseCtrl,
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: 'Brokerage license number',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              _sectionLabel('Managing broker'),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _managingBrokerNameCtrl,
-                textCapitalization: TextCapitalization.words,
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: 'Managing broker name',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _managingBrokerPhoneCtrl,
-                keyboardType: TextInputType.phone,
-                textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
-                  labelText: 'Managing broker office telephone',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _managingBrokerEmailCtrl,
-                keyboardType: TextInputType.emailAddress,
-                textInputAction: TextInputAction.done,
-                autocorrect: false,
-                decoration: const InputDecoration(
-                  labelText: 'Managing broker email',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-            ],
-
-            if (_state == 'Colorado') ...[
-              const SizedBox(height: 24),
-              _sectionLabel('Firm type'),
-              const SizedBox(height: 8),
-              _choiceCard(
-                label: 'Multiple-person firm',
-                subtitle: 'Section 2.1 — designated broker within the firm',
-                selected: _isMultiPersonFirm,
-                onTap: () => setState(() => _isMultiPersonFirm = true),
-                cs: cs,
-              ),
-              const SizedBox(height: 8),
-              _choiceCard(
-                label: 'One-person firm',
-                subtitle: 'Section 2.2 — sole licensed person',
-                selected: !_isMultiPersonFirm,
-                onTap: () => setState(() => _isMultiPersonFirm = false),
-                cs: cs,
-              ),
-              const SizedBox(height: 24),
-              _sectionLabel('Brokerage relationship'),
-              const SizedBox(height: 8),
-              _choiceCard(
-                label: 'Buyer Agency',
-                subtitle: 'You represent the buyer',
-                selected: _isBuyerAgency,
-                onTap: () => setState(() => _isBuyerAgency = true),
-                cs: cs,
-              ),
-              const SizedBox(height: 8),
-              _choiceCard(
-                label: 'Transaction-Brokerage',
-                subtitle: 'You assist without representing either party',
-                selected: !_isBuyerAgency,
-                onTap: () => setState(() => _isBuyerAgency = false),
-                cs: cs,
-              ),
-            ],
-
-            if (_saved) ...[
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Icon(Icons.check_circle, color: cs.primary, size: 18),
-                  const SizedBox(width: 8),
-                  Text('Saved', style: TextStyle(color: cs.primary)),
+                  const SizedBox(height: 16),
+                  _sectionLabel('Managing broker'),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _managingBrokerNameCtrl,
+                    textCapitalization: TextCapitalization.words,
+                    textInputAction: TextInputAction.next,
+                    decoration: const InputDecoration(
+                      labelText: 'Managing broker name',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _managingBrokerPhoneCtrl,
+                    keyboardType: TextInputType.phone,
+                    textInputAction: TextInputAction.next,
+                    decoration: const InputDecoration(
+                      labelText: 'Managing broker office telephone',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _managingBrokerEmailCtrl,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.done,
+                    autocorrect: false,
+                    decoration: const InputDecoration(
+                      labelText: 'Managing broker email',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
                 ],
-              ),
-            ],
 
-            if (_error != null) ...[
-              const SizedBox(height: 16),
-              Text(_error!, style: TextStyle(color: cs.error, fontSize: 13)),
-            ],
-
-            const SizedBox(height: 48),
-            const Divider(),
-            const SizedBox(height: 24),
-
-            // Subscription
-            _sectionLabel('Subscription'),
-            const SizedBox(height: 12),
-            _SubscriptionTile(),
-            const SizedBox(height: 24),
-            const Divider(),
-            const SizedBox(height: 16),
-
-            // Sign out
-            OutlinedButton.icon(
-              onPressed: () => ref.read(authServiceProvider).signOut(),
-              icon: const Icon(Icons.logout),
-              label: const Text('Sign out'),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size.fromHeight(48),
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Divider(),
-            const SizedBox(height: 16),
-
-            // Delete account
-            FilledButton.icon(
-              onPressed: _deleting ? null : _confirmDeleteAccount,
-              icon:
-                  _deleting
-                      ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                      : const Icon(Icons.delete_forever_outlined),
-              label: const Text('Delete account'),
-              style: FilledButton.styleFrom(
-                backgroundColor: cs.error,
-                foregroundColor: cs.onError,
-                minimumSize: const Size.fromHeight(48),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                TextButton(
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                if (_state == 'Colorado') ...[
+                  const SizedBox(height: 24),
+                  _sectionLabel('Firm type'),
+                  const SizedBox(height: 8),
+                  _choiceCard(
+                    label: 'Multiple-person firm',
+                    subtitle: 'Section 2.1 — designated broker within the firm',
+                    selected: _isMultiPersonFirm,
+                    onTap: () => setState(() => _isMultiPersonFirm = true),
+                    cs: cs,
                   ),
-                  onPressed: () => launchUrl(
-                    Uri.parse('https://auaha.app/threshold/terms'),
-                    mode: LaunchMode.externalApplication,
+                  const SizedBox(height: 8),
+                  _choiceCard(
+                    label: 'One-person firm',
+                    subtitle: 'Section 2.2 — sole licensed person',
+                    selected: !_isMultiPersonFirm,
+                    onTap: () => setState(() => _isMultiPersonFirm = false),
+                    cs: cs,
                   ),
-                  child: Text(
-                    'Terms of Use',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: cs.onSurfaceVariant,
-                      decoration: TextDecoration.underline,
-                    ),
+                  const SizedBox(height: 24),
+                  _sectionLabel('Brokerage relationship'),
+                  const SizedBox(height: 8),
+                  _choiceCard(
+                    label: 'Buyer Agency',
+                    subtitle: 'You represent the buyer',
+                    selected: _isBuyerAgency,
+                    onTap: () => setState(() => _isBuyerAgency = true),
+                    cs: cs,
+                  ),
+                  const SizedBox(height: 8),
+                  _choiceCard(
+                    label: 'Transaction-Brokerage',
+                    subtitle: 'You assist without representing either party',
+                    selected: !_isBuyerAgency,
+                    onTap: () => setState(() => _isBuyerAgency = false),
+                    cs: cs,
+                  ),
+                ],
+
+                if (_saved) ...[
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Icon(Icons.check_circle, color: cs.primary, size: 18),
+                      const SizedBox(width: 8),
+                      Text('Saved', style: TextStyle(color: cs.primary)),
+                    ],
+                  ),
+                ],
+
+                if (_error != null) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    _error!,
+                    style: TextStyle(color: cs.error, fontSize: 13),
+                  ),
+                ],
+
+                const SizedBox(height: 48),
+                const Divider(),
+                const SizedBox(height: 24),
+
+                // Subscription
+                _sectionLabel('Subscription'),
+                const SizedBox(height: 12),
+                _SubscriptionTile(),
+                const SizedBox(height: 24),
+                const Divider(),
+                const SizedBox(height: 16),
+
+                // Sign out
+                OutlinedButton.icon(
+                  onPressed: () => ref.read(authServiceProvider).signOut(),
+                  icon: const Icon(Icons.logout),
+                  label: const Text('Sign out'),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
                   ),
                 ),
-                Text(
-                  '·',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: cs.onSurfaceVariant,
+                const SizedBox(height: 12),
+                const Divider(),
+                const SizedBox(height: 16),
+
+                // Delete account
+                FilledButton.icon(
+                  onPressed: _deleting ? null : _confirmDeleteAccount,
+                  icon:
+                      _deleting
+                          ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                          : const Icon(Icons.delete_forever_outlined),
+                  label: const Text('Delete account'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: cs.error,
+                    foregroundColor: cs.onError,
+                    minimumSize: const Size.fromHeight(48),
                   ),
                 ),
-                TextButton(
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  onPressed: () => launchUrl(
-                    Uri.parse('https://auaha.app/threshold/privacy'),
-                    mode: LaunchMode.externalApplication,
-                  ),
-                  child: Text(
-                    'Privacy Policy',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: cs.onSurfaceVariant,
-                      decoration: TextDecoration.underline,
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      onPressed:
+                          () => launchUrl(
+                            Uri.parse('https://auaha.app/threshold/terms'),
+                            mode: LaunchMode.externalApplication,
+                          ),
+                      child: Text(
+                        'Terms of Use',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: cs.onSurfaceVariant,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
                     ),
-                  ),
+                    Text(
+                      '·',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      onPressed:
+                          () => launchUrl(
+                            Uri.parse('https://auaha.app/threshold/privacy'),
+                            mode: LaunchMode.externalApplication,
+                          ),
+                      child: Text(
+                        'Privacy Policy',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: cs.onSurfaceVariant,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );
