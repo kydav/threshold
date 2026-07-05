@@ -197,18 +197,7 @@ class _DashboardContent extends StatelessWidget {
 
           // Recent agreements
           if (agreements.isNotEmpty) ...[
-            Container(
-              decoration: BoxDecoration(
-                color: cs.surface,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.12),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
+            Card(
               child: Column(
                 children: [
                   Padding(
