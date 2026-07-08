@@ -30,8 +30,16 @@ void main() {
         };
       }
 
-      await configureRevenueCat();
-      final remoteConfig = await RemoteConfigService.init();
+      try {
+        await configureRevenueCat();
+      } catch (e, s) {
+        debugPrint('RevenueCat init failed: $e');
+        if (!kDebugMode) {
+          FirebaseCrashlytics.instance.recordError(e, s, fatal: false);
+        }
+      }
+
+      final remoteConfig = await RemoteConfigService.initSafe();
       runApp(
         ProviderScope(
           overrides: [remoteConfigProvider.overrideWithValue(remoteConfig)],

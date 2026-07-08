@@ -12,17 +12,30 @@ class RemoteConfigService {
   static Future<RemoteConfigService> init() async {
     final rc = FirebaseRemoteConfig.instance;
     await rc.setDefaults({_kPaywallEnabled: true});
-    await rc.setConfigSettings(RemoteConfigSettings(
-      fetchTimeout: const Duration(seconds: 10),
-      minimumFetchInterval:
-          kDebugMode ? Duration.zero : const Duration(hours: 1),
-    ));
+    await rc.setConfigSettings(
+      RemoteConfigSettings(
+        fetchTimeout: const Duration(seconds: 10),
+        minimumFetchInterval:
+            kDebugMode ? Duration.zero : const Duration(hours: 1),
+      ),
+    );
     try {
       await rc.fetchAndActivate();
     } catch (e) {
-      debugPrint('RemoteConfig: fetch failed, using cached/default values — $e');
+      debugPrint(
+        'RemoteConfig: fetch failed, using cached/default values — $e',
+      );
     }
     return RemoteConfigService._(rc);
+  }
+
+  static Future<RemoteConfigService> initSafe() async {
+    try {
+      return await init();
+    } catch (e) {
+      debugPrint('RemoteConfig: init failed, using instance defaults - $e');
+      return RemoteConfigService._(FirebaseRemoteConfig.instance);
+    }
   }
 
   bool get paywallEnabled => _rc.getBool(_kPaywallEnabled);
