@@ -35,7 +35,7 @@ void main() {
       } catch (e, s) {
         debugPrint('RevenueCat init failed: $e');
         if (!kDebugMode) {
-          FirebaseCrashlytics.instance.recordError(e, s, fatal: false);
+          await FirebaseCrashlytics.instance.recordError(e, s);
         }
       }
 
