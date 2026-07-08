@@ -8,3 +8,6 @@
 -keep class io.flutter.** { *; }
 -keep class io.flutter.app.** { *; }
 -keep class io.flutter.plugin.** { *; }
+
+# Flutter deferred components reference Play Core — suppress if not using dynamic features
+-dontwarn com.google.android.play.core.**
