@@ -22,6 +22,19 @@ class SubscriptionNotifier extends AsyncNotifier<CustomerInfo?> {
       return null;
     }
     final result = await Purchases.logIn(user.uid);
+    // Attach identifying attributes so this customer is findable in the
+    // RevenueCat dashboard by email/name — e.g. to grant a broker a
+    // promotional free-trial entitlement. Never let this block sign-in.
+    try {
+      final email = user.email;
+      if (email != null && email.isNotEmpty) {
+        await Purchases.setEmail(email);
+      }
+      final name = user.displayName;
+      if (name != null && name.isNotEmpty) {
+        await Purchases.setDisplayName(name);
+      }
+    } catch (_) {}
     return result.customerInfo;
   }
 
