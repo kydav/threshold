@@ -667,8 +667,10 @@ class _SubscriptionTile extends ConsumerWidget {
     final sub = ref.watch(subscriptionProvider);
     final isPro =
         !kPaywallEnabled ||
-        (sub.valueOrNull?.entitlements.active.containsKey(kEntitlementId) ??
-            false);
+        ((sub.valueOrNull?.entitlements.active.containsKey(kEntitlementId) ??
+                false) ||
+            (sub.valueOrNull?.entitlements.all.containsKey(kEntitlementId) ??
+                false));
 
     if (isPro) {
       return Container(
