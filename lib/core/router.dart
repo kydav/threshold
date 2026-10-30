@@ -18,6 +18,12 @@ import 'package:threshold/features/auth/presentation/profile_screen.dart';
 import 'package:threshold/features/auth/presentation/setup_screen.dart';
 import 'package:threshold/features/auth/presentation/signup_screen.dart';
 import 'package:threshold/features/dashboard/presentation/dashboard_screen.dart';
+import 'package:threshold/features/templates/data/template_deal.dart';
+import 'package:threshold/features/templates/presentation/template_capture_screen.dart';
+import 'package:threshold/features/templates/presentation/template_deal_screen.dart';
+import 'package:threshold/features/templates/presentation/template_review_screen.dart';
+import 'package:threshold/features/templates/presentation/template_sign_screen.dart';
+import 'package:threshold/features/templates/presentation/templates_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final notifier = _AuthNotifier();
@@ -79,6 +85,37 @@ final routerProvider = Provider<GoRouter>((ref) {
                 );
               },
             ),
+      ),
+      // Bring-your-own-form templates.
+      GoRoute(path: '/templates', builder: (_, _) => const TemplatesScreen()),
+      GoRoute(
+        path: '/templates/new',
+        builder: (_, _) => const TemplateCaptureScreen(),
+      ),
+      GoRoute(
+        path: '/templates/:id/review',
+        builder:
+            (_, state) =>
+                TemplateReviewScreen(templateId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/templates/:id/deal',
+        builder:
+            (_, state) =>
+                TemplateDealScreen(templateId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/templates/:id/sign',
+        // The deal only lives in memory; without it (e.g. a restored route)
+        // start the deal over.
+        redirect:
+            (_, state) =>
+                state.extra is TemplateDeal
+                    ? null
+                    : '/templates/${state.pathParameters['id']}/deal',
+        builder:
+            (_, state) =>
+                TemplateSignScreen(deal: state.extra! as TemplateDeal),
       ),
       GoRoute(
         path: '/agreements/:id/sign',
