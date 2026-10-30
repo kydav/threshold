@@ -83,5 +83,7 @@
 				</array>
 			</dict>
 		</array>
-	</dict>
+		<key>NSCameraUsageDescription</key>
+	<string>Threshold uses the camera to scan your paper buyer agreement so you can turn it into a reusable template.</string>
+</dict>
 </plist>

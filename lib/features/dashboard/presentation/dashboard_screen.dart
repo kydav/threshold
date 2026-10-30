@@ -114,6 +114,26 @@ class _DashboardContent extends StatelessWidget {
 
           const SizedBox(height: 24),
 
+          // Bring-your-own-form entry point.
+          Card(
+            clipBehavior: Clip.antiAlias,
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 8,
+              ),
+              leading: Icon(Icons.document_scanner_outlined, color: cs.primary),
+              title: const Text('My forms'),
+              subtitle: const Text(
+                'Scan your own buyer agreement and have buyers sign it here.',
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/templates'),
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
           // Overview card
           Card(
             child: Padding(

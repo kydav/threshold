@@ -72,3 +72,4 @@ export const sendAgreementEmail = onCall(
     return { success: true };
   }
 );
+export { mapFormFields } from './mapFields';

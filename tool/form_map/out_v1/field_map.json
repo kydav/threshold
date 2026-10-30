@@ -1,0 +1,566 @@
+{
+  "form_title": "Exclusive Buyer-Broker Agreement & Agency Disclosure",
+  "form_id": "UAR FORM 6",
+  "fields": [
+    {
+      "id": "company_name",
+      "page": 1,
+      "section": "Header",
+      "label": "Brokerage company name",
+      "kind": "text",
+      "filled_by": "agent_once",
+      "choice_group": "",
+      "box": [
+        78,
+        382,
+        360,
+        402
+      ],
+      "currently_filled": true
+    },
+    {
+      "id": "buyers_agent_name",
+      "page": 1,
+      "section": "Header",
+      "label": "Authorized agent (Buyer's Agent) name",
+      "kind": "text",
+      "filled_by": "agent_once",
+      "choice_group": "",
+      "box": [
+        460,
+        380,
+        790,
+        400
+      ],
+      "currently_filled": true
+    },
+    {
+      "id": "buyer_name",
+      "page": 1,
+      "section": "Header",
+      "label": "Buyer name(s)",
+      "kind": "text",
+      "filled_by": "agent_per_deal",
+      "choice_group": "",
+      "box": [
+        320,
+        405,
+        660,
+        425
+      ],
+      "currently_filled": true
+    },
+    {
+      "id": "end_date_day",
+      "page": 1,
+      "section": "1.1",
+      "label": "End date - day",
+      "kind": "text",
+      "filled_by": "agent_per_deal",
+      "choice_group": "",
+      "box": [
+        72,
+        373,
+        130,
+        392
+      ],
+      "currently_filled": true
+    },
+    {
+      "id": "end_date_month",
+      "page": 1,
+      "section": "1.1",
+      "label": "End date - month",
+      "kind": "text",
+      "filled_by": "agent_per_deal",
+      "choice_group": "",
+      "box": [
+        190,
+        373,
+        330,
+        392
+      ],
+      "currently_filled": true
+    },
+    {
+      "id": "end_date_year",
+      "page": 1,
+      "section": "1.1",
+      "label": "End date - year",
+      "kind": "text",
+      "filled_by": "agent_per_deal",
+      "choice_group": "",
+      "box": [
+        355,
+        373,
+        400,
+        392
+      ],
+      "currently_filled": true
+    },
+    {
+      "id": "scope_county_checkbox",
+      "page": 1,
+      "section": "1.2",
+      "label": "Checkbox: located only within county/counties",
+      "kind": "checkbox",
+      "filled_by": "agent_per_deal",
+      "choice_group": "property_scope",
+      "box": [
+        128,
+        447,
+        148,
+        465
+      ],
+      "currently_filled": true
+    },
+    {
+      "id": "scope_county_value",
+      "page": 1,
+      "section": "1.2",
+      "label": "County/Counties where Company represents Buyer",
+      "kind": "text",
+      "filled_by": "agent_per_deal",
+      "choice_group": "",
+      "box": [
+        262,
+        445,
+        818,
+        465
+      ],
+      "currently_filled": true
+    },
+    {
+      "id": "scope_property_checkbox",
+      "page": 1,
+      "section": "1.2",
+      "label": "Checkbox: located only at specific property/properties",
+      "kind": "checkbox",
+      "filled_by": "agent_per_deal",
+      "choice_group": "property_scope",
+      "box": [
+        128,
+        495,
+        148,
+        513
+      ],
+      "currently_filled": false
+    },
+    {
+      "id": "scope_property_value_line1",
+      "page": 1,
+      "section": "1.2",
+      "label": "Specific property/properties address (line 1)",
+      "kind": "text",
+      "filled_by": "agent_per_deal",
+      "choice_group": "",
+      "box": [
+        245,
+        492,
+        925,
+        510
+      ],
+      "currently_filled": false
+    },
+    {
+      "id": "scope_property_value_line2",
+      "page": 1,
+      "section": "1.2",
+      "label": "Specific property/properties address (line 2)",
+      "kind": "text",
+      "filled_by": "agent_per_deal",
+      "choice_group": "",
+      "box": [
+        73,
+        512,
+        800,
+        530
+      ],
+      "currently_filled": false
+    },
+    {
+      "id": "other_brokerage_checkbox",
+      "page": 1,
+      "section": "1.2",
+      "label": "Checkbox: Buyer has a representation agreement with another brokerage",
+      "kind": "checkbox",
+      "filled_by": "buyer",
+      "choice_group": "",
+      "box": [
+        125,
+        595,
+        146,
+        613
+      ],
+      "currently_filled": false
+    },
+    {
+      "id": "other_brokerage_properties_line1",
+      "page": 1,
+      "section": "1.2",
+      "label": "Excluded properties under other brokerage agreement (line 1)",
+      "kind": "text",
+      "filled_by": "agent_per_deal",
+      "choice_group": "",
+      "box": [
+        300,
+        615,
+        930,
+        633
+      ],
+      "currently_filled": false
+    },
+    {
+      "id": "other_brokerage_properties_line2",
+      "page": 1,
+      "section": "1.2",
+      "label": "Excluded properties under other brokerage agreement (line 2)",
+      "kind": "text",
+      "filled_by": "agent_per_deal",
+      "choice_group": "",
+      "box": [
+        73,
+        635,
+        930,
+        653
+      ],
+      "currently_filled": false
+    },
+    {
+      "id": "brokerage_fee_amount",
+      "page": 1,
+      "section": "2.1",
+      "label": "Brokerage fee flat dollar amount",
+      "kind": "currency",
+      "filled_by": "agent_per_deal",
+      "choice_group": "",
+      "box": [
+        295,
+        810,
+        400,
+        828
+      ],
+      "currently_filled": false
+    },
+    {
+      "id": "brokerage_fee_percent",
+      "page": 1,
+      "section": "2.1",
+      "label": "Brokerage fee percent of gross acquisition price",
+      "kind": "percent",
+      "filled_by": "agent_per_deal",
+      "choice_group": "",
+      "box": [
+        432,
+        810,
+        490,
+        828
+      ],
+      "currently_filled": true
+    },
+    {
+      "id": "protection_period_months",
+      "page": 1,
+      "section": "3",
+      "label": "Protection period length in months",
+      "kind": "number",
+      "filled_by": "agent_per_deal",
+      "choice_group": "",
+      "box": [
+        205,
+        1020,
+        250,
+        1038
+      ],
+      "currently_filled": true
+    },
+    {
+      "id": "buyer_initials_p1",
+      "page": 1,
+      "section": "Footer",
+      "label": "Buyer's initials page 1",
+      "kind": "initials",
+      "filled_by": "buyer",
+      "choice_group": "",
+      "box": [
+        208,
+        1160,
+        300,
+        1192
+      ],
+      "currently_filled": true
+    },
+    {
+      "id": "buyer_initials_date_p1",
+      "page": 1,
+      "section": "Footer",
+      "label": "Date of buyer's initials page 1",
+      "kind": "date",
+      "filled_by": "buyer",
+      "choice_group": "",
+      "box": [
+        340,
+        1155,
+        440,
+        1190
+      ],
+      "currently_filled": true
+    },
+    {
+      "id": "mediation_shall_checkbox",
+      "page": 2,
+      "section": "7",
+      "label": "Checkbox: disputes SHALL be submitted to mediation",
+      "kind": "checkbox",
+      "filled_by": "agent_per_deal",
+      "choice_group": "mediation_option",
+      "box": [
+        124,
+        1071,
+        142,
+        1088
+      ],
+      "currently_filled": false
+    },
+    {
+      "id": "mediation_may_checkbox",
+      "page": 2,
+      "section": "7",
+      "label": "Checkbox: disputes MAY AT THE OPTION OF THE PARTIES be submitted to mediation",
+      "kind": "checkbox",
+      "filled_by": "agent_per_deal",
+      "choice_group": "mediation_option",
+      "box": [
+        205,
+        1071,
+        224,
+        1088
+      ],
+      "currently_filled": true
+    },
+    {
+      "id": "buyer_initials_p2",
+      "page": 2,
+      "section": "Footer",
+      "label": "Buyer's initials page 2",
+      "kind": "initials",
+      "filled_by": "buyer",
+      "choice_group": "",
+      "box": [
+        228,
+        1693,
+        290,
+        1725
+      ],
+      "currently_filled": true
+    },
+    {
+      "id": "buyer_initials_date_p2",
+      "page": 2,
+      "section": "Footer",
+      "label": "Date of buyer's initials page 2",
+      "kind": "date",
+      "filled_by": "buyer",
+      "choice_group": "",
+      "box": [
+        330,
+        1688,
+        430,
+        1722
+      ],
+      "currently_filled": true
+    },
+    {
+      "id": "addendum_are_checkbox",
+      "page": 3,
+      "section": "10",
+      "label": "Checkbox: There ARE additional terms in an Addendum",
+      "kind": "checkbox",
+      "filled_by": "agent_per_deal",
+      "choice_group": "addendum",
+      "box": [
+        247,
+        250,
+        268,
+        268
+      ],
+      "currently_filled": false
+    },
+    {
+      "id": "addendum_are_not_checkbox",
+      "page": 3,
+      "section": "10",
+      "label": "Checkbox: There ARE NOT additional terms in an Addendum",
+      "kind": "checkbox",
+      "filled_by": "agent_per_deal",
+      "choice_group": "addendum",
+      "box": [
+        318,
+        250,
+        340,
+        268
+      ],
+      "currently_filled": true
+    },
+    {
+      "id": "buyer_signature_1",
+      "page": 3,
+      "section": "Signatures",
+      "label": "Buyer's signature (first buyer)",
+      "kind": "signature",
+      "filled_by": "buyer",
+      "choice_group": "",
+      "box": [
+        110,
+        840,
+        345,
+        885
+      ],
+      "currently_filled": true
+    },
+    {
+      "id": "buyer_address_phone_1",
+      "page": 3,
+      "section": "Signatures",
+      "label": "Buyer's address/phone (first buyer)",
+      "kind": "text",
+      "filled_by": "buyer",
+      "choice_group": "",
+      "box": [
+        370,
+        855,
+        740,
+        885
+      ],
+      "currently_filled": false
+    },
+    {
+      "id": "buyer_date_1",
+      "page": 3,
+      "section": "Signatures",
+      "label": "Date signed (first buyer)",
+      "kind": "date",
+      "filled_by": "buyer",
+      "choice_group": "",
+      "box": [
+        770,
+        840,
+        890,
+        885
+      ],
+      "currently_filled": true
+    },
+    {
+      "id": "buyer_signature_2",
+      "page": 3,
+      "section": "Signatures",
+      "label": "Buyer's signature (second buyer)",
+      "kind": "signature",
+      "filled_by": "buyer",
+      "choice_group": "",
+      "box": [
+        110,
+        900,
+        345,
+        945
+      ],
+      "currently_filled": true
+    },
+    {
+      "id": "buyer_address_phone_2",
+      "page": 3,
+      "section": "Signatures",
+      "label": "Buyer's address/phone (second buyer)",
+      "kind": "text",
+      "filled_by": "buyer",
+      "choice_group": "",
+      "box": [
+        370,
+        915,
+        740,
+        945
+      ],
+      "currently_filled": false
+    },
+    {
+      "id": "buyer_date_2",
+      "page": 3,
+      "section": "Signatures",
+      "label": "Date signed (second buyer)",
+      "kind": "date",
+      "filled_by": "buyer",
+      "choice_group": "",
+      "box": [
+        770,
+        915,
+        890,
+        945
+      ],
+      "currently_filled": false
+    },
+    {
+      "id": "agent_signature",
+      "page": 3,
+      "section": "Signatures",
+      "label": "Signature of authorized Buyer's Agent or Broker",
+      "kind": "signature",
+      "filled_by": "agent_sign",
+      "choice_group": "",
+      "box": [
+        120,
+        1095,
+        610,
+        1130
+      ],
+      "currently_filled": false
+    },
+    {
+      "id": "agent_signature_date",
+      "page": 3,
+      "section": "Signatures",
+      "label": "Date accepted by the Company",
+      "kind": "date",
+      "filled_by": "agent_sign",
+      "choice_group": "",
+      "box": [
+        660,
+        1095,
+        760,
+        1130
+      ],
+      "currently_filled": false
+    },
+    {
+      "id": "buyer_initials_p3",
+      "page": 3,
+      "section": "Footer",
+      "label": "Buyer's initials page 3",
+      "kind": "initials",
+      "filled_by": "buyer",
+      "choice_group": "",
+      "box": [
+        208,
+        1690,
+        295,
+        1725
+      ],
+      "currently_filled": true
+    },
+    {
+      "id": "buyer_initials_date_p3",
+      "page": 3,
+      "section": "Footer",
+      "label": "Date of buyer's initials page 3",
+      "kind": "date",
+      "filled_by": "buyer",
+      "choice_group": "",
+      "box": [
+        330,
+        1685,
+        440,
+        1722
+      ],
+      "currently_filled": true
+    }
+  ]
+}
