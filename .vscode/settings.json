@@ -1,0 +1,12 @@
+{
+  "files.exclude": {
+    "**/build/ios/SourcePackages": true
+  },
+  "files.watcherExclude": {
+    "**/build/**": true,
+    "**/ios/Pods/**": true
+  },
+  "search.exclude": {
+    "**/build": true
+  }
+}
