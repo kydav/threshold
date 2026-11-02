@@ -332,7 +332,7 @@ class _DateFieldState extends State<_DateField> {
   /// [months] from today, on the same day of the month where it exists.
   static DateTime _plusMonths(int months) {
     final now = DateTime.now();
-    final target = DateTime(now.year, now.month + months, 1);
+    final target = DateTime(now.year, now.month + months);
     final lastDay = DateTime(target.year, target.month + 1, 0).day;
     return DateTime(target.year, target.month, now.day.clamp(1, lastDay));
   }
