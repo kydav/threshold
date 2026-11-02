@@ -164,6 +164,7 @@ class _TermsFormState extends State<TermsForm> {
           out.add(
             _DateField(
               label: _dateLabel(d),
+              quick: d.key.contains('end'),
               onPicked: (date) {
                 d.fill(values, date);
                 if (d.key.contains('end')) deal.endDate = date;
@@ -242,6 +243,7 @@ class _TermsFormState extends State<TermsForm> {
       case FieldKind.date:
         return _DateField(
           label: f.label,
+          quick: f.role == FieldRole.endDate,
           onPicked: (d) {
             values[f.id] = DateFormat('M/d/yyyy').format(d);
             if (f.role == FieldRole.endDate) deal.endDate = d;
@@ -303,10 +305,17 @@ class _Heading extends StatelessWidget {
 }
 
 class _DateField extends StatefulWidget {
-  const _DateField({required this.label, required this.onPicked});
+  const _DateField({
+    required this.label,
+    required this.onPicked,
+    this.quick = false,
+  });
 
   final String label;
   final void Function(DateTime) onPicked;
+
+  /// One-tap lengths (3 months, 6 months, a year) for an end date.
+  final bool quick;
 
   @override
   State<_DateField> createState() => _DateFieldState();
@@ -315,9 +324,22 @@ class _DateField extends StatefulWidget {
 class _DateFieldState extends State<_DateField> {
   DateTime? _date;
 
+  void _set(DateTime d) {
+    setState(() => _date = d);
+    widget.onPicked(d);
+  }
+
+  /// [months] from today, on the same day of the month where it exists.
+  static DateTime _plusMonths(int months) {
+    final now = DateTime.now();
+    final target = DateTime(now.year, now.month + months, 1);
+    final lastDay = DateTime(target.year, target.month + 1, 0).day;
+    return DateTime(target.year, target.month, now.day.clamp(1, lastDay));
+  }
+
   @override
   Widget build(BuildContext context) {
-    return ListTile(
+    final tile = ListTile(
       contentPadding: EdgeInsets.zero,
       title: Text(widget.label),
       subtitle: Text(
@@ -333,9 +355,29 @@ class _DateFieldState extends State<_DateField> {
           lastDate: now.add(const Duration(days: 3650)),
         );
         if (d == null) return;
-        setState(() => _date = d);
-        widget.onPicked(d);
+        _set(d);
       },
+    );
+    if (!widget.quick) return tile;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        tile,
+        Wrap(
+          spacing: 8,
+          children: [
+            for (final (label, months) in [
+              ('3 months', 3),
+              ('6 months', 6),
+              ('1 year', 12),
+            ])
+              ActionChip(
+                label: Text(label),
+                onPressed: () => _set(_plusMonths(months)),
+              ),
+          ],
+        ),
+      ],
     );
   }
 }
