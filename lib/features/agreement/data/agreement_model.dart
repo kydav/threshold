@@ -45,89 +45,88 @@ class AgreementModel {
   bool get hasLocalPdf => localPdfPath != null;
 
   factory AgreementModel.fromJson(Map<String, dynamic> d) => AgreementModel(
-        id: d['id'] as String,
-        agentId: d['agentId'] as String,
-        agentName: d['agentName'] as String? ?? '',
-        agentEmail: d['agentEmail'] as String? ?? '',
-        brokerageName: d['brokerageName'] as String? ?? '',
-        buyerName: d['buyerName'] as String,
-        buyerEmail: d['buyerEmail'] as String,
-        propertyScope: d['propertyScope'] as String,
-        compensation: d['compensation'] as String,
-        startDate: DateTime.parse(d['startDate'] as String),
-        endDate: DateTime.parse(d['endDate'] as String),
-        status: _statusFromString(d['status'] as String? ?? 'draft'),
-        createdAt: DateTime.parse(d['createdAt'] as String),
-        signedAt: d['signedAt'] != null
-            ? DateTime.parse(d['signedAt'] as String)
-            : null,
-        localPdfPath: d['localPdfPath'] as String?,
-        deliveredAt: d['deliveredAt'] != null
+    id: d['id'] as String,
+    agentId: d['agentId'] as String,
+    agentName: d['agentName'] as String? ?? '',
+    agentEmail: d['agentEmail'] as String? ?? '',
+    brokerageName: d['brokerageName'] as String? ?? '',
+    buyerName: d['buyerName'] as String,
+    buyerEmail: d['buyerEmail'] as String,
+    propertyScope: d['propertyScope'] as String,
+    compensation: d['compensation'] as String,
+    startDate: DateTime.parse(d['startDate'] as String),
+    endDate: DateTime.parse(d['endDate'] as String),
+    status: _statusFromString(d['status'] as String? ?? 'draft'),
+    createdAt: DateTime.parse(d['createdAt'] as String),
+    signedAt:
+        d['signedAt'] != null ? DateTime.parse(d['signedAt'] as String) : null,
+    localPdfPath: d['localPdfPath'] as String?,
+    deliveredAt:
+        d['deliveredAt'] != null
             ? DateTime.parse(d['deliveredAt'] as String)
             : null,
-        formState: d['formState'] as String? ?? 'Colorado',
-        formData: d['formData'] as Map<String, dynamic>? ?? const {},
-      );
+    formState: d['formState'] as String? ?? 'Colorado',
+    formData: d['formData'] as Map<String, dynamic>? ?? const {},
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'agentId': agentId,
-        'agentName': agentName,
-        'agentEmail': agentEmail,
-        'brokerageName': brokerageName,
-        'buyerName': buyerName,
-        'buyerEmail': buyerEmail,
-        'propertyScope': propertyScope,
-        'compensation': compensation,
-        'startDate': startDate.toIso8601String(),
-        'endDate': endDate.toIso8601String(),
-        'status': _statusToString(status),
-        'createdAt': createdAt.toIso8601String(),
-        if (signedAt != null) 'signedAt': signedAt!.toIso8601String(),
-        if (localPdfPath != null) 'localPdfPath': localPdfPath,
-        if (deliveredAt != null) 'deliveredAt': deliveredAt!.toIso8601String(),
-        'formState': formState,
-        if (formData.isNotEmpty) 'formData': formData,
-      };
+    'id': id,
+    'agentId': agentId,
+    'agentName': agentName,
+    'agentEmail': agentEmail,
+    'brokerageName': brokerageName,
+    'buyerName': buyerName,
+    'buyerEmail': buyerEmail,
+    'propertyScope': propertyScope,
+    'compensation': compensation,
+    'startDate': startDate.toIso8601String(),
+    'endDate': endDate.toIso8601String(),
+    'status': _statusToString(status),
+    'createdAt': createdAt.toIso8601String(),
+    if (signedAt != null) 'signedAt': signedAt!.toIso8601String(),
+    if (localPdfPath != null) 'localPdfPath': localPdfPath,
+    if (deliveredAt != null) 'deliveredAt': deliveredAt!.toIso8601String(),
+    'formState': formState,
+    if (formData.isNotEmpty) 'formData': formData,
+  };
 
   AgreementModel copyWith({
     AgreementStatus? status,
     String? localPdfPath,
     DateTime? signedAt,
     DateTime? deliveredAt,
-  }) =>
-      AgreementModel(
-        id: id,
-        agentId: agentId,
-        agentName: agentName,
-        agentEmail: agentEmail,
-        brokerageName: brokerageName,
-        buyerName: buyerName,
-        buyerEmail: buyerEmail,
-        propertyScope: propertyScope,
-        compensation: compensation,
-        startDate: startDate,
-        endDate: endDate,
-        status: status ?? this.status,
-        createdAt: createdAt,
-        signedAt: signedAt ?? this.signedAt,
-        localPdfPath: localPdfPath ?? this.localPdfPath,
-        deliveredAt: deliveredAt ?? this.deliveredAt,
-        formState: formState,
-        formData: formData,
-      );
+  }) => AgreementModel(
+    id: id,
+    agentId: agentId,
+    agentName: agentName,
+    agentEmail: agentEmail,
+    brokerageName: brokerageName,
+    buyerName: buyerName,
+    buyerEmail: buyerEmail,
+    propertyScope: propertyScope,
+    compensation: compensation,
+    startDate: startDate,
+    endDate: endDate,
+    status: status ?? this.status,
+    createdAt: createdAt,
+    signedAt: signedAt ?? this.signedAt,
+    localPdfPath: localPdfPath ?? this.localPdfPath,
+    deliveredAt: deliveredAt ?? this.deliveredAt,
+    formState: formState,
+    formData: formData,
+  );
 
   static AgreementStatus _statusFromString(String s) => switch (s) {
-        'signed' => AgreementStatus.signed,
-        'pending_delivery' => AgreementStatus.pendingDelivery,
-        'delivered' => AgreementStatus.delivered,
-        _ => AgreementStatus.draft,
-      };
+    'signed' => AgreementStatus.signed,
+    'pending_delivery' => AgreementStatus.pendingDelivery,
+    'delivered' => AgreementStatus.delivered,
+    _ => AgreementStatus.draft,
+  };
 
   static String _statusToString(AgreementStatus s) => switch (s) {
-        AgreementStatus.signed => 'signed',
-        AgreementStatus.pendingDelivery => 'pending_delivery',
-        AgreementStatus.delivered => 'delivered',
-        AgreementStatus.draft => 'draft',
-      };
+    AgreementStatus.signed => 'signed',
+    AgreementStatus.pendingDelivery => 'pending_delivery',
+    AgreementStatus.delivered => 'delivered',
+    AgreementStatus.draft => 'draft',
+  };
 }

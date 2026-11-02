@@ -37,9 +37,10 @@ class ColoradoPdfService {
     // ── Parties ──────────────────────────────────────────────────────────────
     _setText(form, 'Document Date', _dateFmt.format(now));
 
-    final buyerDisplayName = co.hasCoBuyer
-        ? '${agreement.buyerName} and ${co.buyer2Name}'
-        : agreement.buyerName;
+    final buyerDisplayName =
+        co.hasCoBuyer
+            ? '${agreement.buyerName} and ${co.buyer2Name}'
+            : agreement.buyerName;
     _setText(form, 'Buyer/Buyers Name', buyerDisplayName);
 
     // Buyer 1 contact fields (page 6 signature section)
@@ -50,14 +51,30 @@ class ColoradoPdfService {
 
     // Co-buyer fields — the _2 fields are co-buyer slots on the same page 6
     if (co.hasCoBuyer) {
-      _setText(form, 'Buyers Email Address_2',
-          co.buyer2Email.isNotEmpty ? co.buyer2Email : agreement.buyerEmail);
-      _setText(form, 'Buyers Phone No_2',
-          co.buyer2Phone.isNotEmpty ? co.buyer2Phone : co.buyerPhone);
-      _setText(form, 'Buyers Street Address_2',
-          co.buyer2StreetAddress.isNotEmpty ? co.buyer2StreetAddress : co.buyerStreetAddress);
-      _setText(form, 'Buyers City State Zip_2',
-          co.buyer2CityStateZip.isNotEmpty ? co.buyer2CityStateZip : co.buyerCityStateZip);
+      _setText(
+        form,
+        'Buyers Email Address_2',
+        co.buyer2Email.isNotEmpty ? co.buyer2Email : agreement.buyerEmail,
+      );
+      _setText(
+        form,
+        'Buyers Phone No_2',
+        co.buyer2Phone.isNotEmpty ? co.buyer2Phone : co.buyerPhone,
+      );
+      _setText(
+        form,
+        'Buyers Street Address_2',
+        co.buyer2StreetAddress.isNotEmpty
+            ? co.buyer2StreetAddress
+            : co.buyerStreetAddress,
+      );
+      _setText(
+        form,
+        'Buyers City State Zip_2',
+        co.buyer2CityStateZip.isNotEmpty
+            ? co.buyer2CityStateZip
+            : co.buyerCityStateZip,
+      );
     }
 
     _setText(form, 'Brokerage Firm Name', agreement.brokerageName);
@@ -70,11 +87,23 @@ class ColoradoPdfService {
     _setCheckbox(form, 'Section 2.2 Checkbox', false);
 
     // ── Section 3 — Listing period ────────────────────────────────────────
-    _setText(form, 'Listing Period Beginning Date', _dateFmt.format(agreement.startDate));
-    _setText(form, 'Alternative Listing Period End Date', _dateFmt.format(agreement.endDate));
+    _setText(
+      form,
+      'Listing Period Beginning Date',
+      _dateFmt.format(agreement.startDate),
+    );
+    _setText(
+      form,
+      'Alternative Listing Period End Date',
+      _dateFmt.format(agreement.endDate),
+    );
     _setText(form, 'Holdover Number of Days', co.holdoverDays);
     _setCheckbox(form, 'Computation of Date Will', co.computationWillExtend);
-    _setCheckbox(form, 'Computation of Date Will Not', !co.computationWillExtend);
+    _setCheckbox(
+      form,
+      'Computation of Date Will Not',
+      !co.computationWillExtend,
+    );
     _setCheckbox(form, 'Section 3.5.2 Checkbox', false);
 
     // ── Section 4 — Brokerage relationship ───────────────────────────────
@@ -101,10 +130,26 @@ class ColoradoPdfService {
     _setCheckbox(form, 'Section 7.4 Will Not Checkbox', true);
 
     // ── Section 9 — Buyer obligations ────────────────────────────────────
-    _setCheckbox(form, 'Section 9 Is Checkbox', co.buyerIsPartyToOtherAgreement);
-    _setCheckbox(form, 'Section 9 Is Not Checkbox', !co.buyerIsPartyToOtherAgreement);
-    _setCheckbox(form, 'Section 9 Has Checkbox', co.buyerHasReceivedSubmittedList);
-    _setCheckbox(form, 'Section 9 Has Not Checkbox', !co.buyerHasReceivedSubmittedList);
+    _setCheckbox(
+      form,
+      'Section 9 Is Checkbox',
+      co.buyerIsPartyToOtherAgreement,
+    );
+    _setCheckbox(
+      form,
+      'Section 9 Is Not Checkbox',
+      !co.buyerIsPartyToOtherAgreement,
+    );
+    _setCheckbox(
+      form,
+      'Section 9 Has Checkbox',
+      co.buyerHasReceivedSubmittedList,
+    );
+    _setCheckbox(
+      form,
+      'Section 9 Has Not Checkbox',
+      !co.buyerHasReceivedSubmittedList,
+    );
 
     // ── Section 13 ────────────────────────────────────────────────────────
     _setCheckbox(form, 'Section 13 Does Checkbox', false);
@@ -133,7 +178,10 @@ class ColoradoPdfService {
 
     // Save to device.
     final dir = await getApplicationDocumentsDirectory();
-    final safeName = agreement.buyerName.replaceAll(RegExp('[^a-zA-Z0-9]'), '_');
+    final safeName = agreement.buyerName.replaceAll(
+      RegExp('[^a-zA-Z0-9]'),
+      '_',
+    );
     final filename = 'CO_BC60_${safeName}_${agreement.id.substring(0, 8)}.pdf';
     final file = File('${dir.path}/$filename');
     await file.writeAsBytes(savedBytes);
@@ -155,7 +203,10 @@ class ColoradoPdfService {
         deliveredAt: now,
       );
       await _repo.save(signed);
-      await Printing.sharePdf(bytes: Uint8List.fromList(savedBytes), filename: filename);
+      await Printing.sharePdf(
+        bytes: Uint8List.fromList(savedBytes),
+        filename: filename,
+      );
     }
 
     return localPath;
@@ -185,7 +236,12 @@ class ColoradoPdfService {
     } catch (_) {}
   }
 
-  void _drawSignature(PdfDocument doc, PdfForm form, String name, Uint8List imageBytes) {
+  void _drawSignature(
+    PdfDocument doc,
+    PdfForm form,
+    String name,
+    Uint8List imageBytes,
+  ) {
     try {
       final f = _find(form, name);
       if (f == null) return;
@@ -196,11 +252,17 @@ class ColoradoPdfService {
       // Signatures are on page 6 (last page) of the Colorado BC60 form.
       final page = doc.pages[doc.pages.count - 1];
 
-      page.graphics.drawImage(image, Rect.fromLTWH(bounds.left, bounds.top, bounds.width, bounds.height));
+      page.graphics.drawImage(
+        image,
+        Rect.fromLTWH(bounds.left, bounds.top, bounds.width, bounds.height),
+      );
     } catch (_) {}
   }
 }
 
 final coloradoPdfServiceProvider = Provider<ColoradoPdfService>(
-  (ref) => ColoradoPdfService(ref.read(agreementRepositoryProvider), ref.read(deliveryServiceProvider)),
+  (ref) => ColoradoPdfService(
+    ref.read(agreementRepositoryProvider),
+    ref.read(deliveryServiceProvider),
+  ),
 );

@@ -105,7 +105,9 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
       profileNotifier.state = profile;
       AnalyticsService.signUp(state: _state!);
     } on Exception catch (e) {
-      if (mounted) setState(() => _error = 'Setup failed. Please try again. ($e)');
+      if (mounted) {
+        setState(() => _error = 'Setup failed. Please try again. ($e)');
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -136,7 +138,8 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
           isMultiPersonFirm: _isMultiPersonFirm,
           isBuyerAgency: _isBuyerAgency,
           stateCallback: (val) => setState(() => _state = val),
-          multiPersonFirmCallback: (val) => setState(() => _isMultiPersonFirm = val),
+          multiPersonFirmCallback:
+              (val) => setState(() => _isMultiPersonFirm = val),
           buyerAgencyCallback: (val) => setState(() => _isBuyerAgency = val),
           agentLicenseCtrl: _agentLicenseCtrl,
           brokerageLicenseCtrl: _brokerageLicenseCtrl,
@@ -161,14 +164,17 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
               ),
             FilledButton(
               onPressed: _loading ? null : _submit,
-              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
-              child: _loading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Finish setup'),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
+              ),
+              child:
+                  _loading
+                      ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                      : const Text('Finish setup'),
             ),
           ],
         ),
