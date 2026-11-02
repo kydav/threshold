@@ -241,7 +241,7 @@ class _AgreementTile extends ConsumerWidget {
                                   content: Text(
                                     ok
                                         ? 'Agreement sent successfully.'
-                                        : 'Failed to send. Check your connection.',
+                                        : "Couldn't send yet. It's saved and will retry automatically.",
                                   ),
                                 ),
                               );
