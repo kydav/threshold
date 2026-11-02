@@ -7,7 +7,83 @@ import 'package:threshold/features/templates/data/template_pdf_service.dart';
 class TemplateDeal {
   TemplateDeal(this.template) {
     values.addAll(template.agentValues);
+    // Start from this form's usual terms (set at import, then the last
+    // deal's), and the form's own default options.
+    values.addAll(template.dealDefaults);
+    final groupsSet = {
+      for (final f in template.fields)
+        if (f.choiceGroup.isNotEmpty && values[f.id] == true) f.choiceGroup,
+    };
+    for (final f in template.fields) {
+      if (f.kind == FieldKind.checkbox &&
+          f.defaultChecked &&
+          !values.containsKey(f.id) &&
+          (f.choiceGroup.isEmpty || !groupsSet.contains(f.choiceGroup))) {
+        values[f.id] = true;
+      }
+    }
   }
+
+  /// Field by id.
+  TemplateField? field(String id) =>
+      template.fields.where((f) => f.id == id).firstOrNull;
+
+  /// Whether [f] applies right now: everything it depends on is checked.
+  bool applies(TemplateField f) {
+    var dep = f.dependsOn;
+    final seen = <String>{};
+    while (dep.isNotEmpty && seen.add(dep)) {
+      if (values[dep] != true) return false;
+      dep = field(dep)?.dependsOn ?? '';
+    }
+    return hasBuyer2 || buyerIndex(f) == 1;
+  }
+
+  /// The lines one answer wraps over, starting at [head].
+  List<TemplateField> lineChain(TemplateField head) {
+    final chain = [head];
+    while (true) {
+      final next =
+          template.fields
+              .where((f) => f.continues == chain.last.id)
+              .firstOrNull;
+      if (next == null || chain.contains(next)) return chain;
+      chain.add(next);
+    }
+  }
+
+  /// Wraps [text] over [lines] by how many characters each blank holds, so
+  /// a long address flows onto the continuation lines.
+  static Map<String, String> wrapOver(String text, List<TemplateField> lines) {
+    final out = <String, String>{};
+    final words = text.split(RegExp(r'\s+')).where((w) => w.isNotEmpty);
+    final queue = words.toList();
+    for (var i = 0; i < lines.length && queue.isNotEmpty; i++) {
+      final b = lines[i].box;
+      // Text is stamped at about 70% of the blank's height; average glyph
+      // width is about half the font size.
+      final capacity = (b.width / (b.height * 0.36)).floor().clamp(8, 400);
+      final last = i == lines.length - 1;
+      final buf = StringBuffer();
+      while (queue.isNotEmpty) {
+        final w = queue.first;
+        final candidate = buf.isEmpty ? w : '$buf $w';
+        if (!last && candidate.length > capacity && buf.isNotEmpty) break;
+        buf
+          ..clear()
+          ..write(candidate);
+        queue.removeAt(0);
+      }
+      out[lines[i].id] = buf.toString();
+    }
+    return out;
+  }
+
+  /// All the buyers' names together, for a "(the Buyer)" blank.
+  String get buyerNames => [
+    buyerName,
+    if (hasBuyer2 && buyer2Name.isNotEmpty) buyer2Name,
+  ].where((n) => n.isNotEmpty).join(' and ');
 
   final FormTemplate template;
   String buyerName = '';
@@ -55,8 +131,32 @@ class TemplateDeal {
 
   /// Fills the parts that follow from facts already known: buyer names go in
   /// name blanks, and every date beside a signature or initials is today.
+  /// Wraps long answers over their lines, and clears anything that no longer
+  /// applies (a county typed before switching to "specific properties").
   void autofill() {
     final today = DateFormat('M/d/yyyy').format(DateTime.now());
+    for (final f in template.fields) {
+      switch (f.role) {
+        case FieldRole.buyerNames:
+          values[f.id] = buyerNames;
+          continue;
+        case FieldRole.buyer1Name:
+          if (buyerName.isNotEmpty) values[f.id] = buyerName;
+          continue;
+        case FieldRole.buyer2Name:
+          if (hasBuyer2 && buyer2Name.isNotEmpty) values[f.id] = buyer2Name;
+          continue;
+        default:
+      }
+      if (f.continues.isEmpty &&
+          template.fields.any((x) => x.continues == f.id)) {
+        final text = values[f.id];
+        if (text is String) values.addAll(wrapOver(text, lineChain(f)));
+      }
+    }
+    for (final f in template.fields) {
+      if (f.dependsOn.isNotEmpty && !applies(f)) values.remove(f.id);
+    }
     for (final f in template.fields) {
       final label = f.label.toLowerCase();
       final isBuyerSide =
@@ -64,12 +164,33 @@ class TemplateDeal {
           f.filledBy == FieldFiller.agentSign;
       if (f.kind == FieldKind.date && isBuyerSide) {
         values[f.id] = today;
-      } else if (f.filledBy == FieldFiller.buyer &&
+      } else if (f.role == FieldRole.other &&
+          f.filledBy == FieldFiller.buyer &&
           f.kind == FieldKind.text &&
           label.contains('name') &&
           !label.contains('agent')) {
         final name = buyerIndex(f) == 2 ? buyer2Name : buyerName;
         if (name.isNotEmpty) values[f.id] = name;
+      }
+    }
+  }
+
+  /// Remembers this deal's terms as the starting point for the next one:
+  /// the fee, protection period and every option picked. Not names, dates or
+  /// addresses, which change every deal.
+  void rememberTerms() {
+    const keep = {
+      FieldRole.feeAmount,
+      FieldRole.feePercent,
+      FieldRole.protectionMonths,
+    };
+    for (final f in template.fields) {
+      if (f.filledBy != FieldFiller.agentPerDeal) continue;
+      final v = values[f.id];
+      if (f.kind == FieldKind.checkbox) {
+        template.dealDefaults[f.id] = v == true;
+      } else if (keep.contains(f.role) && v is String && v.isNotEmpty) {
+        template.dealDefaults[f.id] = v;
       }
     }
   }

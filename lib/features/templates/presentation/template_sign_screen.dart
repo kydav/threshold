@@ -233,6 +233,9 @@ class _TemplateSignScreenState extends ConsumerState<TemplateSignScreen> {
         signedAt: now,
       );
       await repo.save(signed);
+      // Next deal on this form starts from these terms.
+      deal.rememberTerms();
+      await ref.read(templateRepositoryProvider).save(deal.template);
       // Delivery retries on reconnect if this fails (no signal at the door).
       await ref.read(deliveryServiceProvider).deliver(signed);
       await ref.read(agreementListProvider.notifier).refresh();

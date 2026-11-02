@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:threshold/features/auth/data/user_profile.dart';
 import 'package:threshold/features/templates/data/form_template.dart';
+import 'package:threshold/features/templates/data/template_deal.dart';
 import 'package:threshold/features/templates/data/template_repository.dart';
+import 'package:threshold/features/templates/presentation/terms_form.dart';
 
 Color fillerColor(FieldFiller f) => switch (f) {
   FieldFiller.agentOnce => const Color(0xFF3478F6),
@@ -62,6 +64,37 @@ class _ReviewState extends ConsumerState<_Review> {
   final Map<String, TextEditingController> _agent = {};
   bool _saving = false;
 
+  /// Holds the usual-terms answers while setting up (a deal that's never
+  /// signed); saved into the template's dealDefaults.
+  late final TemplateDeal _terms = TemplateDeal(widget.template);
+
+  /// Per-deal questions with a usual answer (fee, protection, mediation,
+  /// addendum...). Not who, where or when, which change every deal.
+  List<TemplateField> get _termFields {
+    bool varies(TemplateField f) =>
+        f.role.isBuyerName ||
+        f.kind == FieldKind.date ||
+        RegExp(r'_(day|month|year)$').hasMatch(f.id) ||
+        const {
+          FieldRole.endDate,
+          FieldRole.startDate,
+          FieldRole.area,
+          FieldRole.propertyAddress,
+          FieldRole.excludedProperties,
+        }.contains(f.role);
+    final skipGroups = {
+      for (final f in t.fields)
+        if (varies(f) && f.groupTitle.isNotEmpty) f.groupTitle,
+    };
+    return [
+      for (final f in _terms.active(FieldFiller.agentPerDeal))
+        if (!varies(f) &&
+            f.dependsOn.isEmpty &&
+            !skipGroups.contains(f.groupTitle))
+          f,
+    ];
+  }
+
   FormTemplate get t => widget.template;
 
   @override
@@ -79,6 +112,8 @@ class _ReviewState extends ConsumerState<_Review> {
   /// the match obvious; the agent can correct anything.
   String _guessFromProfile(TemplateField f, UserProfile? p) {
     if (p == null) return '';
+    if (f.role == FieldRole.brokerageName) return p.brokerageName;
+    if (f.role == FieldRole.agentName) return p.fullName;
     final l = f.label.toLowerCase();
     if (l.contains('company') || l.contains('brokerage')) {
       return p.brokerageName;
@@ -104,6 +139,17 @@ class _ReviewState extends ConsumerState<_Review> {
     t.agentValues
       ..clear()
       ..addAll({for (final e in _agent.entries) e.key: e.value.text.trim()});
+    // Usual terms: every deal on this form starts with these.
+    for (final f in _termFields) {
+      final v = _terms.values[f.id];
+      if (f.kind == FieldKind.checkbox) {
+        t.dealDefaults[f.id] = v == true;
+      } else if (v is String && v.isNotEmpty) {
+        t.dealDefaults[f.id] = v;
+      } else {
+        t.dealDefaults.remove(f.id);
+      }
+    }
     await ref.read(templateRepositoryProvider).save(t);
     ref.invalidate(templatesProvider);
     if (mounted) context.go('/templates');
@@ -148,6 +194,48 @@ class _ReviewState extends ConsumerState<_Review> {
             controller: _title,
             decoration: const InputDecoration(labelText: 'Form name'),
           ),
+          const SizedBox(height: 16),
+          if (agentFields.isNotEmpty) ...[
+            Text(
+              'Your details',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Filled in on every agreement from this form.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
+            for (final f in agentFields)
+              if (_agent[f.id] != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: TextField(
+                    controller: _agent[f.id],
+                    decoration: InputDecoration(labelText: f.label),
+                  ),
+                ),
+          ],
+          if (_termFields.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text(
+              'Your usual terms',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Every deal on this form starts with these, so most deals only '
+              'ask who, where and when. You can still change them on a deal; '
+              "the last deal's terms carry forward.",
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            TermsForm(deal: _terms, fields: _termFields),
+          ],
+          const SizedBox(height: 20),
+          Text(
+            'Check the boxes',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           const SizedBox(height: 12),
           const _Legend(),
           const SizedBox(height: 8),
@@ -177,27 +265,6 @@ class _ReviewState extends ConsumerState<_Review> {
                           ),
             ),
             const SizedBox(height: 16),
-          ],
-          if (agentFields.isNotEmpty) ...[
-            Text(
-              'Your details',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Filled in on every agreement from this form.',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 8),
-            for (final f in agentFields)
-              if (_agent[f.id] != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: TextField(
-                    controller: _agent[f.id],
-                    decoration: InputDecoration(labelText: f.label),
-                  ),
-                ),
           ],
         ],
       ),
