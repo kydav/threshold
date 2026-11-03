@@ -40,14 +40,24 @@ class NewAgreementDefault {
 
 final newAgreementDefaultProvider = Provider((_) => NewAgreementDefault());
 
+/// Whether the agent's state has a form built into the app. Agents in
+/// other states use their own forms.
+bool _hasStateForm(WidgetRef ref) =>
+    kSupportedStates.contains(ref.read(userProfileProvider)?.state);
+
 /// The + button: straight to the default when one is set (and still
 /// exists), straight to the state form when there are no own forms, else
-/// asks.
+/// asks. Without a built-in state form and no own forms yet, it goes
+/// straight to adding one.
 Future<void> startNewAgreement(BuildContext context, WidgetRef ref) async {
   final templates = await ref.read(templatesProvider.future);
   final choice = await ref.read(newAgreementDefaultProvider).read();
+  final hasStateForm = _hasStateForm(ref);
   if (!context.mounted) return;
-  if (choice == _stateForm || (choice == null && templates.isEmpty)) {
+  if (!hasStateForm && templates.isEmpty) {
+    await context.push('/templates/new');
+  } else if (hasStateForm &&
+      (choice == _stateForm || (choice == null && templates.isEmpty))) {
     await context.push('/agreements/new');
   } else if (templates.any((t) => t.id == choice)) {
     await context.push('/templates/$choice/deal');
@@ -105,15 +115,14 @@ class _SheetState extends ConsumerState<_Sheet> {
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             child: Text('New agreement', style: theme.textTheme.titleLarge),
           ),
-          ListTile(
-            leading: const Icon(Icons.description_outlined),
-            title: Text(
-              state.isEmpty ? 'Standard agreement' : '$state agreement',
+          if (kSupportedStates.contains(state))
+            ListTile(
+              leading: const Icon(Icons.description_outlined),
+              title: Text('$state agreement'),
+              subtitle: const Text('The built-in form for your state'),
+              trailing: _check(_stateForm),
+              onTap: () => _pick(_stateForm, '/agreements/new'),
             ),
-            subtitle: const Text('The built-in form for your state'),
-            trailing: _check(_stateForm),
-            onTap: () => _pick(_stateForm, '/agreements/new'),
-          ),
           for (final t in widget.templates)
             ListTile(
               leading: const Icon(Icons.edit_document),

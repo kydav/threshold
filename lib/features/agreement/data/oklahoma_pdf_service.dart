@@ -57,7 +57,8 @@ class OklahomaPdfService {
     final postExpDays = fd['postExpirationDays'] as String? ?? '60';
 
     final agentLicenseNumber = fd['agentLicenseNumber'] as String? ?? '';
-    final brokerageLicenseNumber = fd['brokerageLicenseNumber'] as String? ?? '';
+    final brokerageLicenseNumber =
+        fd['brokerageLicenseNumber'] as String? ?? '';
     final managingBrokerName = fd['managingBrokerName'] as String? ?? '';
     final managingBrokerPhone = fd['managingBrokerPhone'] as String? ?? '';
     final managingBrokerEmail = fd['managingBrokerEmail'] as String? ?? '';
@@ -162,7 +163,10 @@ class OklahomaPdfService {
     doc.dispose();
 
     final dir = await getApplicationDocumentsDirectory();
-    final safeName = agreement.buyerName.replaceAll(RegExp('[^a-zA-Z0-9]'), '_');
+    final safeName = agreement.buyerName.replaceAll(
+      RegExp('[^a-zA-Z0-9]'),
+      '_',
+    );
     final filename = 'OK_BBSA_${safeName}_${agreement.id.substring(0, 8)}.pdf';
     final file = File('${dir.path}/$filename');
     await file.writeAsBytes(savedBytes);
@@ -197,10 +201,7 @@ class OklahomaPdfService {
 
   List<String> _lines(String text, int count) {
     final parts = text.split('\n');
-    return List.generate(
-      count,
-      (i) => i < parts.length ? parts[i].trim() : '',
-    );
+    return List.generate(count, (i) => i < parts.length ? parts[i].trim() : '');
   }
 
   String _initials(String name) {

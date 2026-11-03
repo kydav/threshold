@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
@@ -5,11 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:syncfusion_flutter_signaturepad/signaturepad.dart';
-import 'package:threshold/core/config/revenue_cat_config.dart';
 import 'package:threshold/core/services/analytics_service.dart';
-import 'package:threshold/core/services/data_service.dart';
-import 'package:threshold/core/services/remote_config_service.dart';
-import 'package:threshold/core/services/subscription_service.dart';
+import 'package:threshold/core/services/review_service.dart';
 import 'package:threshold/features/agreement/data/agreement_model.dart';
 import 'package:threshold/features/agreement/data/agreement_repository.dart';
 import 'package:threshold/features/agreement/data/colorado_form_data.dart';
@@ -18,8 +16,7 @@ import 'package:threshold/features/agreement/data/louisiana_pdf_service.dart';
 import 'package:threshold/features/agreement/data/oklahoma_pdf_service.dart';
 import 'package:threshold/features/agreement/data/pdf_service.dart';
 import 'package:threshold/features/agreement/data/wisconsin_pdf_service.dart';
-import 'package:threshold/features/auth/data/user_profile.dart';
-import 'package:threshold/features/paywall/presentation/paywall_screen.dart';
+import 'package:threshold/features/paywall/data/agreement_quota.dart';
 
 class SignatureScreen extends ConsumerStatefulWidget {
   const SignatureScreen({required this.agreementId, super.key});
@@ -95,21 +92,7 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
   Future<void> _finalize() async {
     if (!_canFinalize || _agreement == null) return;
 
-    final remotePaywallEnabled = ref.read(remoteConfigProvider).paywallEnabled;
-    final customerInfo = await ref.read(subscriptionProvider.future);
-    final isPro =
-        !kPaywallEnabled ||
-        !remotePaywallEnabled ||
-        (customerInfo?.entitlements.active.containsKey(kEntitlementId) ??
-            false);
-    if (!isPro) {
-      final profile = ref.read(userProfileProvider);
-      final sentCount = profile?.agreementsSent ?? 0;
-      if (sentCount >= kFreeAgreementLimit && mounted) {
-        final subscribed = await showPaywall(context);
-        if (!subscribed || !mounted) return;
-      }
-    }
+    if (!await canSendAgreement(context, ref) || !mounted) return;
 
     setState(() => _processing = true);
     try {
@@ -195,28 +178,11 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
 
       if (path != null && mounted) {
         AnalyticsService.pdfGenerated(formState: _agreement!.formState);
-        // Persist agreement count to Firestore so it survives reinstalls.
-        final uid = _agreement!.agentId;
-        await ref.read(dataServiceProvider).incrementAgreementsSent(uid);
-        final profile = ref.read(userProfileProvider);
-        if (profile != null) {
-          ref.read(userProfileProvider.notifier).state = UserProfile(
-            uid: profile.uid,
-            email: profile.email,
-            firstName: profile.firstName,
-            lastName: profile.lastName,
-            brokerageName: profile.brokerageName,
-            brokerageAddress: profile.brokerageAddress,
-            brokerageCityStateZip: profile.brokerageCityStateZip,
-            phone: profile.phone,
-            state: profile.state,
-            isMultiPersonFirm: profile.isMultiPersonFirm,
-            isBuyerAgency: profile.isBuyerAgency,
-            agreementsSent: profile.agreementsSent + 1,
-          );
-        }
+        await recordAgreementSent(ref, _agreement!.agentId);
         await ref.read(agreementListProvider.notifier).refresh();
+        final review = ref.read(reviewServiceProvider);
         if (mounted) context.go('/home');
+        unawaited(review.recordSigning());
       }
     } on Exception catch (e) {
       debugPrint('Error generating PDF: $e');

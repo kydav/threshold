@@ -54,8 +54,7 @@ class AgreementRepository {
 
   Future<void> save(AgreementModel model) async {
     final dir = await _dir();
-    await _file(dir, model.id)
-        .writeAsString(jsonEncode(model.toJson()));
+    await _file(dir, model.id).writeAsString(jsonEncode(model.toJson()));
   }
 
   Future<AgreementModel?> get(String id) async {
@@ -63,7 +62,8 @@ class AgreementRepository {
     final file = _file(dir, id);
     if (!file.existsSync()) return null;
     return AgreementModel.fromJson(
-        jsonDecode(await file.readAsString()) as Map<String, dynamic>);
+      jsonDecode(await file.readAsString()) as Map<String, dynamic>,
+    );
   }
 
   Future<List<AgreementModel>> listForAgent(String agentId) async {
@@ -73,7 +73,8 @@ class AgreementRepository {
     for (final f in files) {
       try {
         final model = AgreementModel.fromJson(
-            jsonDecode(await f.readAsString()) as Map<String, dynamic>);
+          jsonDecode(await f.readAsString()) as Map<String, dynamic>,
+        );
         if (model.agentId == agentId) results.add(model);
       } catch (_) {}
     }
@@ -87,12 +88,12 @@ class AgreementRepository {
   }
 }
 
-final agreementRepositoryProvider =
-    Provider<AgreementRepository>((_) => AgreementRepository());
+final agreementRepositoryProvider = Provider<AgreementRepository>(
+  (_) => AgreementRepository(),
+);
 
 // Notifier that holds the in-memory list and refreshes from disk.
-class AgreementListNotifier
-    extends AsyncNotifier<List<AgreementModel>> {
+class AgreementListNotifier extends AsyncNotifier<List<AgreementModel>> {
   @override
   Future<List<AgreementModel>> build() {
     // Rebuild whenever auth state changes so agreements clear on logout/login.
@@ -111,4 +112,5 @@ class AgreementListNotifier
 
 final agreementListProvider =
     AsyncNotifierProvider<AgreementListNotifier, List<AgreementModel>>(
-        AgreementListNotifier.new);
+      AgreementListNotifier.new,
+    );

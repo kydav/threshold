@@ -124,7 +124,10 @@ class LouisianaPdfService {
     doc.dispose();
 
     final dir = await getApplicationDocumentsDirectory();
-    final safeName = agreement.buyerName.replaceAll(RegExp('[^a-zA-Z0-9]'), '_');
+    final safeName = agreement.buyerName.replaceAll(
+      RegExp('[^a-zA-Z0-9]'),
+      '_',
+    );
     final filename = 'LA_BRA_${safeName}_${agreement.id.substring(0, 8)}.pdf';
     final file = File('${dir.path}/$filename');
     await file.writeAsBytes(savedBytes);
@@ -159,10 +162,7 @@ class LouisianaPdfService {
 
   List<String> _lines(String text, int count) {
     final parts = text.split('\n');
-    return List.generate(
-      count,
-      (i) => i < parts.length ? parts[i].trim() : '',
-    );
+    return List.generate(count, (i) => i < parts.length ? parts[i].trim() : '');
   }
 
   PdfField? _find(PdfForm form, String name) {

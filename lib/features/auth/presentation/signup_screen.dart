@@ -94,8 +94,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         ),
       );
     } else {
-      // Show a notice for agents in states without a digital form workflow,
-      // but still proceed with account creation after they dismiss.
+      // Agents in states without a built-in form use their own; tell them
+      // how, then proceed with account creation after they dismiss.
       final selectedState = _state ?? '';
       if (!kSupportedStates.contains(selectedState)) {
         if (!mounted) return;
@@ -311,28 +311,23 @@ class _UnsupportedStateSheet extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Forms coming soon for $state',
+            'Bring your $state form',
             style: Theme.of(
               context,
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
-          Text.rich(
-            TextSpan(
-              style: Theme.of(context).textTheme.bodyMedium,
-              children: const [
-                TextSpan(
-                  text:
-                      'We currently have digital form workflows for Colorado and Wisconsin. '
-                      'Have your local board or state association contact ',
-                ),
-                TextSpan(
-                  text: 'hello@auaha.app',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                TextSpan(text: ' to add support for your state.'),
-              ],
-            ),
+          Text(
+            "Threshold doesn't have a built-in $state form, and you don't "
+            'need one. Scan or upload the buyer agreement you already use. '
+            'Threshold finds every field, and your buyers sign it on your '
+            'phone.',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Tap + or "My forms" on the home screen to add it.',
+            style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 24),
           FilledButton(

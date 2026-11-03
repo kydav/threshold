@@ -46,6 +46,27 @@ class UserProfile {
 
   String get fullName => '$firstName $lastName'.trim();
 
+  /// This profile with a new sent count; every other field kept.
+  UserProfile withAgreementsSent(int count) => UserProfile(
+    uid: uid,
+    email: email,
+    firstName: firstName,
+    lastName: lastName,
+    brokerageName: brokerageName,
+    brokerageAddress: brokerageAddress,
+    brokerageCityStateZip: brokerageCityStateZip,
+    phone: phone,
+    state: state,
+    isMultiPersonFirm: isMultiPersonFirm,
+    isBuyerAgency: isBuyerAgency,
+    agreementsSent: count,
+    agentLicenseNumber: agentLicenseNumber,
+    brokerageLicenseNumber: brokerageLicenseNumber,
+    managingBrokerName: managingBrokerName,
+    managingBrokerPhone: managingBrokerPhone,
+    managingBrokerEmail: managingBrokerEmail,
+  );
+
   factory UserProfile.fromFirestore(DocumentSnapshot doc) {
     final d = doc.data() as Map<String, dynamic>?;
     if (d == null) {

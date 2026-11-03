@@ -160,48 +160,7 @@ class _FormRouter extends ConsumerStatefulWidget {
 }
 
 class _FormRouterState extends ConsumerState<_FormRouter> {
-  bool _shownUnsupportedSheet = false;
-  Future<void> _showUnsupportedStateSheet(String state) async {
-    if (_shownUnsupportedSheet || !mounted) return;
-    _shownUnsupportedSheet = true;
-
-    await showModalBottomSheet<void>(
-      context: context,
-      useSafeArea: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder:
-          (_) => Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'State not supported yet',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 8),
-                Text('$state forms are not available yet.'),
-                const Text(
-                  'Please contact your local board, state association or broker and have them reach out to hello@auaha.app to get your state added to the platform.',
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('OK'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-    );
-
-    if (mounted) context.go('/agreements');
-  }
+  bool _redirected = false;
 
   @override
   Widget build(BuildContext context) {
@@ -215,11 +174,14 @@ class _FormRouterState extends ConsumerState<_FormRouter> {
     final approved = kSupportedStates.contains(state);
 
     if (!approved) {
+      // No built-in form for this state: the agent scans their own.
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _showUnsupportedStateSheet(state);
+        if (_redirected || !mounted) return;
+        _redirected = true;
+        context.pushReplacement('/templates/new');
       });
 
-      // Hold a blank shell while the sheet is shown.
+      // Hold a blank shell until the redirect.
       return const Scaffold(body: SizedBox.shrink());
     }
     return switch (profile.state) {

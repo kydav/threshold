@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -9,9 +10,11 @@ import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:syncfusion_flutter_signaturepad/signaturepad.dart';
 import 'package:threshold/core/services/delivery_service.dart';
+import 'package:threshold/core/services/review_service.dart';
 import 'package:threshold/features/agreement/data/agreement_model.dart';
 import 'package:threshold/features/agreement/data/agreement_repository.dart';
 import 'package:threshold/features/auth/data/user_profile.dart';
+import 'package:threshold/features/paywall/data/agreement_quota.dart';
 import 'package:threshold/features/templates/data/form_template.dart';
 import 'package:threshold/features/templates/data/template_deal.dart';
 import 'package:threshold/features/templates/data/template_pdf_service.dart';
@@ -257,6 +260,7 @@ class _TemplateSignScreenState extends ConsumerState<TemplateSignScreen> {
         signedAt: now,
       );
       await repo.save(signed);
+      await recordAgreementSent(ref, signed.agentId);
       // Next deal on this form starts from these terms.
       deal.rememberTerms();
       await ref.read(templateRepositoryProvider).save(deal.template);
@@ -264,6 +268,7 @@ class _TemplateSignScreenState extends ConsumerState<TemplateSignScreen> {
       await ref.read(deliveryServiceProvider).deliver(signed);
       await ref.read(agreementListProvider.notifier).refresh();
       if (mounted) setState(() => _step = _Step.done);
+      unawaited(ref.read(reviewServiceProvider).recordSigning());
     } catch (e) {
       setState(() => _error = 'Could not finish: $e');
     } finally {

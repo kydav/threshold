@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:threshold/features/paywall/data/agreement_quota.dart';
 import 'package:threshold/features/templates/data/form_template.dart';
 import 'package:threshold/features/templates/data/template_deal.dart';
 import 'package:threshold/features/templates/data/template_repository.dart';
@@ -42,16 +43,16 @@ class TemplateDealScreen extends ConsumerWidget {
   }
 }
 
-class _DealForm extends StatefulWidget {
+class _DealForm extends ConsumerStatefulWidget {
   const _DealForm({required this.template});
 
   final FormTemplate template;
 
   @override
-  State<_DealForm> createState() => _DealFormState();
+  ConsumerState<_DealForm> createState() => _DealFormState();
 }
 
-class _DealFormState extends State<_DealForm> {
+class _DealFormState extends ConsumerState<_DealForm> {
   final _formKey = GlobalKey<FormState>();
 
   // Made once: the screen above rebuilds (going to the sign screen and
@@ -150,8 +151,11 @@ class _DealFormState extends State<_DealForm> {
   String? _required(String? v) =>
       (v == null || v.trim().isEmpty) ? 'Required' : null;
 
-  void _handOver() {
+  Future<void> _handOver() async {
     if (!_formKey.currentState!.validate()) return;
+    // Check the free limit before the buyer gets the phone, not after
+    // they've signed.
+    if (!await canSendAgreement(context, ref) || !mounted) return;
     // Read straight from the fields, so what's on screen is what's signed.
     deal
       ..buyerName = _name.text.trim()
@@ -159,7 +163,7 @@ class _DealFormState extends State<_DealForm> {
       ..buyer2Name = deal.hasBuyer2 ? _name2.text.trim() : ''
       ..buyer2Email = deal.hasBuyer2 ? _email2.text.trim() : ''
       ..autofill();
-    context.push('/templates/${deal.template.id}/sign', extra: deal);
+    await context.push('/templates/${deal.template.id}/sign', extra: deal);
   }
 }
 
