@@ -244,6 +244,23 @@ class TemplatePage {
 }
 
 /// An agent's own form, turned into a reusable, fillable template.
+/// One sentence of a form's AI overview, written once at import with
+/// {field_id} placeholders for the deal's values. [ifChecked]: an option id
+/// the sentence only applies to.
+class SummaryLine {
+  const SummaryLine(this.text, {this.ifChecked = ''});
+
+  factory SummaryLine.fromMap(Map<String, dynamic> m) => SummaryLine(
+    m['text'] as String? ?? '',
+    ifChecked: m['if_checked'] as String? ?? '',
+  );
+
+  final String text;
+  final String ifChecked;
+
+  Map<String, dynamic> toMap() => {'text': text, 'if_checked': ifChecked};
+}
+
 class FormTemplate {
   FormTemplate({
     required this.id,
@@ -254,6 +271,7 @@ class FormTemplate {
     required this.createdAt,
     Map<String, String>? agentValues,
     Map<String, Object>? dealDefaults,
+    this.summary = const [],
   }) : agentValues = agentValues ?? {},
        dealDefaults = dealDefaults ?? {};
 
@@ -271,6 +289,10 @@ class FormTemplate {
   /// protection period, mediation choice...), set at import and updated to
   /// the last deal's answers. Strings, or bools for checkboxes.
   final Map<String, Object> dealDefaults;
+
+  /// The AI overview shown to the buyer above the form (empty for forms
+  /// imported before overviews existed).
+  final List<SummaryLine> summary;
 
   Iterable<TemplateField> fieldsBy(FieldFiller f) =>
       fields.where((x) => x.filledBy == f);
@@ -293,6 +315,10 @@ class FormTemplate {
       for (final e in (m['dealDefaults'] as Map? ?? const {}).entries)
         if (e.value is String || e.value is bool) '${e.key}': e.value as Object,
     },
+    summary: [
+      for (final l in m['summary'] as List? ?? const [])
+        SummaryLine.fromMap(Map<String, dynamic>.from(l as Map)),
+    ],
   );
 
   Map<String, dynamic> toMap() => {
@@ -304,5 +330,6 @@ class FormTemplate {
     'createdAt': createdAt.toIso8601String(),
     'agentValues': agentValues,
     'dealDefaults': dealDefaults,
+    'summary': [for (final l in summary) l.toMap()],
   };
 }

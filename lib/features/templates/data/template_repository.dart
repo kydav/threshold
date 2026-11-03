@@ -59,6 +59,7 @@ class TemplateRepository {
       pages: stored,
       fields: fields,
       createdAt: DateTime.now(),
+      summary: map.summary,
     );
     await save(template);
     return template;

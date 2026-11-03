@@ -37,6 +37,9 @@ class TemplateSignScreen extends ConsumerStatefulWidget {
 
 class _TemplateSignScreenState extends ConsumerState<TemplateSignScreen> {
   _Step _step = _Step.review;
+
+  /// Steps already passed, so back retraces them.
+  final List<_Step> _history = [];
   bool _consent1 = false;
   bool _consent2 = false;
   DateTime? _consentAt;
@@ -52,8 +55,9 @@ class _TemplateSignScreenState extends ConsumerState<TemplateSignScreen> {
   TemplateDeal get deal => widget.deal;
 
   /// Buyer fields still empty after autofill that aren't ink: address,
-  /// phone, any box the buyer checks.
-  List<TemplateField> get _detailFields => [
+  /// phone, any box the buyer checks. Decided once, so going back to this
+  /// step still shows what was typed.
+  late final List<TemplateField> _detailFields = [
     for (final f in deal.active(FieldFiller.buyer))
       if (!f.kind.isInk &&
           f.kind != FieldKind.date &&
@@ -181,8 +185,28 @@ class _TemplateSignScreenState extends ConsumerState<TemplateSignScreen> {
     if (next == _Step.done) {
       await _finish();
     } else {
-      setState(() => _step = next);
+      setState(() {
+        _history.add(_step);
+        _step = next;
+      });
     }
+  }
+
+  /// One step back; from the agreement, back to the agent's form.
+  void _back() {
+    if (_working) return;
+    if (_history.isEmpty) {
+      context.pop();
+      return;
+    }
+    setState(() {
+      _error = null;
+      _step = _history.removeLast();
+      // Signing again replaces the signature this step stamped.
+      if (_step case _Step.buyer1 || _Step.buyer2 || _Step.agent) {
+        if (deal.events.isNotEmpty) deal.events.removeLast();
+      }
+    });
   }
 
   Future<void> _finish() async {
@@ -251,6 +275,9 @@ class _TemplateSignScreenState extends ConsumerState<TemplateSignScreen> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: _step == _Step.review || _step == _Step.done,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _back();
+      },
       child: Scaffold(
         appBar: AppBar(
           title: Text(switch (_step) {
@@ -261,7 +288,10 @@ class _TemplateSignScreenState extends ConsumerState<TemplateSignScreen> {
             _Step.agent => 'Agent signature',
             _Step.done => 'All signed',
           }),
-          automaticallyImplyLeading: _step == _Step.review,
+          leading:
+              _step == _Step.done
+                  ? const SizedBox.shrink()
+                  : BackButton(onPressed: _back),
         ),
         body: switch (_step) {
           _Step.review => _review(),
@@ -333,6 +363,10 @@ class _TemplateSignScreenState extends ConsumerState<TemplateSignScreen> {
           'through, and ask about anything that is unclear before you sign.',
         ),
         const SizedBox(height: 12),
+        if (deal.overview case final lines when lines.isNotEmpty) ...[
+          AiOverview(lines: lines),
+          const SizedBox(height: 12),
+        ],
         for (var i = 0; i < deal.template.pages.length; i++) ...[
           FutureBuilder<File>(
             future: repo.pageFile(deal.template, i),
@@ -394,11 +428,28 @@ class _TemplateSignScreenState extends ConsumerState<TemplateSignScreen> {
             )
           else
             TextFormField(
-              decoration: InputDecoration(labelText: f.label),
+              key: ValueKey(f.id),
+              initialValue: deal.values[f.id] as String?,
+              decoration: InputDecoration(labelText: _detailLabel(f)),
+              keyboardType:
+                  f.label.toLowerCase().contains('email')
+                      ? TextInputType.emailAddress
+                      : TextInputType.text,
+              textCapitalization: TextCapitalization.words,
               onChanged: (v) => deal.values[f.id] = v.trim(),
             ),
       ],
     );
+  }
+
+  /// Whose detail this is, when the form has a line per buyer.
+  String _detailLabel(TemplateField f) {
+    final name =
+        TemplateDeal.buyerIndex(f) == 2 ? deal.buyer2Name : deal.buyerName;
+    final shared = _detailFields.where((o) => o.label == f.label).length > 1;
+    return (deal.hasBuyer2 || shared) && name.isNotEmpty
+        ? '$name: ${f.label}'
+        : f.label;
   }
 
   Widget _inkStep(
@@ -506,6 +557,58 @@ class _Pad extends StatelessWidget {
           child: const Text('Clear'),
         ),
       ],
+    );
+  }
+}
+
+/// The form's AI overview, filled in with this deal, clearly marked as AI so
+/// nobody mistakes it for the agreement itself.
+class AiOverview extends StatelessWidget {
+  const AiOverview({required this.lines, super.key});
+
+  final List<String> lines;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    return Card(
+      margin: EdgeInsets.zero,
+      color: cs.secondaryContainer.withValues(alpha: 0.5),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.auto_awesome, size: 18, color: cs.secondary),
+                const SizedBox(width: 8),
+                Text('Overview', style: theme.textTheme.titleSmall),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Generated by AI. It may be incomplete or wrong. The agreement '
+              'below is what you are signing, so review it for the actual '
+              'terms.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: cs.onSurfaceVariant,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+            const SizedBox(height: 10),
+            for (final l in lines)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [const Text('•  '), Expanded(child: Text(l))],
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

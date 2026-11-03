@@ -36,6 +36,7 @@ TemplateField f(
 FormTemplate template(
   List<TemplateField> fields, {
   Map<String, Object>? defaults,
+  List<SummaryLine> summary = const [],
 }) => FormTemplate(
   id: 't',
   title: 'Form 6',
@@ -44,6 +45,7 @@ FormTemplate template(
   fields: fields,
   createdAt: DateTime(2026),
   dealDefaults: defaults,
+  summary: summary,
 );
 
 void main() {
@@ -161,5 +163,49 @@ void main() {
       ..['no_addendum'] = true;
     deal.rememberTerms();
     expect(t.dealDefaults, {'fee_pct': '2.5', 'no_addendum': true});
+  });
+
+  test('the AI overview fills values and drops what does not apply', () {
+    final deal = TemplateDeal(
+      template(
+        [
+          f('fee', kind: FieldKind.percent),
+          f('area_county', kind: FieldKind.checkbox, choice: 'area'),
+          f('area_property', kind: FieldKind.checkbox, choice: 'area'),
+          f('county', dependsOn: 'area_county', role: FieldRole.area),
+          f('end_date_month'),
+          f('end_date_day'),
+          f('end_date_year'),
+          f('protection'),
+        ],
+        summary: const [
+          SummaryLine('You agree to pay {fee} of the price.'),
+          SummaryLine('It covers {county}.', ifChecked: 'area_county'),
+          SummaryLine('It covers one property.', ifChecked: 'area_property'),
+          SummaryLine('It ends on {end_date}.'),
+          SummaryLine('Protection lasts {protection} days.'),
+        ],
+      ),
+    );
+    deal.values.addAll({
+      'fee': '3',
+      'area_county': true,
+      'county': 'Larimer',
+      'end_date_month': '2',
+      'end_date_day': '1',
+      'end_date_year': '2027',
+    });
+    expect(deal.overview, [
+      'You agree to pay 3% of the price.',
+      'It covers Larimer.',
+      'It ends on 2/1/2027.',
+    ]);
+  });
+
+  test('second-buyer lines are recognised by id or label', () {
+    expect(TemplateDeal.buyerIndex(f('buyer2_address')), 2);
+    expect(TemplateDeal.buyerIndex(f('address_2')), 2);
+    expect(TemplateDeal.buyerIndex(f('x', label: 'Buyer #2 phone')), 2);
+    expect(TemplateDeal.buyerIndex(f('buyer_address')), 1);
   });
 }

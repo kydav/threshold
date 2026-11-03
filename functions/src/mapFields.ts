@@ -66,6 +66,18 @@ const SCHEMA = {
   properties: {
     form_title: { type: 'string' },
     form_id: { type: 'string' },
+    summary: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          text: { type: 'string' },
+          if_checked: { type: 'string' },
+        },
+        required: ['text', 'if_checked'],
+        additionalProperties: false,
+      },
+    },
     fields: {
       type: 'array',
       items: {
@@ -106,7 +118,7 @@ const SCHEMA = {
       },
     },
   },
-  required: ['form_title', 'form_id', 'fields'],
+  required: ['form_title', 'form_id', 'summary', 'fields'],
   additionalProperties: false,
 } as const;
 
@@ -182,6 +194,8 @@ line down to the line itself. Signature and initials boxes should be generous \
 enough for a real signature. Never cover printed words.
 - currently_filled: true if this copy already has something written, typed or \
 checked there.
+
+Also return summary: a short plain-English overview of this agreement that the app shows the buyer above the form before they sign, filled in with the deal's own values. 4 to 7 sentences, each its own item, in the order a buyer would want: who they're hiring and for how long, where/which properties, what they'll owe and when, how long the protection period lasts, and any notable commitment (exclusivity, mediation, attorney fees, class-action waiver). Write to the buyer as "you". Neutral and factual: describe what the form says, never advise. Put a field's value in a sentence with {field_id} (an id from your fields), e.g. "This agreement ends on {end_date}." For a date split into day/month/year blanks, use {<base>_date} (e.g. {end_date} for end_date_day/end_date_month/end_date_year). if_checked: the id of a checkbox option the sentence only applies to (e.g. the county sentence uses the county option's id, the property sentence the property option's id), else empty. Don't mention buyer names (the app greets them).
 
 Include every blank, including ones this copy left empty (a second buyer's \
 signature line, an unused property line). A date printed as separate day / \

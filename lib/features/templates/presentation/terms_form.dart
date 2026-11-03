@@ -59,19 +59,40 @@ class _TermsFormState extends State<TermsForm> {
     return groups.values.toList();
   }
 
+  /// The groups folded into "Your usual terms", decided once when the form
+  /// opens so picking an option never moves its group out from under you.
+  late final Set<String> _usualTitles = {
+    for (final g in _groups())
+      if (_usual(g)) g.title,
+  };
+
+  /// [f] and every blank that hangs off it (an option's county or address
+  /// lines), however deep.
+  Iterable<TemplateField> _withDependents(TemplateField f) sync* {
+    yield f;
+    for (final d in deal.template.fields) {
+      if (d.dependsOn == f.id && d.id != f.id) yield* _withDependents(d);
+    }
+  }
+
+  /// Answers that change deal to deal (dates, area, property, exclusions),
+  /// so a group holding one, or an option leading to one, never folds away.
+  static bool _varies(TemplateField f) =>
+      f.kind == FieldKind.date ||
+      f.role == FieldRole.endDate ||
+      f.role == FieldRole.startDate ||
+      f.role == FieldRole.area ||
+      f.role == FieldRole.propertyAddress ||
+      f.role == FieldRole.excludedProperties ||
+      f.role.isBuyerName ||
+      RegExp(r'_(day|month|year)$').hasMatch(f.id);
+
   /// A group already settled by this form's usual terms (fee, protection,
   /// mediation...). Area, property and date questions always stay open.
   bool _usual(_Group g) {
     if (!widget.collapseUsual) return false;
     for (final f in g.fields) {
-      if (f.kind == FieldKind.date ||
-          f.role == FieldRole.endDate ||
-          f.role == FieldRole.area ||
-          f.role == FieldRole.propertyAddress ||
-          f.role == FieldRole.excludedProperties ||
-          RegExp(r'_(day|month|year)$').hasMatch(f.id)) {
-        return false;
-      }
+      if (_withDependents(f).any(_varies)) return false;
       if (f.kind == FieldKind.checkbox) {
         if (f.choiceGroup.isNotEmpty &&
             !g.fields
@@ -110,8 +131,8 @@ class _TermsFormState extends State<TermsForm> {
   @override
   Widget build(BuildContext context) {
     final groups = _groups();
-    final open = groups.where((g) => !_usual(g)).toList();
-    final usual = groups.where(_usual).toList();
+    final open = groups.where((g) => !_usualTitles.contains(g.title)).toList();
+    final usual = groups.where((g) => _usualTitles.contains(g.title)).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

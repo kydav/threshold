@@ -49,9 +49,7 @@ void main() {
     );
     final out =
         img.decodeJpg(
-          cleanPage(Uint8List.fromList(img.encodeJpg(page)), [
-            field,
-          ]),
+          cleanPage(Uint8List.fromList(img.encodeJpg(page)), [field]),
         )!;
 
     bool isWhite(int x, int y) => out.getPixel(x, y).luminance > 230;

@@ -37,15 +37,15 @@ class TemplateDealScreen extends ConsumerWidget {
                       ? const Scaffold(
                         body: Center(child: Text('Form not found')),
                       )
-                      : _DealForm(deal: TemplateDeal(t)),
+                      : _DealForm(template: t),
         );
   }
 }
 
 class _DealForm extends StatefulWidget {
-  const _DealForm({required this.deal});
+  const _DealForm({required this.template});
 
-  final TemplateDeal deal;
+  final FormTemplate template;
 
   @override
   State<_DealForm> createState() => _DealFormState();
@@ -54,7 +54,21 @@ class _DealForm extends StatefulWidget {
 class _DealFormState extends State<_DealForm> {
   final _formKey = GlobalKey<FormState>();
 
-  TemplateDeal get deal => widget.deal;
+  // Made once: the screen above rebuilds (going to the sign screen and
+  // back), and a fresh deal would drop everything typed so far.
+  late final TemplateDeal deal = TemplateDeal(widget.template);
+  final _name = TextEditingController();
+  final _email = TextEditingController();
+  final _name2 = TextEditingController();
+  final _email2 = TextEditingController();
+
+  @override
+  void dispose() {
+    for (final c in [_name, _email, _name2, _email2]) {
+      c.dispose();
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,12 +81,14 @@ class _DealFormState extends State<_DealForm> {
           children: [
             const _Heading('Buyer'),
             TextFormField(
+              controller: _name,
               decoration: const InputDecoration(labelText: 'Buyer name'),
               textCapitalization: TextCapitalization.words,
               validator: _required,
               onChanged: (v) => deal.buyerName = v.trim(),
             ),
             TextFormField(
+              controller: _email,
               decoration: const InputDecoration(
                 labelText: 'Buyer email (for their copy)',
               ),
@@ -88,6 +104,7 @@ class _DealFormState extends State<_DealForm> {
             ),
             if (deal.hasBuyer2) ...[
               TextFormField(
+                controller: _name2,
                 decoration: const InputDecoration(
                   labelText: 'Second buyer name',
                 ),
@@ -96,6 +113,7 @@ class _DealFormState extends State<_DealForm> {
                 onChanged: (v) => deal.buyer2Name = v.trim(),
               ),
               TextFormField(
+                controller: _email2,
                 decoration: const InputDecoration(
                   labelText: 'Second buyer email',
                 ),
@@ -134,7 +152,13 @@ class _DealFormState extends State<_DealForm> {
 
   void _handOver() {
     if (!_formKey.currentState!.validate()) return;
-    deal.autofill();
+    // Read straight from the fields, so what's on screen is what's signed.
+    deal
+      ..buyerName = _name.text.trim()
+      ..buyerEmail = _email.text.trim()
+      ..buyer2Name = deal.hasBuyer2 ? _name2.text.trim() : ''
+      ..buyer2Email = deal.hasBuyer2 ? _email2.text.trim() : ''
+      ..autofill();
     context.push('/templates/${deal.template.id}/sign', extra: deal);
   }
 }

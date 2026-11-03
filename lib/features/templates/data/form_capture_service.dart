@@ -9,6 +9,7 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
 import 'package:printing/printing.dart';
+import 'package:threshold/features/templates/data/form_template.dart';
 
 /// Long edge of a stored page, in pixels. Matches what the vision model reads
 /// natively, so field boxes come back in the same pixel space we store.
@@ -29,9 +30,15 @@ class CapturedPage {
   final List<({String text, List<int> box})> ocr;
 }
 
-/// The map Claude returned: form title/id and the raw field list.
+/// The map Claude returned: form title/id, the raw field list and the
+/// overview template.
 typedef FieldMap =
-    ({String title, String formId, List<Map<String, dynamic>> fields});
+    ({
+      String title,
+      String formId,
+      List<Map<String, dynamic>> fields,
+      List<SummaryLine> summary,
+    });
 
 /// Turns a paper or PDF form into pages + a field map.
 class FormCaptureService {
@@ -140,6 +147,10 @@ class FormCaptureService {
       fields: [
         for (final f in data['fields'] as List)
           Map<String, dynamic>.from(f as Map),
+      ],
+      summary: [
+        for (final l in data['summary'] as List? ?? const [])
+          SummaryLine.fromMap(Map<String, dynamic>.from(l as Map)),
       ],
     );
   }

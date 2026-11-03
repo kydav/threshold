@@ -24,6 +24,56 @@ class TemplateDeal {
     }
   }
 
+  /// The form's AI overview with this deal's values in: a sentence drops
+  /// out when its option isn't picked or a value it needs is still blank.
+  List<String> get overview {
+    final out = <String>[];
+    for (final line in template.summary) {
+      if (line.ifChecked.isNotEmpty && values[line.ifChecked] != true) {
+        continue;
+      }
+      var missing = false;
+      final text = line.text.replaceAllMapped(RegExp(r'\{([a-zA-Z0-9_]+)\}'), (
+        m,
+      ) {
+        final v = _overviewValue(m[1]!);
+        if (v == null) missing = true;
+        return v ?? '';
+      });
+      if (!missing && text.trim().isNotEmpty) out.add(text.trim());
+    }
+    return out;
+  }
+
+  /// A value as it reads in a sentence: $ on money, % on a percent, and a
+  /// date split over day/month/year blanks put back together.
+  String? _overviewValue(String id) {
+    final f = field(id);
+    final v = values[id];
+    if (v is String && v.trim().isNotEmpty) {
+      final t = v.trim();
+      return switch (f?.kind) {
+        FieldKind.currency => t.startsWith(r'$') ? t : '\$$t',
+        FieldKind.percent => t.endsWith('%') ? t : '$t%',
+        _ => t,
+      };
+    }
+    if (f == null || f.kind == FieldKind.date || id.endsWith('_date')) {
+      final base = id.replaceAll(RegExp(r'_date$'), '');
+      final parts = [
+        for (final p in ['month', 'day', 'year'])
+          values['${base}_$p'] ?? values['${base}_date_$p'],
+      ];
+      if (parts.every((p) => p is String && p.trim().isNotEmpty)) {
+        return parts.map((p) => (p! as String).trim()).join('/');
+      }
+      if (f?.role == FieldRole.endDate || base.contains('end')) {
+        if (endDate case final d?) return DateFormat.yMMMMd().format(d);
+      }
+    }
+    return null;
+  }
+
   /// Field by id.
   TemplateField? field(String id) =>
       template.fields.where((f) => f.id == id).firstOrNull;
@@ -101,9 +151,10 @@ class TemplateDeal {
   static int buyerIndex(TemplateField f) {
     final id = f.id.toLowerCase();
     final label = f.label.toLowerCase();
-    if (RegExp(r'_2($|_)').hasMatch(id) ||
+    if (f.role == FieldRole.buyer2Name ||
+        RegExp(r'(buyer_?2|_2)($|_)').hasMatch(id) ||
         label.contains('second') ||
-        label.contains('buyer 2') ||
+        RegExp(r'buyer\s*#?\s*2').hasMatch(label) ||
         label.contains('co-buyer')) {
       return 2;
     }
