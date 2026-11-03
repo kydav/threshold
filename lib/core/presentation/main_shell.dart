@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:threshold/features/templates/presentation/new_agreement_sheet.dart';
 
-class MainShell extends StatelessWidget {
+class MainShell extends ConsumerWidget {
   const MainShell({required this.location, required this.child, super.key});
 
   final Widget child;
@@ -13,7 +15,7 @@ class MainShell extends StatelessWidget {
   bool get _profileActive => location.startsWith('/profile');
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -41,7 +43,8 @@ class MainShell extends StatelessWidget {
             profileActive: _profileActive,
             onHomeTap: () => context.go('/home'),
             onAgreementsTap: () => context.go('/agreements'),
-            onAddTap: () => context.push('/agreements/new'),
+            onAddTap: () => startNewAgreement(context, ref),
+            onAddLongPress: () => chooseNewAgreement(context, ref),
             onProfileTap: () => context.go('/profile'),
           ),
         ),
@@ -58,6 +61,7 @@ class _FloatingNav extends StatelessWidget {
     required this.onHomeTap,
     required this.onAgreementsTap,
     required this.onAddTap,
+    required this.onAddLongPress,
     required this.onProfileTap,
   });
 
@@ -67,6 +71,7 @@ class _FloatingNav extends StatelessWidget {
   final VoidCallback onHomeTap;
   final VoidCallback onAgreementsTap;
   final VoidCallback onAddTap;
+  final VoidCallback onAddLongPress;
   final VoidCallback onProfileTap;
 
   @override
@@ -116,6 +121,10 @@ class _FloatingNav extends StatelessWidget {
               onTap: () {
                 HapticFeedback.lightImpact();
                 onAddTap();
+              },
+              onLongPress: () {
+                HapticFeedback.mediumImpact();
+                onAddLongPress();
               },
               child: Container(
                 width: 52,
