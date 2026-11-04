@@ -135,6 +135,33 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
+  Future<void> _pickState() async {
+    FocusScope.of(context).unfocus();
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      showDragHandle: true,
+      useSafeArea: true,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.75,
+      ),
+      builder:
+          (ctx) => ListView(
+            children: [
+              for (final s in kAllUsStates)
+                ListTile(
+                  title: Text(s),
+                  trailing:
+                      s == _state ? const Icon(Icons.check_rounded) : null,
+                  onTap: () => Navigator.of(ctx).pop(s),
+                ),
+            ],
+          ),
+    );
+    if (picked != null && mounted) setState(() => _state = picked);
+  }
+
   Future<void> _confirmSignOut() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -363,20 +390,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  initialValue: _state,
-                  decoration: const InputDecoration(
-                    labelText: 'State',
-                    border: OutlineInputBorder(),
+                // A sheet on the root navigator, not a dropdown: a dropdown
+                // menu opens inside the tab and the bottom nav covers it.
+                InkWell(
+                  onTap: _pickState,
+                  borderRadius: BorderRadius.circular(4),
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: 'State',
+                      border: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.arrow_drop_down),
+                    ),
+                    isEmpty: _state == null,
+                    child: Text(_state ?? ''),
                   ),
-                  hint: const Text('Select your state'),
-                  items:
-                      kAllUsStates
-                          .map(
-                            (s) => DropdownMenuItem(value: s, child: Text(s)),
-                          )
-                          .toList(),
-                  onChanged: (v) => setState(() => _state = v),
                 ),
 
                 if (_state == 'Oklahoma') ...[

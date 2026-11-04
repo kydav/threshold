@@ -16,7 +16,18 @@ class TemplatesScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final templates = ref.watch(templatesProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('My forms')),
+      appBar: AppBar(
+        title: const Text('My forms'),
+        // Saving a new form lands here with go(), so there may be nothing
+        // to pop.
+        leading:
+            context.canPop()
+                ? null
+                : IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => context.go('/home'),
+                ),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/templates/new'),
         icon: const Icon(Icons.document_scanner_outlined),

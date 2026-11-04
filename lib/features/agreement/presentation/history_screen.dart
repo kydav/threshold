@@ -75,8 +75,15 @@ class HistoryScreen extends HookConsumerWidget {
               ),
             );
           }
+          // The shell's floating nav overlaps the body (extendBody); its
+          // height arrives as bottom padding, so stop the list above it.
           return Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+            padding: EdgeInsets.fromLTRB(
+              20,
+              8,
+              20,
+              MediaQuery.paddingOf(context).bottom + 12,
+            ),
             child: Card(
               child: RefreshIndicator(
                 onRefresh:
@@ -137,7 +144,7 @@ class _AgreementTile extends ConsumerWidget {
   Future<void> _handleTap(BuildContext context, WidgetRef ref) async {
     switch (agreement.status) {
       case AgreementStatus.draft:
-        context.go('/agreements/${agreement.id}/sign');
+        await context.push('/agreements/${agreement.id}/sign');
 
       case AgreementStatus.delivered:
         await _sharePdf(context, loading);
@@ -179,6 +186,8 @@ class _AgreementTile extends ConsumerWidget {
 
     await showModalBottomSheet(
       context: context,
+      // Above the shell's bottom nav, not inside the tab under it.
+      useRootNavigator: true,
       builder:
           (ctx) => SafeArea(
             child: Padding(

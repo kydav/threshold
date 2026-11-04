@@ -205,7 +205,18 @@ class _SignatureScreenState extends ConsumerState<SignatureScreen> {
     }
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Signatures')),
+      appBar: AppBar(
+        title: const Text('Signatures'),
+        // Reached with go() right after filling the form, so there may be
+        // nothing to pop; the draft is waiting under Agreements.
+        leading:
+            context.canPop()
+                ? null
+                : IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => context.go('/agreements'),
+                ),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
