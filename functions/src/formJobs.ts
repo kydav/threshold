@@ -10,13 +10,13 @@ import { anthropicApiKey, mapPages, PageInput, validPages } from './mapFields';
  * than a phone keeps a connection open once the agent leaves the app. So:
  *
  *  1. startFormMapping stores the pages and a queued job, then returns at
- *     once. A form someone already imported and confirmed comes straight
- *     back from the cache instead.
+ *     once. A form that 3 different agents already imported and
+ *     reviewed comes straight back from the cache instead.
  *  2. processFormJob (Firestore trigger) reads the form and saves the
  *     result on the job.
  *  3. The app polls getFormJob, now or the next time it's opened.
- *  4. confirmFormMap: the agent saved their review, so the form can be
- *     offered to others from the cache.
+ *  4. confirmFormMap: the agent saved their review, which counts toward
+ *     the form being offered to others from the cache.
  *
  * Jobs live in formJobs/{jobId}; the page images in its "chunks"
  * subcollection until the job finishes. Clients reach them only through

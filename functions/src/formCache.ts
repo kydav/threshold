@@ -23,6 +23,12 @@ const MIN_MATCHED = 5;
 const MAX_RMS = 0.012;
 /** Page-1 hashes kept on each cached form for lookups. */
 const KEY_COUNT = 120;
+/**
+ * Different agents who must have imported and reviewed the same form
+ * before it's offered to everyone else, so one agent's bad review
+ * doesn't spread.
+ */
+export const MIN_AGENTS = 3;
 
 export interface Anchor {
   h: string;
@@ -186,8 +192,9 @@ interface CachedForm {
 }
 
 /**
- * A confirmed form whose pages match [pages], with its fields moved onto
- * them; null when none matches. Fields come back with currently_filled
+ * A reviewed form whose pages match [pages], with its fields moved onto
+ * them; null when none matches or fewer than [MIN_AGENTS] different agents
+ * have reviewed a matching copy. Fields come back with currently_filled
  * false: the app checks each box for ink on this copy itself.
  */
 export async function findCached(
@@ -201,11 +208,12 @@ export async function findCached(
   const snap = await db
     .collection('formMaps')
     .where('keys', 'array-contains-any', keys)
-    .limit(20)
+    .limit(100)
     .get();
 
   let best: { id: string; form: CachedForm; fits: Fit[]; score: number } | null =
     null;
+  const agents = new Set<string>();
   for (const doc of snap.docs) {
     const form = doc.data() as CachedForm;
     if (!form.confirmed || form.pageCount !== pages.length) continue;
@@ -218,9 +226,10 @@ export async function findCached(
       score += r.coverage;
     }
     if (fits.length !== pages.length) continue;
+    agents.add(form.ownerUid);
     if (!best || score > best.score) best = { id: doc.id, form, fits, score };
   }
-  if (!best) return null;
+  if (!best || agents.size < MIN_AGENTS) return null;
 
   const { form, fits } = best;
   const map: FieldMap = {
@@ -239,9 +248,10 @@ export async function findCached(
 }
 
 /**
- * Keeps a freshly read form as a cache candidate (formMaps/[jobId]). It is
- * only offered to others once its agent reviews and saves it
- * ([confirmCached]), so their corrections carry over.
+ * Keeps a freshly read form as a cache candidate (formMaps/[jobId]). It
+ * counts toward the cache once its agent reviews and saves it
+ * ([confirmCached]), and is offered to others once [MIN_AGENTS] different
+ * agents have reviewed the same form.
  */
 export async function saveCandidate(
   db: Firestore,
@@ -284,8 +294,8 @@ const FIELD_KEYS = [
 ];
 
 /**
- * The agent saved their review: store their corrected fields and offer the
- * form to others. Only the agent who imported it can confirm it.
+ * The agent saved their review: store their corrected fields, counting
+ * toward the cache. Only the agent who imported it can confirm it.
  */
 export async function confirmCached(
   db: Firestore,
