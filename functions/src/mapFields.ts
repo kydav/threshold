@@ -6,7 +6,7 @@ export const anthropicApiKey = defineSecret('ANTHROPIC_API_KEY');
 
 // Mapping runs once per template (not per deal), so it uses the most capable
 // model: accuracy here is what every later signing depends on.
-const MODEL = 'claude-opus-5';
+const MODEL = 'claude-opus-5-5';
 
 export interface OcrWord {
   text: string;
