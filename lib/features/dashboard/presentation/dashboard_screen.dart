@@ -2,12 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:threshold/core/services/subscription_service.dart';
 
 import 'package:threshold/features/agreement/data/agreement_model.dart';
 import 'package:threshold/features/agreement/data/agreement_repository.dart';
+import 'package:threshold/features/agreement/presentation/agreement_actions.dart';
 import 'package:threshold/features/auth/data/user_profile.dart';
+import 'package:threshold/features/templates/data/form_imports.dart';
+import 'package:threshold/features/templates/data/form_template.dart';
+import 'package:threshold/features/templates/data/template_repository.dart';
+import 'package:threshold/features/templates/presentation/new_agreement_sheet.dart';
 
+/// Home: start an agreement, finish what's waiting, jump to a status or a
+/// form. Everything on it can be tapped.
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
@@ -15,404 +21,469 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(userProfileProvider);
     final agreements = ref.watch(agreementListProvider);
-    ref.watch(subscriptionProvider);
+    final templates = ref.watch(templatesProvider).valueOrNull ?? const [];
+    final imports = ref.watch(formImportsProvider);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: SafeArea(
         child: agreements.when(
-          loading:
-              () => const Center(
-                child: CircularProgressIndicator(color: Colors.white),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => Center(child: Text('Error: $e')),
+          data:
+              (list) => _DashboardContent(
+                profile: profile,
+                agreements: list,
+                templates: templates,
+                imports: imports,
               ),
-          error:
-              (e, _) => Center(
-                child: Text(
-                  'Error: $e',
-                  style: const TextStyle(color: Colors.white),
-                ),
-              ),
-          data: (list) => _DashboardContent(profile: profile, agreements: list),
         ),
       ),
     );
   }
 }
 
-class _DashboardContent extends StatelessWidget {
-  const _DashboardContent({required this.profile, required this.agreements});
+class _DashboardContent extends ConsumerWidget {
+  const _DashboardContent({
+    required this.profile,
+    required this.agreements,
+    required this.templates,
+    required this.imports,
+  });
 
   final UserProfile? profile;
   final List<AgreementModel> agreements;
+  final List<FormTemplate> templates;
+  final List<PendingImport> imports;
 
-  int get _totalCount => agreements.length;
-  int get _signedCount =>
-      agreements
-          .where(
-            (a) =>
-                a.status == AgreementStatus.signed ||
-                a.status == AgreementStatus.pendingDelivery ||
-                a.status == AgreementStatus.delivered,
-          )
-          .length;
-  int get _awaitingCount =>
-      agreements.where((a) => a.status == AgreementStatus.draft).length;
-  int get _deliveredCount =>
-      agreements.where((a) => a.status == AgreementStatus.delivered).length;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final firstName = profile?.firstName ?? '';
 
-  List<AgreementModel> get _recentAgreements => agreements.take(3).toList();
+    final drafts = [
+      for (final a in agreements)
+        if (a.status == AgreementStatus.draft) a,
+    ];
+    final unsent = [
+      for (final a in agreements)
+        if (a.status == AgreementStatus.pendingDelivery) a,
+    ];
+    final hasNeeds =
+        drafts.isNotEmpty || unsent.isNotEmpty || imports.isNotEmpty;
+    final recent = agreements.take(3).toList();
+
+    return ListView(
+      padding: EdgeInsets.fromLTRB(
+        20,
+        16,
+        20,
+        MediaQuery.paddingOf(context).bottom + 24,
+      ),
+      children: [
+        Text(
+          firstName.isEmpty ? 'Hi there' : 'Hi $firstName',
+          style: theme.textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // 1. The main thing an agent does here.
+        FilledButton.icon(
+          onPressed: () => startNewAgreement(context, ref),
+          onLongPress: () => chooseNewAgreement(context, ref),
+          icon: const Icon(Icons.add),
+          label: const Text('Start agreement'),
+          style: FilledButton.styleFrom(
+            minimumSize: const Size.fromHeight(56),
+            textStyle: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+        ),
+
+        // 2. What's waiting on the agent.
+        if (hasNeeds) ...[
+          const _SectionTitle('Needs you'),
+          Card(
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              children: _divided([
+                for (final i in imports) _ImportRow(item: i),
+                for (final a in drafts.take(3))
+                  _NeedRow(
+                    icon: Icons.draw_outlined,
+                    color: Colors.orange,
+                    title: a.buyerName,
+                    subtitle: 'Finish signing · ${_date(a.createdAt)}',
+                    onTap: () => openAgreement(context, ref, a),
+                  ),
+                if (drafts.length > 3)
+                  _NeedRow(
+                    icon: Icons.more_horiz,
+                    color: theme.colorScheme.primary,
+                    title: '${drafts.length - 3} more drafts',
+                    subtitle: 'See all waiting on signatures',
+                    onTap: () => context.go('/agreements?status=drafts'),
+                  ),
+                for (final a in unsent)
+                  _NeedRow(
+                    icon: Icons.upload_outlined,
+                    color: Colors.purple,
+                    title: a.buyerName,
+                    subtitle: 'Signed, not sent yet · tap to send',
+                    onTap: () => openAgreement(context, ref, a),
+                  ),
+              ]),
+            ),
+          ),
+        ],
+
+        // 3. Counts that open the list filtered.
+        if (agreements.isNotEmpty) ...[
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              for (final f in AgreementFilter.values) ...[
+                if (f != AgreementFilter.values.first) const SizedBox(width: 8),
+                Expanded(
+                  child: _CountChip(
+                    filter: f,
+                    count: agreements.where(f.matches).length,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+
+        // 5. The agent's own forms, one tap from a new deal.
+        _SectionTitle(
+          'My forms',
+          action: templates.isEmpty ? null : 'All forms',
+          onAction: () => context.push('/templates'),
+        ),
+        SizedBox(
+          height: 112,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            clipBehavior: Clip.none,
+            children: [
+              for (final t in templates)
+                _FormCard(
+                  icon: Icons.description_outlined,
+                  title: t.title,
+                  subtitle: 'Start',
+                  onTap: () => context.push('/templates/${t.id}/deal'),
+                ),
+              _FormCard(
+                icon: Icons.document_scanner_outlined,
+                title: templates.isEmpty ? 'Add your form' : 'Add a form',
+                subtitle: 'Scan it once',
+                onTap: () => context.push('/templates/new'),
+              ),
+            ],
+          ),
+        ),
+
+        // 4. Recent agreements, each one tappable.
+        if (recent.isNotEmpty) ...[
+          _SectionTitle(
+            'Recent',
+            action: 'View all',
+            onAction: () => context.go('/agreements'),
+          ),
+          Card(
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              children: _divided([
+                for (final a in recent) _RecentAgreementTile(agreement: a),
+              ]),
+            ),
+          ),
+        ] else if (!hasNeeds) ...[
+          const SizedBox(height: 24),
+          Text(
+            'Your signed agreements will show up here.',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  static List<Widget> _divided(List<Widget> rows) => [
+    for (var i = 0; i < rows.length; i++) ...[
+      if (i > 0) const Divider(height: 1, indent: 64),
+      rows[i],
+    ],
+  ];
+}
+
+String _date(DateTime d) => DateFormat('MMM d').format(d.toLocal());
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle(this.title, {this.action, this.onAction});
+
+  final String title;
+  final String? action;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 24, 0, 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              title,
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
+          ),
+          if (action != null)
+            TextButton(
+              onPressed: onAction,
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                minimumSize: const Size(0, 32),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(action!),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NeedRow extends StatelessWidget {
+  const _NeedRow({
+    required this.icon,
+    required this.color,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    this.leading,
+  });
+
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  final Widget? leading;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      onTap: onTap,
+      leading:
+          leading ??
+          CircleAvatar(
+            backgroundColor: color.withValues(alpha: 0.15),
+            child: Icon(icon, color: color, size: 20),
+          ),
+      title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+      subtitle: Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis),
+      trailing: const Icon(Icons.chevron_right),
+    );
+  }
+}
+
+class _ImportRow extends StatelessWidget {
+  const _ImportRow({required this.item});
+  final PendingImport item;
+
+  @override
+  Widget build(BuildContext context) {
+    final failed = item.status == ImportStatus.failed;
+    final cs = Theme.of(context).colorScheme;
+    final pages = '${item.pageCount} page${item.pageCount == 1 ? '' : 's'}';
+    return _NeedRow(
+      icon: Icons.error_outline,
+      color: cs.error,
+      leading:
+          failed
+              ? null
+              : const SizedBox(
+                width: 40,
+                height: 40,
+                child: Padding(
+                  padding: EdgeInsets.all(10),
+                  child: CircularProgressIndicator(strokeWidth: 2.5),
+                ),
+              ),
+      title: failed ? 'Form import needs attention' : 'Reading your form…',
+      subtitle:
+          failed
+              ? (item.error ?? 'Tap to try again')
+              : '$pages · we’ll let you know when it’s ready',
+      onTap: () => context.push('/templates'),
+    );
+  }
+}
+
+class _CountChip extends StatelessWidget {
+  const _CountChip({required this.filter, required this.count});
+
+  final AgreementFilter filter;
+  final int count;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final firstName =
-        (profile?.firstName.isNotEmpty ?? false) ? profile!.firstName : 'there';
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 110),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 8),
-
-          // Header
-          Row(
+    final color = switch (filter) {
+      AgreementFilter.drafts => Colors.orange,
+      AgreementFilter.signed => Colors.blue,
+      AgreementFilter.delivered => Colors.green,
+    };
+    return Material(
+      color: color.withValues(alpha: 0.08),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: color.withValues(alpha: 0.25)),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => context.go('/agreements?status=${filter.name}'),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Dashboard',
-                      style: Theme.of(
-                        context,
-                      ).textTheme.headlineSmall?.copyWith(
-                        //color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Welcome, $firstName',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        //color: Colors.white.withValues(alpha: 0.9),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Manage your agreements with confidence.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        //color: Colors.white.withValues(alpha: 0.7),
-                      ),
-                    ),
-                  ],
+              Text(
+                '$count',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                  height: 1,
                 ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                filter.label,
+                style: Theme.of(
+                  context,
+                ).textTheme.labelMedium?.copyWith(color: cs.onSurfaceVariant),
               ),
             ],
           ),
-
-          const SizedBox(height: 24),
-
-          // Bring-your-own-form entry point.
-          Card(
-            clipBehavior: Clip.antiAlias,
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 8,
-              ),
-              leading: Icon(Icons.document_scanner_outlined, color: cs.primary),
-              title: const Text('My forms'),
-              subtitle: const Text(
-                'Scan your own buyer agreement and have buyers sign it here.',
-              ),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => context.push('/templates'),
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // Overview card
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Overview',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: cs.primaryContainer,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          'All time',
-                          style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(color: cs.onPrimaryContainer),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _StatBox(
-                          count: _totalCount,
-                          label: 'Agreements\nCreated',
-                          icon: Icons.article_outlined,
-                          color: cs.primary,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _StatBox(
-                          count: _signedCount,
-                          label: 'Agreements\nSigned',
-                          icon: Icons.draw_outlined,
-                          color: Colors.green,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _StatBox(
-                          count: _awaitingCount,
-                          label: 'Awaiting\nSigning',
-                          icon: Icons.pending_outlined,
-                          color: Colors.orange,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _StatBox(
-                          count: _deliveredCount,
-                          label: 'Agreements\nDelivered',
-                          icon: Icons.mark_email_read_outlined,
-                          color: cs.tertiary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // Recent agreements
-          if (agreements.isNotEmpty) ...[
-            Card(
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 20, 16, 12),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Recent Agreements',
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        TextButton(
-                          onPressed: () => context.go('/agreements'),
-                          style: TextButton.styleFrom(
-                            padding: EdgeInsets.zero,
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          child: const Text('View all'),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Divider(height: 1),
-                  ..._recentAgreements.asMap().entries.map((entry) {
-                    final idx = entry.key;
-                    final agreement = entry.value;
-                    return Column(
-                      children: [
-                        _RecentAgreementTile(agreement: agreement),
-                        if (idx < _recentAgreements.length - 1)
-                          const Divider(height: 1, indent: 20, endIndent: 20),
-                      ],
-                    );
-                  }),
-                  const SizedBox(height: 8),
-                ],
-              ),
-            ),
-          ] else ...[
-            GestureDetector(
-              onTap: () => context.go('/agreements'),
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.description_outlined,
-                        size: 48,
-                        color: cs.outlineVariant,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'No agreements yet',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Tap + to start one at a showing',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: cs.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }
 }
 
-class _StatBox extends StatelessWidget {
-  const _StatBox({
-    required this.count,
-    required this.label,
+class _FormCard extends StatelessWidget {
+  const _FormCard({
     required this.icon,
-    required this.color,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
   });
 
-  final int count;
-  final String label;
   final IconData icon;
-  final Color color;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '$count',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: color,
-                    height: 1,
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(right: 10),
+      child: SizedBox(
+        width: 150,
+        child: Card(
+          margin: EdgeInsets.zero,
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(icon, color: cs.primary),
+                  const Spacer(),
+                  Text(
+                    title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      height: 1.2,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  label,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    height: 1.3,
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.labelSmall?.copyWith(color: cs.primary),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 }
 
-class _RecentAgreementTile extends StatelessWidget {
+class _RecentAgreementTile extends ConsumerWidget {
   const _RecentAgreementTile({required this.agreement});
   final AgreementModel agreement;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
-    final dateStr = DateFormat(
-      'MMM d, yyyy',
-    ).format(agreement.createdAt.toLocal());
     final (label, color) = switch (agreement.status) {
       AgreementStatus.draft => ('Draft', Colors.orange),
-      AgreementStatus.signed => ('Signed', Colors.green),
-      AgreementStatus.pendingDelivery => ('Sending', cs.tertiary),
-      AgreementStatus.delivered => ('Delivered', cs.primary),
+      AgreementStatus.signed => ('Signed', Colors.blue),
+      AgreementStatus.pendingDelivery => ('Sending', Colors.purple),
+      AgreementStatus.delivered => ('Delivered', Colors.green),
     };
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  agreement.buyerName,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '${agreement.propertyScope} · $dateStr',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
+    return ListTile(
+      onTap: () => openAgreement(context, ref, agreement),
+      title: Text(
+        agreement.buyerName,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(fontWeight: FontWeight.w600),
+      ),
+      subtitle: Text(
+        '${agreement.propertyScope} · ${_date(agreement.createdAt)}',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(color: cs.onSurfaceVariant),
+      ),
+      trailing: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: color,
           ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

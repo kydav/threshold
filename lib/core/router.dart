@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:threshold/core/presentation/main_shell.dart';
+import 'package:threshold/features/agreement/presentation/agreement_actions.dart';
 import 'package:threshold/features/agreement/presentation/colorado_form_screen.dart';
 import 'package:threshold/features/agreement/presentation/form_screen.dart';
 import 'package:threshold/features/agreement/presentation/history_screen.dart';
@@ -137,7 +138,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/agreements',
             pageBuilder:
-                (_, _) => const NoTransitionPage(child: HistoryScreen()),
+                (_, state) => NoTransitionPage(
+                  child: HistoryScreen(
+                    initialFilter: AgreementFilter.parse(
+                      state.uri.queryParameters['status'],
+                    ),
+                  ),
+                ),
           ),
           GoRoute(
             path: '/profile',
