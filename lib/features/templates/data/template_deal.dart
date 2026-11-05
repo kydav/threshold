@@ -161,6 +161,31 @@ class TemplateDeal {
     return 1;
   }
 
+  /// A first-buyer initials box that every buyer initials: the form has no
+  /// separate second-buyer initials on that page, so a second buyer's go
+  /// beside the first's.
+  bool isSharedInitials(TemplateField f) =>
+      f.kind == FieldKind.initials &&
+      f.filledBy == FieldFiller.buyer &&
+      buyerIndex(f) == 1 &&
+      !template.fields.any(
+        (o) =>
+            o.page == f.page &&
+            o.kind == FieldKind.initials &&
+            buyerIndex(o) == 2,
+      );
+
+  /// The boxes [buyer] signs or initials: their own lines, and for a second
+  /// buyer also the shared initials.
+  List<TemplateField> inkFields(int buyer) =>
+      active(FieldFiller.buyer)
+          .where(
+            (f) =>
+                buyerIndex(f) == buyer ||
+                (buyer == 2 && hasBuyer2 && isSharedInitials(f)),
+          )
+          .toList();
+
   /// Fields this deal actually uses (second-buyer lines drop out when there
   /// is only one buyer), in reading order.
   List<TemplateField> active(FieldFiller filler) {

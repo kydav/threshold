@@ -16,6 +16,7 @@ import 'package:threshold/features/agreement/data/agreement_repository.dart';
 import 'package:threshold/features/auth/data/user_profile.dart';
 import 'package:threshold/features/paywall/data/agreement_quota.dart';
 import 'package:threshold/features/templates/data/form_template.dart';
+import 'package:threshold/features/templates/data/ink.dart';
 import 'package:threshold/features/templates/data/template_deal.dart';
 import 'package:threshold/features/templates/data/template_pdf_service.dart';
 import 'package:threshold/features/templates/data/template_repository.dart';
@@ -52,6 +53,9 @@ class _TemplateSignScreenState extends ConsumerState<TemplateSignScreen> {
   final _initials1 = GlobalKey<SfSignaturePadState>();
   final _signature1 = GlobalKey<SfSignaturePadState>();
   final _initials2 = GlobalKey<SfSignaturePadState>();
+
+  /// The first buyer's initials, kept to pair with the second's.
+  Uint8List? _buyer1Initials;
   final _signature2 = GlobalKey<SfSignaturePadState>();
   final _agentSig = GlobalKey<SfSignaturePadState>();
 
@@ -102,13 +106,11 @@ class _TemplateSignScreenState extends ConsumerState<TemplateSignScreen> {
     final fields =
         role == 'Agent'
             ? deal.active(FieldFiller.agentSign)
-            : deal
-                .active(FieldFiller.buyer)
-                .where((f) => TemplateDeal.buyerIndex(f) == buyer)
-                .toList();
+            : deal.inkFields(buyer);
     final needsInitials = fields.any((f) => f.kind == FieldKind.initials);
     final sig = await _png(signature);
-    final ini = needsInitials ? await _png(initials) : null;
+    final rawInitials = needsInitials ? await _png(initials) : null;
+    final ini = rawInitials == null ? null : InkImage.trim(rawInitials);
     if (sig == null || (needsInitials && ini == null)) {
       setState(
         () =>
@@ -119,10 +121,18 @@ class _TemplateSignScreenState extends ConsumerState<TemplateSignScreen> {
       );
       return false;
     }
+    if (buyer == 1) _buyer1Initials = ini;
     for (final f in fields) {
       if (f.kind == FieldKind.signature) deal.values[f.id] = sig;
-      // The footer initials boxes are shared; the first buyer's go there.
-      if (f.kind == FieldKind.initials && ini != null) deal.values[f.id] = ini;
+      if (f.kind != FieldKind.initials || ini == null) continue;
+      // A shared box gets both buyers' initials side by side. Built from the
+      // first buyer's own initials, so signing this step again doesn't
+      // stack a third set.
+      final first = _buyer1Initials;
+      deal.values[f.id] =
+          buyer == 2 && deal.isSharedInitials(f) && first != null
+              ? InkImage.sideBySide(first, ini)
+              : ini;
     }
     deal.events.add(
       SignatureEvent(
@@ -464,14 +474,7 @@ class _TemplateSignScreenState extends ConsumerState<TemplateSignScreen> {
     int buyer,
   ) {
     final initialCount =
-        deal
-            .active(FieldFiller.buyer)
-            .where(
-              (f) =>
-                  f.kind == FieldKind.initials &&
-                  TemplateDeal.buyerIndex(f) == buyer,
-            )
-            .length;
+        deal.inkFields(buyer).where((f) => f.kind == FieldKind.initials).length;
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
