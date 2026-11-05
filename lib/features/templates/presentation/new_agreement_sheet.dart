@@ -75,6 +75,7 @@ Future<void> chooseNewAgreement(BuildContext context, WidgetRef ref) async {
     context: context,
     useSafeArea: true,
     isScrollControlled: true,
+    useRootNavigator: true,
     showDragHandle: true,
     builder: (_) => _Sheet(templates: templates, current: current),
   );
