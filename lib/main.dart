@@ -5,12 +5,12 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:threshold/core/router.dart';
 import 'package:threshold/core/services/connectivity_watcher.dart';
 import 'package:threshold/core/services/remote_config_service.dart';
 import 'package:threshold/core/services/subscription_service.dart';
 import 'package:threshold/features/auth/data/user_profile.dart';
+import 'package:threshold/features/templates/data/form_imports.dart';
 import 'package:threshold/firebase_options.dart';
 
 void main() {
@@ -55,6 +55,9 @@ void main() {
   );
 }
 
+/// App-wide messages, e.g. a form that finished setting up in the background.
+final _messengerKey = GlobalKey<ScaffoldMessengerState>();
+
 class ThresholdApp extends ConsumerWidget {
   const ThresholdApp({super.key});
 
@@ -62,11 +65,28 @@ class ThresholdApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(connectivityWatcherProvider);
     ref.watch(profileLoaderProvider);
+    // Keeps background form imports polling app-wide.
+    ref.watch(formImportsProvider);
     final router = ref.watch(routerProvider);
+    ref.listen(formReadyProvider, (_, template) {
+      if (template == null) return;
+      ref.read(formReadyProvider.notifier).state = null;
+      _messengerKey.currentState?.showSnackBar(
+        SnackBar(
+          content: Text('Your form "${template.title}" is ready to review.'),
+          duration: const Duration(seconds: 10),
+          action: SnackBarAction(
+            label: 'Review',
+            onPressed: () => router.push('/templates/${template.id}/review'),
+          ),
+        ),
+      );
+    });
 
     return MaterialApp.router(
       title: 'Threshold',
       debugShowCheckedModeBanner: false,
+      scaffoldMessengerKey: _messengerKey,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1E56B2)),
         useMaterial3: true,

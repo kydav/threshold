@@ -2,19 +2,19 @@ import Anthropic from '@anthropic-ai/sdk';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
 
-const anthropicApiKey = defineSecret('ANTHROPIC_API_KEY');
+export const anthropicApiKey = defineSecret('ANTHROPIC_API_KEY');
 
 // Mapping runs once per template (not per deal), so it uses the most capable
 // model: accuracy here is what every later signing depends on.
 const MODEL = 'claude-opus-5';
 
-interface OcrWord {
+export interface OcrWord {
   text: string;
   /** [x0, y0, x1, y1] in page-image pixels. */
   box: number[];
 }
 
-interface PageInput {
+export interface PageInput {
   /** JPEG of the flattened page, base64. Long edge <= 1568 px. */
   jpegBase64: string;
   width: number;
@@ -203,6 +203,93 @@ month / year blanks is separate fields with the same group_title. Leave out \
 printed text that never changes, and footers printed by forms software \
 (brokerage address, transaction name) that aren't blanks.`;
 
+/** The JSON field map Claude returns (shape: SCHEMA). */
+export type FieldMap = {
+  form_title: string;
+  form_id: string;
+  summary: { text: string; if_checked: string }[];
+  fields: Record<string, unknown>[];
+};
+
+/**
+ * Reads the pages with Claude and returns the field map. Throws HttpsError
+ * on a refusal, an over-long form or an empty answer.
+ */
+export async function mapPages(
+  pages: PageInput[],
+  apiKey: string
+): Promise<FieldMap> {
+  const content: Anthropic.Beta.BetaContentBlockParam[] = [];
+  pages.forEach((p, i) => {
+    const ocr = p.ocr
+      .map((w) => `${JSON.stringify(w.text)} ${JSON.stringify(w.box)}`)
+      .join('\n');
+    content.push({
+      type: 'text',
+      text: `Page ${i + 1}: ${p.width}x${p.height} pixels. OCR lines:\n${ocr}`,
+    });
+    content.push({
+      type: 'image',
+      source: {
+        type: 'base64',
+        media_type: 'image/jpeg',
+        data: p.jpegBase64,
+      },
+    });
+  });
+  content.push({ type: 'text', text: PROMPT });
+
+  const client = new Anthropic({ apiKey });
+  const stream = client.beta.messages.stream({
+    model: MODEL,
+    max_tokens: 64000,
+    thinking: { type: 'adaptive' },
+    output_config: {
+      effort: 'high',
+      format: { type: 'json_schema', schema: SCHEMA },
+    },
+    betas: ['server-side-fallback-2026-07-01'],
+    fallbacks: 'default',
+    messages: [{ role: 'user', content }],
+  });
+  const response = await stream.finalMessage();
+
+  if (response.stop_reason === 'refusal') {
+    throw new HttpsError('failed-precondition', 'The form could not be read.');
+  }
+  if (response.stop_reason === 'max_tokens') {
+    throw new HttpsError('resource-exhausted', 'The form was too long to map.');
+  }
+  const text = response.content.find((b) => b.type === 'text');
+  if (!text || text.type !== 'text') {
+    throw new HttpsError('internal', 'No field map came back.');
+  }
+  return JSON.parse(text.text) as FieldMap;
+}
+
+/** Pages a client sent, checked: 1-12 pages, each with an image and size. */
+export function validPages(data: unknown): PageInput[] {
+  const pages = ((data as { pages?: unknown })?.pages ?? []) as PageInput[];
+  if (!Array.isArray(pages) || !pages.length || pages.length > 12) {
+    throw new HttpsError('invalid-argument', 'Send 1-12 pages.');
+  }
+  for (const p of pages) {
+    if (
+      typeof p?.jpegBase64 !== 'string' ||
+      !(p.width > 0) ||
+      !(p.height > 0) ||
+      !Array.isArray(p.ocr)
+    ) {
+      throw new HttpsError('invalid-argument', 'A page is incomplete.');
+    }
+  }
+  return pages;
+}
+
+/**
+ * The original one-shot mapping, kept for app versions before background
+ * imports (1.2.x). The phone waits on the open connection for the answer.
+ */
 export const mapFormFields = onCall(
   {
     secrets: [anthropicApiKey],
@@ -214,56 +301,6 @@ export const mapFormFields = onCall(
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'Sign in to map a form.');
     }
-    const pages = (request.data?.pages ?? []) as PageInput[];
-    if (!pages.length || pages.length > 12) {
-      throw new HttpsError('invalid-argument', 'Send 1-12 pages.');
-    }
-
-    const content: Anthropic.Beta.BetaContentBlockParam[] = [];
-    pages.forEach((p, i) => {
-      const ocr = p.ocr
-        .map((w) => `${JSON.stringify(w.text)} ${JSON.stringify(w.box)}`)
-        .join('\n');
-      content.push({
-        type: 'text',
-        text: `Page ${i + 1}: ${p.width}x${p.height} pixels. OCR lines:\n${ocr}`,
-      });
-      content.push({
-        type: 'image',
-        source: {
-          type: 'base64',
-          media_type: 'image/jpeg',
-          data: p.jpegBase64,
-        },
-      });
-    });
-    content.push({ type: 'text', text: PROMPT });
-
-    const client = new Anthropic({ apiKey: anthropicApiKey.value() });
-    const stream = client.beta.messages.stream({
-      model: MODEL,
-      max_tokens: 64000,
-      thinking: { type: 'adaptive' },
-      output_config: {
-        effort: 'high',
-        format: { type: 'json_schema', schema: SCHEMA },
-      },
-      betas: ['server-side-fallback-2026-07-01'],
-      fallbacks: 'default',
-      messages: [{ role: 'user', content }],
-    });
-    const response = await stream.finalMessage();
-
-    if (response.stop_reason === 'refusal') {
-      throw new HttpsError('failed-precondition', 'The form could not be read.');
-    }
-    if (response.stop_reason === 'max_tokens') {
-      throw new HttpsError('resource-exhausted', 'The form was too long to map.');
-    }
-    const text = response.content.find((b) => b.type === 'text');
-    if (!text || text.type !== 'text') {
-      throw new HttpsError('internal', 'No field map came back.');
-    }
-    return JSON.parse(text.text);
+    return mapPages(validPages(request.data), anthropicApiKey.value());
   }
 );

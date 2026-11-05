@@ -85,3 +85,4 @@ export const sendAgreementEmail = onCall(
   }
 );
 export { mapFormFields } from './mapFields';
+export { startFormMapping, processFormJob, getFormJob, confirmFormMap } from './formJobs';

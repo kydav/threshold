@@ -59,9 +59,8 @@ void main() {
 
   group('InkImage', () {
     test('trim crops to the strokes plus a margin', () {
-      final out = img.decodePng(
-        InkImage.trim(_strokes(600, 110, 200, 40, 80, 30)),
-      )!;
+      final out =
+          img.decodePng(InkImage.trim(_strokes(600, 110, 200, 40, 80, 30)))!;
       expect(out.width, lessThan(120));
       expect(out.height, lessThan(50));
       expect(out.width, greaterThanOrEqualTo(80));

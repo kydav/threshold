@@ -4,13 +4,19 @@ import 'package:threshold/core/config/revenue_cat_config.dart';
 void main() {
   group('RevenueCat config constants', () {
     test('iOS key starts with "appl_"', () {
-      expect(kRevenueCatIosKey.startsWith('appl_'), isTrue,
-          reason: 'iOS RevenueCat keys use the "appl_" prefix');
+      expect(
+        kRevenueCatIosKey.startsWith('appl_'),
+        isTrue,
+        reason: 'iOS RevenueCat keys use the "appl_" prefix',
+      );
     });
 
     test('Android key starts with "goog_"', () {
-      expect(kRevenueCatAndroidKey.startsWith('goog_'), isTrue,
-          reason: 'Android RevenueCat keys use the "goog_" prefix');
+      expect(
+        kRevenueCatAndroidKey.startsWith('goog_'),
+        isTrue,
+        reason: 'Android RevenueCat keys use the "goog_" prefix',
+      );
     });
 
     test('entitlement ID is non-empty', () {

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:ui';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as img;
@@ -29,15 +30,22 @@ class TemplateRepository {
   /// Builds a template from captured pages and the model's field map. Pages
   /// are cleaned first: anything the source copy already had written in is
   /// erased, so a filled-in copy works as a blank form.
+  ///
+  /// [checkInk]: the map came from another copy of the form (the cache), so
+  /// it can't know what this copy has filled in; each box is checked for
+  /// ink instead.
   Future<FormTemplate> create({
     required List<CapturedPage> pages,
     required FieldMap map,
+    String? mapJobId,
+    bool checkInk = false,
   }) async {
     final id = const Uuid().v4();
     final dir = await folder(id);
     dir.createSync(recursive: true);
 
-    final fields = [for (final f in map.fields) TemplateField.fromMap(f)];
+    var fields = [for (final f in map.fields) TemplateField.fromMap(f)];
+    if (checkInk) fields = markFilledByInk(pages, fields);
     final stored = <TemplatePage>[];
     for (var i = 0; i < pages.length; i++) {
       final page = pages[i];
@@ -60,6 +68,7 @@ class TemplateRepository {
       fields: fields,
       createdAt: DateTime.now(),
       summary: map.summary,
+      mapJobId: mapJobId,
     );
     await save(template);
     return template;
@@ -97,6 +106,62 @@ class TemplateRepository {
     final dir = await folder(templateId);
     if (dir.existsSync()) await dir.delete(recursive: true);
   }
+}
+
+/// [fields] with currentlyFilled set from this copy's own pages: a box with
+/// dark marks above its underline (or inside a checkbox's outline) was
+/// filled in.
+List<TemplateField> markFilledByInk(
+  List<CapturedPage> pages,
+  List<TemplateField> fields,
+) {
+  final decoded = [for (final p in pages) img.decodeJpg(p.jpeg)];
+  return [
+    for (final f in fields)
+      TemplateField.fromMap({
+        ...f.toMap(),
+        'currently_filled': switch (decoded.elementAtOrNull(f.page - 1)) {
+          final page? => hasInk(page, f),
+          null => false,
+        },
+      }),
+  ];
+}
+
+/// Whether [f]'s box on [page] has something written or checked in it.
+bool hasInk(img.Image page, TemplateField f) {
+  final box = f.box;
+  if (box.width < 4 || box.height < 4) return false;
+  final Rect area;
+  final double threshold;
+  if (f.kind == FieldKind.checkbox) {
+    // Inside the outline: a check or an X.
+    area = box.deflate(box.shortestSide * 0.25);
+    threshold = 0.10;
+  } else {
+    // Above the printed underline.
+    area = Rect.fromLTRB(
+      box.left + 2,
+      box.top,
+      box.right - 2,
+      box.bottom - (box.height * 0.25).clamp(4, 12),
+    );
+    threshold = 0.015;
+  }
+  final x0 = area.left.round().clamp(0, page.width - 1);
+  final x1 = area.right.round().clamp(0, page.width);
+  final y0 = area.top.round().clamp(0, page.height - 1);
+  final y1 = area.bottom.round().clamp(0, page.height);
+  var dark = 0;
+  var total = 0;
+  for (var y = y0; y < y1; y++) {
+    for (var x = x0; x < x1; x++) {
+      final p = page.getPixel(x, y);
+      total++;
+      if (0.299 * p.r + 0.587 * p.g + 0.114 * p.b < 140) dark++;
+    }
+  }
+  return total > 0 && dark / total > threshold;
 }
 
 /// Erases what a filled-in copy already had written on it:

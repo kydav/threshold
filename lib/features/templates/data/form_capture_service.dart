@@ -121,37 +121,95 @@ class FormCaptureService {
     }
   }
 
-  /// Sends the pages to the mapFormFields function (Claude, server-side).
-  Future<FieldMap> mapFields(List<CapturedPage> pages) async {
-    final callable = FirebaseFunctions.instance.httpsCallable(
-      'mapFormFields',
-      options: HttpsCallableOptions(timeout: const Duration(minutes: 5)),
-    );
-    final result = await callable.call<dynamic>({
-      'pages': [
-        for (final p in pages)
-          {
-            'jpegBase64': base64Encode(p.jpeg),
-            'width': p.width,
-            'height': p.height,
-            'ocr': [
-              for (final l in p.ocr) {'text': l.text, 'box': l.box},
-            ],
-          },
-      ],
-    });
-    final data = Map<String, dynamic>.from(result.data as Map);
-    return (
-      title: data['form_title'] as String? ?? 'My form',
-      formId: data['form_id'] as String? ?? '',
-      fields: [
-        for (final f in data['fields'] as List)
-          Map<String, dynamic>.from(f as Map),
-      ],
-      summary: [
-        for (final l in data['summary'] as List? ?? const [])
-          SummaryLine.fromMap(Map<String, dynamic>.from(l as Map)),
-      ],
-    );
+  /// Hands the pages to the server to read in the background. Returns at
+  /// once with a job to poll, or straight away with the map when the same
+  /// form was already set up by someone (from the cache).
+  Future<FormJob> startJob(List<CapturedPage> pages) async {
+    final result = await FirebaseFunctions.instance
+        .httpsCallable(
+          'startFormMapping',
+          options: HttpsCallableOptions(timeout: const Duration(minutes: 2)),
+        )
+        .call<dynamic>({
+          'pages': [for (final p in pages) _pageJson(p)],
+        });
+    return FormJob.fromMap(Map<String, dynamic>.from(result.data as Map));
   }
+
+  /// Where a background job stands.
+  Future<FormJob> pollJob(String jobId) async {
+    final result = await FirebaseFunctions.instance
+        .httpsCallable('getFormJob')
+        .call<dynamic>({'jobId': jobId});
+    final data = Map<String, dynamic>.from(result.data as Map);
+    return FormJob.fromMap({...data, 'jobId': jobId});
+  }
+
+  /// Tells the server the agent reviewed and saved this form, so others
+  /// importing the same form can reuse it. Best effort.
+  Future<void> confirmJob(String jobId, List<TemplateField> fields) async {
+    await FirebaseFunctions.instance
+        .httpsCallable('confirmFormMap')
+        .call<dynamic>({
+          'jobId': jobId,
+          'fields': [for (final f in fields) f.toMap()],
+        });
+  }
+
+  Map<String, dynamic> _pageJson(CapturedPage p) => {
+    'jpegBase64': base64Encode(p.jpeg),
+    'width': p.width,
+    'height': p.height,
+    'ocr': [
+      for (final l in p.ocr) {'text': l.text, 'box': l.box},
+    ],
+  };
 }
+
+/// A background form import on the server.
+class FormJob {
+  FormJob({
+    required this.jobId,
+    required this.status,
+    this.cached = false,
+    this.map,
+    this.error,
+  });
+
+  factory FormJob.fromMap(Map<String, dynamic> m) => FormJob(
+    jobId: m['jobId'] as String,
+    status: m['status'] as String? ?? 'queued',
+    cached: m['cached'] == true,
+    map:
+        m['result'] == null
+            ? null
+            : parseFieldMap(Map<String, dynamic>.from(m['result'] as Map)),
+    error: m['error'] as String?,
+  );
+
+  final String jobId;
+
+  /// queued, running, done or error.
+  final String status;
+
+  /// The map came from a form someone else already set up.
+  final bool cached;
+  final FieldMap? map;
+  final String? error;
+
+  bool get isDone => status == 'done' && map != null;
+  bool get isError => status == 'error';
+}
+
+/// The server's JSON field map as a [FieldMap].
+FieldMap parseFieldMap(Map<String, dynamic> data) => (
+  title: data['form_title'] as String? ?? 'My form',
+  formId: data['form_id'] as String? ?? '',
+  fields: [
+    for (final f in data['fields'] as List) Map<String, dynamic>.from(f as Map),
+  ],
+  summary: [
+    for (final l in data['summary'] as List? ?? const [])
+      SummaryLine.fromMap(Map<String, dynamic>.from(l as Map)),
+  ],
+);

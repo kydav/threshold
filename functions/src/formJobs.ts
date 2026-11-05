@@ -1,0 +1,196 @@
+import * as admin from 'firebase-admin';
+import { HttpsError, onCall } from 'firebase-functions/v2/https';
+import { onDocumentCreated } from 'firebase-functions/v2/firestore';
+import { logger } from 'firebase-functions/v2';
+import { confirmCached, findCached, saveCandidate } from './formCache';
+import { anthropicApiKey, mapPages, PageInput, validPages } from './mapFields';
+
+/**
+ * Background form imports. Reading a form takes a minute or more, longer
+ * than a phone keeps a connection open once the agent leaves the app. So:
+ *
+ *  1. startFormMapping stores the pages and a queued job, then returns at
+ *     once. A form someone already imported and confirmed comes straight
+ *     back from the cache instead.
+ *  2. processFormJob (Firestore trigger) reads the form and saves the
+ *     result on the job.
+ *  3. The app polls getFormJob, now or the next time it's opened.
+ *  4. confirmFormMap: the agent saved their review, so the form can be
+ *     offered to others from the cache.
+ *
+ * Jobs live in formJobs/{jobId}; the page images in its "chunks"
+ * subcollection until the job finishes. Clients reach them only through
+ * these functions (no client Firestore rules involved).
+ */
+
+const db = () => admin.firestore();
+const REGION = 'us-central1';
+/** Firestore's document limit is 1 MiB; page images are split below it. */
+const CHUNK = 900 * 1024;
+
+type JobStatus = 'queued' | 'running' | 'done' | 'error';
+
+interface PageMeta {
+  width: number;
+  height: number;
+  ocr: PageInput['ocr'];
+  chunks: number;
+}
+
+export const startFormMapping = onCall(
+  { region: REGION, timeoutSeconds: 120, memory: '512MiB' },
+  async (request) => {
+    const uid = request.auth?.uid;
+    if (!uid) throw new HttpsError('unauthenticated', 'Sign in to add a form.');
+    const pages = validPages(request.data);
+    const job = db().collection('formJobs').doc();
+
+    let cached: Awaited<ReturnType<typeof findCached>> = null;
+    try {
+      cached = await findCached(db(), pages);
+    } catch (e) {
+      logger.warn('Form cache lookup failed', e);
+    }
+    if (cached) {
+      await job.set({
+        uid,
+        status: 'done' as JobStatus,
+        cached: true,
+        sourceId: cached.sourceId,
+        result: cached.map,
+        createdAt: new Date(),
+        finishedAt: new Date(),
+      });
+      return { jobId: job.id, status: 'done', cached: true, result: cached.map };
+    }
+
+    // The pages first: the trigger on the job reads them.
+    const meta: PageMeta[] = [];
+    const writes: Promise<unknown>[] = [];
+    pages.forEach((p, i) => {
+      const jpeg = Buffer.from(p.jpegBase64, 'base64');
+      const count = Math.max(1, Math.ceil(jpeg.length / CHUNK));
+      for (let n = 0; n < count; n++) {
+        writes.push(
+          job
+            .collection('chunks')
+            .doc(`${i}_${n}`)
+            .set({ page: i, n, data: jpeg.subarray(n * CHUNK, (n + 1) * CHUNK) })
+        );
+      }
+      meta.push({ width: p.width, height: p.height, ocr: p.ocr, chunks: count });
+    });
+    writes.push(job.collection('chunks').doc('meta').set({ pages: meta }));
+    await Promise.all(writes);
+
+    await job.set({
+      uid,
+      status: 'queued' as JobStatus,
+      pageCount: pages.length,
+      createdAt: new Date(),
+    });
+    return { jobId: job.id, status: 'queued' };
+  }
+);
+
+export const processFormJob = onDocumentCreated(
+  {
+    document: 'formJobs/{jobId}',
+    region: REGION,
+    secrets: [anthropicApiKey],
+    timeoutSeconds: 540,
+    memory: '1GiB',
+    retry: false,
+  },
+  async (event) => {
+    const snap = event.data;
+    const job = snap?.data();
+    if (!snap || job?.status !== 'queued') return;
+    const ref = snap.ref;
+    await ref.update({ status: 'running' as JobStatus, startedAt: new Date() });
+    const chunks = ref.collection('chunks');
+    try {
+      const metaDoc = await chunks.doc('meta').get();
+      const meta = (metaDoc.data()?.pages ?? []) as PageMeta[];
+      const pages: PageInput[] = [];
+      for (let i = 0; i < meta.length; i++) {
+        const parts = await Promise.all(
+          Array.from({ length: meta[i].chunks }, (_, n) =>
+            chunks.doc(`${i}_${n}`).get()
+          )
+        );
+        const jpeg = Buffer.concat(
+          parts.map((d) => Buffer.from(d.data()?.data as Uint8Array))
+        );
+        pages.push({
+          jpegBase64: jpeg.toString('base64'),
+          width: meta[i].width,
+          height: meta[i].height,
+          ocr: meta[i].ocr,
+        });
+      }
+
+      const map = await mapPages(pages, anthropicApiKey.value());
+      try {
+        await saveCandidate(db(), event.params.jobId, job.uid, pages, map);
+      } catch (e) {
+        logger.warn('Could not save the form as a cache candidate', e);
+      }
+      await ref.update({
+        status: 'done' as JobStatus,
+        result: map,
+        finishedAt: new Date(),
+      });
+    } catch (e) {
+      logger.error('Form mapping failed', e);
+      await ref.update({
+        status: 'error' as JobStatus,
+        error:
+          e instanceof HttpsError
+            ? e.message
+            : 'Could not read the form. Please try again.',
+        finishedAt: new Date(),
+      });
+    } finally {
+      await db().recursiveDelete(chunks);
+    }
+  }
+);
+
+async function ownJob(uid: string | undefined, jobId: unknown) {
+  if (!uid) throw new HttpsError('unauthenticated', 'Sign in first.');
+  if (typeof jobId !== 'string' || !jobId) {
+    throw new HttpsError('invalid-argument', 'Missing jobId.');
+  }
+  const doc = await db().collection('formJobs').doc(jobId).get();
+  if (!doc.exists || doc.data()?.uid !== uid) {
+    throw new HttpsError('not-found', 'That form import was not found.');
+  }
+  return doc;
+}
+
+export const getFormJob = onCall({ region: REGION }, async (request) => {
+  const doc = await ownJob(request.auth?.uid, request.data?.jobId);
+  const job = doc.data()!;
+  const status = job.status as JobStatus;
+  return {
+    status,
+    cached: job.cached === true,
+    ...(status === 'done' ? { result: job.result } : {}),
+    ...(status === 'error' ? { error: job.error } : {}),
+  };
+});
+
+export const confirmFormMap = onCall({ region: REGION }, async (request) => {
+  const uid = request.auth?.uid;
+  const doc = await ownJob(uid, request.data?.jobId);
+  // A form that came from the cache is already confirmed by someone else.
+  if (doc.data()?.cached) return { confirmed: false };
+  const confirmed = await confirmCached(
+    db(),
+    doc.id,
+    uid!,
+    request.data?.fields as Record<string, unknown>[]
+  );
+  return { confirmed };
+});

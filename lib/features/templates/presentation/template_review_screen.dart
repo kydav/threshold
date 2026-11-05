@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:threshold/features/auth/data/user_profile.dart';
+import 'package:threshold/features/templates/data/form_capture_service.dart';
 import 'package:threshold/features/templates/data/form_template.dart';
 import 'package:threshold/features/templates/data/template_deal.dart';
 import 'package:threshold/features/templates/data/template_repository.dart';
@@ -152,6 +154,15 @@ class _ReviewState extends ConsumerState<_Review> {
     }
     await ref.read(templateRepositoryProvider).save(t);
     ref.invalidate(templatesProvider);
+    // The reviewed layout (fields only; never the agent's own answers) can
+    // now set up the same form for other agents. Best effort.
+    if (t.mapJobId case final jobId?) {
+      unawaited(
+        FormCaptureService()
+            .confirmJob(jobId, t.fields)
+            .catchError((Object e) => debugPrint('Form confirm failed: $e')),
+      );
+    }
     if (mounted) context.go('/templates');
   }
 

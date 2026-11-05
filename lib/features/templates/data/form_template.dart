@@ -272,6 +272,7 @@ class FormTemplate {
     Map<String, String>? agentValues,
     Map<String, Object>? dealDefaults,
     this.summary = const [],
+    this.mapJobId,
   }) : agentValues = agentValues ?? {},
        dealDefaults = dealDefaults ?? {};
 
@@ -293,6 +294,10 @@ class FormTemplate {
   /// The AI overview shown to the buyer above the form (empty for forms
   /// imported before overviews existed).
   final List<SummaryLine> summary;
+
+  /// The server import this form came from; confirming it after review
+  /// lets others who import the same form reuse it.
+  final String? mapJobId;
 
   Iterable<TemplateField> fieldsBy(FieldFiller f) =>
       fields.where((x) => x.filledBy == f);
@@ -319,6 +324,7 @@ class FormTemplate {
       for (final l in m['summary'] as List? ?? const [])
         SummaryLine.fromMap(Map<String, dynamic>.from(l as Map)),
     ],
+    mapJobId: m['mapJobId'] as String?,
   );
 
   Map<String, dynamic> toMap() => {
@@ -331,5 +337,6 @@ class FormTemplate {
     'agentValues': agentValues,
     'dealDefaults': dealDefaults,
     'summary': [for (final l in summary) l.toMap()],
+    if (mapJobId != null) 'mapJobId': mapJobId,
   };
 }

@@ -9,10 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 List<String> _lines(String text, int count) {
   final parts = text.split('\n');
-  return List.generate(
-    count,
-    (i) => i < parts.length ? parts[i].trim() : '',
-  );
+  return List.generate(count, (i) => i < parts.length ? parts[i].trim() : '');
 }
 
 String _initials(String name) {
@@ -77,10 +74,13 @@ void main() {
       expect(_initials('Cher'), 'C');
     });
 
-    test('uses first and last parts for multi-word names (e.g. "Mary Jane Watson")', () {
-      // Parts: ['Mary', 'Jane', 'Watson'] → first='M', last='W'
-      expect(_initials('Mary Jane Watson'), 'MW');
-    });
+    test(
+      'uses first and last parts for multi-word names (e.g. "Mary Jane Watson")',
+      () {
+        // Parts: ['Mary', 'Jane', 'Watson'] → first='M', last='W'
+        expect(_initials('Mary Jane Watson'), 'MW');
+      },
+    );
 
     test('uppercases both initials', () {
       expect(_initials('john doe'), 'JD');

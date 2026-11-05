@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:threshold/features/templates/data/form_capture_service.dart';
-import 'package:threshold/features/templates/data/template_repository.dart';
+import 'package:threshold/features/templates/data/form_imports.dart';
 
 /// Scan a paper form or pick a PDF, then read and map it into a template.
 class TemplateCaptureScreen extends ConsumerStatefulWidget {
@@ -41,21 +41,19 @@ class _TemplateCaptureScreenState extends ConsumerState<TemplateCaptureScreen> {
         pages.add(await _capture.prepare(images[i]));
       }
 
-      setState(
-        () =>
-            _step =
-                'Finding every blank and signature line…\n'
-                'This takes about a minute.',
-      );
-      final map = await _capture.mapFields(pages);
-
-      setState(() => _step = 'Cleaning up the pages…');
-      final repo = ref.read(templateRepositoryProvider);
-      final template = await repo.create(pages: pages, map: map);
-      ref.invalidate(templatesProvider);
-
+      setState(() => _step = 'Sending to Threshold…');
+      final template = await ref
+          .read(formImportsProvider.notifier)
+          .start(pages);
       if (!mounted) return;
-      context.pushReplacement('/templates/${template.id}/review');
+      if (template != null) {
+        // Someone already set up this form: it's ready now.
+        context.pushReplacement('/templates/${template.id}/review');
+        return;
+      }
+      // Reading it takes a minute or two; that happens on the server. The
+      // form waits on My forms, and the agent can leave the app meanwhile.
+      context.go('/templates');
     } on FirebaseFunctionsException catch (e) {
       setState(() {
         _step = null;
