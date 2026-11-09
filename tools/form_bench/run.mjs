@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url';
 const here = dirname(fileURLToPath(import.meta.url));
 const require = createRequire(join(here, '../../functions/package.json'));
 const Anthropic = require('@anthropic-ai/sdk').default;
-const { mapRequest, parseMapResponse } = require('../../functions/lib/mapFields.js');
+const { mapRequest, parseMapResponse } = require('./lib/mapFields.js');
 
 // $ per million tokens for claude-opus-5-5.
 const PRICE = { input: 4, output: 20 };
