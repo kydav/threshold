@@ -219,6 +219,20 @@ export async function mapPages(
   pages: PageInput[],
   apiKey: string
 ): Promise<FieldMap> {
+  const client = new Anthropic({ apiKey });
+  const response = await client.beta.messages
+    .stream(mapRequest(pages))
+    .finalMessage();
+  return parseMapResponse(response);
+}
+
+/**
+ * The exact request mapPages sends. Exported so the form bench
+ * (tools/form_bench) tests the same model, prompt and settings.
+ */
+export function mapRequest(
+  pages: PageInput[]
+): Anthropic.Beta.MessageCreateParamsStreaming {
   const content: Anthropic.Beta.BetaContentBlockParam[] = [];
   pages.forEach((p, i) => {
     const ocr = p.ocr
@@ -239,8 +253,8 @@ export async function mapPages(
   });
   content.push({ type: 'text', text: PROMPT });
 
-  const client = new Anthropic({ apiKey });
-  const stream = client.beta.messages.stream({
+  return {
+    stream: true,
     model: MODEL,
     max_tokens: 64000,
     thinking: { type: 'adaptive' },
@@ -251,9 +265,11 @@ export async function mapPages(
     betas: ['server-side-fallback-2026-07-01'],
     fallbacks: 'default',
     messages: [{ role: 'user', content }],
-  });
-  const response = await stream.finalMessage();
+  };
+}
 
+/** The field map from a finished response, or an HttpsError. */
+export function parseMapResponse(response: Anthropic.Beta.BetaMessage): FieldMap {
   if (response.stop_reason === 'refusal') {
     throw new HttpsError('failed-precondition', 'The form could not be read.');
   }
