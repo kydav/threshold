@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:threshold/core/config/revenue_cat_config.dart';
@@ -312,7 +313,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     minimumSize: const Size.fromHeight(48),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 4),
+                TextButton.icon(
+                  onPressed: () => context.push('/welcome'),
+                  icon: const Icon(Icons.play_circle_outline),
+                  label: const Text('How Threshold works'),
+                ),
+                const SizedBox(height: 8),
                 const Divider(),
 
                 // Name

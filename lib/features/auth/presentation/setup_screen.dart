@@ -118,9 +118,9 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
     final cs = Theme.of(context).colorScheme;
     final keyboard = MediaQuery.viewInsetsOf(context).bottom;
 
-    // Navigate once profile is saved
+    // Once the profile is saved, a new agent sees how Threshold works.
     ref.listen(userProfileProvider, (_, profile) {
-      if (profile != null && mounted) context.go('/home');
+      if (profile != null && mounted) context.go('/welcome?first=1');
     });
 
     return Scaffold(

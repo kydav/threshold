@@ -18,6 +18,7 @@ import 'package:threshold/features/auth/presentation/login_screen.dart';
 import 'package:threshold/features/auth/presentation/profile_screen.dart';
 import 'package:threshold/features/auth/presentation/setup_screen.dart';
 import 'package:threshold/features/auth/presentation/signup_screen.dart';
+import 'package:threshold/features/auth/presentation/walkthrough_screen.dart';
 import 'package:threshold/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:threshold/features/templates/data/template_deal.dart';
 import 'package:threshold/features/templates/presentation/template_capture_screen.dart';
@@ -56,6 +57,14 @@ final routerProvider = Provider<GoRouter>((ref) {
             email: extra['email'] ?? '',
           );
         },
+      ),
+      // How Threshold works: once after setup (?first=1), and from Profile.
+      GoRoute(
+        path: '/welcome',
+        builder:
+            (_, state) => WalkthroughScreen(
+              firstRun: state.uri.queryParameters['first'] == '1',
+            ),
       ),
       // Non-shell routes — no bottom nav shown
       GoRoute(

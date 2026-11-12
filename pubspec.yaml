@@ -55,6 +55,7 @@ flutter:
     - assets/forms/
     - assets/icon/
     - assets/images/
+    - assets/images/walkthrough/
 
 flutter_native_splash:
   color: "#0A1F6B"
