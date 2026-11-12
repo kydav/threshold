@@ -44,6 +44,13 @@ class AgreementModel {
   bool get isPendingDelivery => status == AgreementStatus.pendingDelivery;
   bool get hasLocalPdf => localPdfPath != null;
 
+  /// What a list row shows for the deal: its area, else the form's name.
+  String get scopeLabel {
+    if (propertyScope.trim().isNotEmpty) return propertyScope;
+    final title = formData['templateTitle'];
+    return title is String && title.isNotEmpty ? title : 'Buyer agreement';
+  }
+
   factory AgreementModel.fromJson(Map<String, dynamic> d) => AgreementModel(
     id: d['id'] as String,
     agentId: d['agentId'] as String,

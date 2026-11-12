@@ -98,6 +98,20 @@ Known gaps from the PoC:
 - **Team templates:** a broker shares a template with every agent in the office, the main path to brokerage sales.
 - **Other forms with the same engine:** the BYO pipeline isn't buyer-agreement specific. Next: the **listing agreement**, the **buyer compensation agreement / commission offer**, and **showing/visitor agreements** for open houses (pairs with the existing open-house content).
 
+## Ideas: faster in the moment (not scheduled)
+
+Ideas from 2026-11-11 for the few minutes at a showing. Not committed; pick from here.
+
+- **Usual terms per form:** save the usual end-date length, counties and fee once per form, so each new deal starts filled in and only the buyers are left. (About half a day.)
+- **Fill by voice:** tap the mic, say "Sam and Jordan Rivera, Iron County, six months, three percent"; Claude fills the fields for the agent to check. Good demo for the listing. (1–2 days.)
+- **Buyer mode on hand-off:** after "Hand to buyer", hide back navigation and other screens until the agent signs, so a buyer can't wander into other deals. (A few hours.)
+- **Buyers from Contacts:** the system contact picker fills name and email with no contacts permission. (A few hours.)
+- **Second buyer signs later:** one buyer signs now, the other gets a text link. The first slice of remote signing (Phase B).
+- **Overview in Spanish** (or the buyer's language), with the same AI disclaimer. (About half a day.)
+- **Signing certificate page** appended to the PDF: who signed, when, device, email confirmations. Compliance teams look for it. (About 1 day.)
+- **Renew in one tap** from the expiry reminder: copy the deal with the same buyers and terms and a new end date.
+- **Start in the car, finish at the house:** save and resume a deal in progress (check what drafts already cover).
+
 ## Phase C: Platform hygiene
 
 - iOS: remove ML Kit after the Vision swap so simulator builds work again.

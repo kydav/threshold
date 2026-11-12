@@ -465,7 +465,7 @@ class _RecentAgreementTile extends ConsumerWidget {
         style: const TextStyle(fontWeight: FontWeight.w600),
       ),
       subtitle: Text(
-        '${agreement.propertyScope} · ${_date(agreement.createdAt)}',
+        '${agreement.scopeLabel} · ${_date(agreement.createdAt)}',
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(color: cs.onSurfaceVariant),

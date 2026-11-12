@@ -34,12 +34,29 @@ class DeliveryService {
       recipients.add({'email': buyer2Email, 'name': buyer2Name ?? 'Co-buyer'});
     }
 
+    // Each detail once, and only when there is one: a scanned form may
+    // not ask for an area or a fee.
+    final scope = agreement.propertyScope.trim();
+    final fee = agreement.compensation.trim();
+    final buyers = [
+      agreement.buyerName,
+      if (buyer2Name != null && buyer2Name.isNotEmpty) buyer2Name,
+    ].join(' and ');
+    final details = [
+      if (scope.isNotEmpty) 'Area: $scope',
+      if (fee.isNotEmpty && fee != scope) 'Fee: $fee',
+      'Term: ${_fmt(agreement.startDate)} – ${_fmt(agreement.endDate)}',
+    ].join('\n');
+    final agent = agreement.agentName.trim();
     final bodyText =
-        'Please find your signed buyer representation agreement attached.\n\n'
-        'This agreement covers: ${agreement.propertyScope}\n'
-        'Compensation: ${agreement.compensation}\n'
-        'Term: ${_fmt(agreement.startDate)} – ${_fmt(agreement.endDate)}\n\n'
-        'Threshold';
+        'Hi $buyers,\n\n'
+        'Your signed buyer representation agreement'
+        '${agent.isEmpty ? '' : ' with $agent'} is attached as a PDF. '
+        'Keep it for your records.\n\n'
+        '$details\n\n'
+        'Questions? Reply to this email to reach '
+        '${agent.isEmpty ? 'your agent' : agent}.\n\n'
+        'Sent with Threshold';
 
     try {
       final callable = FirebaseFunctions.instance.httpsCallable(
@@ -49,8 +66,7 @@ class DeliveryService {
         'recipients': recipients,
         'agentName': agreement.agentName,
         'agentEmail': agreement.agentEmail,
-        'subject':
-            'Signed buyer representation agreement — ${agreement.propertyScope}',
+        'subject': 'Signed buyer representation agreement: $buyers',
         'bodyText': bodyText,
         'pdfBase64': pdfBase64,
         'filename': filename,

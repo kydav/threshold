@@ -184,7 +184,7 @@ class _AgreementTile extends ConsumerWidget {
     return ListTile(
       leading: _StatusIcon(status: agreement.status),
       title: Text(agreement.buyerName),
-      subtitle: Text('${agreement.propertyScope} · $dateStr'),
+      subtitle: Text('${agreement.scopeLabel} · $dateStr'),
       trailing: _statusChip(agreement.status, cs),
       onTap: () => openAgreement(context, ref, agreement, loading: loading),
     );

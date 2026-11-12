@@ -235,9 +235,8 @@ class _TemplateSignScreenState extends ConsumerState<TemplateSignScreen> {
         brokerageName: profile?.brokerageName ?? '',
         buyerName: deal.buyerName,
         buyerEmail: deal.buyerEmail,
-        propertyScope:
-            deal.summary.isEmpty ? deal.template.title : deal.summary,
-        compensation: deal.summary,
+        propertyScope: deal.area ?? '',
+        compensation: deal.fee ?? '',
         startDate: now,
         endDate: deal.endDate ?? now,
         formState: 'Custom',

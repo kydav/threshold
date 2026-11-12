@@ -272,23 +272,43 @@ class TemplateDeal {
   }
 
   /// Display label for the agreement history and email.
-  String get summary {
-    String? pick(bool Function(String) test) {
-      for (final f in active(FieldFiller.agentPerDeal)) {
-        final v = values[f.id];
-        if (v is String && v.isNotEmpty && test(f.label.toLowerCase())) {
-          return v;
-        }
+  String get summary =>
+      [if (area != null) area!, if (fee != null) 'Fee $fee'].join(' · ');
+
+  String? _pick(bool Function(String) test) {
+    for (final f in active(FieldFiller.agentPerDeal)) {
+      final v = values[f.id];
+      if (v is String && v.trim().isNotEmpty && test(f.label.toLowerCase())) {
+        return v.trim();
       }
-      return null;
+    }
+    return null;
+  }
+
+  /// Where the buyer is represented (counties or properties), if asked.
+  String? get area =>
+      _pick((l) => l.contains('count') || l.contains('propert'));
+
+  /// The fee as written on the form, with its unit: "2.5%", "$5,000".
+  String? get fee {
+    String? unit(String? v, {required bool percent}) {
+      if (v == null) return null;
+      if (percent) return v.endsWith('%') ? v : '$v%';
+      return v.startsWith(r'$') ? v : '\$$v';
     }
 
-    final fee = [
-      pick((l) => l.contains('percent') || l.contains('%')),
-      pick((l) => l.contains('fee') && l.contains(r'$')),
-    ].whereType<String>().join(' / ');
-    final area = pick((l) => l.contains('count') || l.contains('propert'));
-    return [if (area != null) area, if (fee.isNotEmpty) 'Fee $fee'].join(' · ');
+    final parts =
+        [
+          unit(
+            _pick((l) => l.contains('percent') || l.contains('%')),
+            percent: true,
+          ),
+          unit(
+            _pick((l) => l.contains('fee') && l.contains(r'$')),
+            percent: false,
+          ),
+        ].whereType<String>();
+    return parts.isEmpty ? null : parts.join(' / ');
   }
 }
 
