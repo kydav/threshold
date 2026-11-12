@@ -99,6 +99,15 @@ class ThresholdApp extends ConsumerWidget {
         useMaterial3: true,
       ),
       routerConfig: router,
+      // Tapping anywhere outside a text field closes the keyboard. iOS
+      // number pads have no Done key, so otherwise it can't be dismissed.
+      // Buttons and fields still get their own taps first.
+      builder:
+          (context, child) => GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+            child: child,
+          ),
     );
   }
 }
