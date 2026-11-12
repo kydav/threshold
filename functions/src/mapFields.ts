@@ -211,6 +211,13 @@ export type FieldMap = {
   fields: Record<string, unknown>[];
 };
 
+/** Packets up to this many pages are read in one request, as before. */
+export const SINGLE_READ_PAGES = 12;
+/** Longer packets are read in parts of at most this many pages, at once. */
+const PART_PAGES = 8;
+/** The most pages one import takes. */
+export const MAX_PAGES = 30;
+
 /**
  * Reads the pages with Claude and returns the field map. Throws HttpsError
  * on a refusal, an over-long form or an empty answer.
@@ -219,11 +226,120 @@ export async function mapPages(
   pages: PageInput[],
   apiKey: string
 ): Promise<FieldMap> {
-  const client = new Anthropic({ apiKey });
-  const response = await client.beta.messages
-    .stream(mapRequest(pages))
-    .finalMessage();
-  return parseMapResponse(response);
+  return (await mapPacket(new Anthropic({ apiKey }), pages)).map;
+}
+
+/** Tokens a read used, summed over its parts. */
+export interface ReadUsage {
+  model: string;
+  input_tokens: number;
+  output_tokens: number;
+  parts: number;
+}
+
+/**
+ * Reads a packet. Up to [SINGLE_READ_PAGES] pages go in one request. A
+ * longer one (a form plus addenda) would take longer than the server
+ * allows and could outgrow one answer, so it's read in parts of up to
+ * [PART_PAGES] pages at the same time and the parts are merged.
+ */
+export async function mapPacket(
+  client: Anthropic,
+  pages: PageInput[]
+): Promise<{ map: FieldMap; usage: ReadUsage }> {
+  const parts: PageInput[][] = [];
+  if (pages.length <= SINGLE_READ_PAGES) {
+    parts.push(pages);
+  } else {
+    const count = Math.ceil(pages.length / PART_PAGES);
+    const size = Math.ceil(pages.length / count);
+    for (let i = 0; i < pages.length; i += size) {
+      parts.push(pages.slice(i, i + size));
+    }
+  }
+  let first = 1;
+  const reads = parts.map((part) => {
+    const range =
+      parts.length > 1
+        ? { first, last: first + part.length - 1, total: pages.length }
+        : undefined;
+    first += part.length;
+    return client.beta.messages.stream(mapRequest(part, range)).finalMessage();
+  });
+  const responses = await Promise.all(reads);
+  const maps = responses.map(parseMapResponse);
+  return {
+    map: maps.length === 1 ? maps[0] : mergeParts(maps, parts),
+    usage: {
+      model: responses[0].model,
+      input_tokens: responses.reduce((s, r) => s + r.usage.input_tokens, 0),
+      output_tokens: responses.reduce((s, r) => s + r.usage.output_tokens, 0),
+      parts: parts.length,
+    },
+  };
+}
+
+/**
+ * One map from the maps of consecutive parts. Pages are renumbered to the
+ * whole packet; an id another part already used gets a page suffix (and
+ * that part's links and summary follow the rename). The title and summary
+ * come from the part holding the agreement's term, since that's the main
+ * agreement and not a disclosure or addendum; failing that, the part with
+ * the most fields.
+ */
+export function mergeParts(maps: FieldMap[], parts: PageInput[][]): FieldMap {
+  const used = new Set<string>();
+  const renamed: Map<string, string>[] = [];
+  const fields: Record<string, unknown>[] = [];
+  let offset = 0;
+  maps.forEach((m, n) => {
+    const rename = new Map<string, string>();
+    for (const f of m.fields) {
+      const id = String(f.id);
+      let next = id;
+      for (let k = 2; used.has(next); k++) {
+        next = `${id}_p${Number(f.page) + offset}${k > 2 ? `_${k}` : ''}`;
+      }
+      used.add(next);
+      if (next !== id) rename.set(id, next);
+    }
+    const fix = (v: unknown) =>
+      typeof v === 'string' && rename.has(v) ? rename.get(v)! : v;
+    for (const f of m.fields) {
+      fields.push({
+        ...f,
+        id: fix(f.id),
+        page: Number(f.page) + offset,
+        depends_on: fix(f.depends_on),
+        continues: fix(f.continues),
+      });
+    }
+    renamed.push(rename);
+    offset += parts[n].length;
+  });
+
+  let main = maps.findIndex((m) =>
+    m.fields.some((f) => f.role === 'end_date')
+  );
+  if (main < 0) {
+    main = maps.reduce(
+      (best, m, i) => (m.fields.length > maps[best].fields.length ? i : best),
+      0
+    );
+  }
+  const rename = renamed[main];
+  const summary = maps[main].summary.map((line) => ({
+    text: line.text.replace(/\{(\w+)\}/g, (all, id: string) =>
+      rename.has(id) ? `{${rename.get(id)}}` : all
+    ),
+    if_checked: rename.get(line.if_checked) ?? line.if_checked,
+  }));
+  return {
+    form_title: maps[main].form_title,
+    form_id: maps[main].form_id,
+    summary,
+    fields,
+  };
 }
 
 /**
@@ -231,9 +347,22 @@ export async function mapPages(
  * (tools/form_bench) tests the same model, prompt and settings.
  */
 export function mapRequest(
-  pages: PageInput[]
+  pages: PageInput[],
+  range?: { first: number; last: number; total: number }
 ): Anthropic.Beta.MessageCreateParamsStreaming {
   const content: Anthropic.Beta.BetaContentBlockParam[] = [];
+  if (range) {
+    content.push({
+      type: 'text',
+      text:
+        `These are pages ${range.first} to ${range.last} of a ` +
+        `${range.total}-page packet; the other pages are read separately. ` +
+        'Number pages from 1 as they appear here. A page may continue a ' +
+        'form that starts before these or be a separate addendum or ' +
+        'disclosure: map every blank either way, and write the summary ' +
+        'about the agreement these pages belong to.',
+    });
+  }
   pages.forEach((p, i) => {
     const ocr = p.ocr
       .map((w) => `${JSON.stringify(w.text)} ${JSON.stringify(w.box)}`)
@@ -283,11 +412,11 @@ export function parseMapResponse(response: Anthropic.Beta.BetaMessage): FieldMap
   return JSON.parse(text.text) as FieldMap;
 }
 
-/** Pages a client sent, checked: 1-12 pages, each with an image and size. */
+/** Pages a client sent, checked: 1 to [MAX_PAGES] pages, each with an image and size. */
 export function validPages(data: unknown): PageInput[] {
   const pages = ((data as { pages?: unknown })?.pages ?? []) as PageInput[];
-  if (!Array.isArray(pages) || !pages.length || pages.length > 12) {
-    throw new HttpsError('invalid-argument', 'Send 1-12 pages.');
+  if (!Array.isArray(pages) || !pages.length || pages.length > MAX_PAGES) {
+    throw new HttpsError('invalid-argument', `Send 1-${MAX_PAGES} pages.`);
   }
   for (const p of pages) {
     if (

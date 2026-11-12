@@ -9,11 +9,29 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
 import 'package:printing/printing.dart';
+import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:threshold/features/templates/data/form_template.dart';
 
 /// Long edge of a stored page, in pixels. Matches what the vision model reads
 /// natively, so field boxes come back in the same pixel space we store.
 const kPageMaxEdge = 1568;
+
+/// The most pages one import takes (the server reads long packets in parts).
+const kMaxFormPages = 30;
+
+/// An uploaded PDF up to this size goes to the server too, so mapped boxes
+/// can be put exactly on its own fillable fields. Larger ones still import;
+/// their boxes are just placed from the page images.
+const kMaxPdfBytes = 6 * 1024 * 1024;
+
+/// A picked PDF: its pages as images, and the file itself.
+typedef PickedPdf = ({List<Uint8List> pages, Uint8List pdf});
+
+/// A PDF with more pages than an import takes.
+class TooManyPagesException implements Exception {
+  const TooManyPagesException(this.pages);
+  final int pages;
+}
 
 /// A page ready for field mapping: a normalised JPEG plus its OCR lines.
 class CapturedPage {
@@ -43,27 +61,47 @@ typedef FieldMap =
 /// Turns a paper or PDF form into pages + a field map.
 class FormCaptureService {
   /// Opens the native document scanner (auto edge-detect, flatten, crop).
-  /// Returns null if the agent cancels.
-  Future<List<Uint8List>?> scan() async {
-    final paths = await CunningDocumentScanner.getPictures();
+  /// Returns null if the agent cancels. [maxPages] 1 retakes a single page.
+  Future<List<Uint8List>?> scan({int maxPages = kMaxFormPages}) async {
+    final paths = await CunningDocumentScanner.getPictures(noOfPages: maxPages);
     if (paths == null || paths.isEmpty) return null;
     return [for (final p in paths) await File(p).readAsBytes()];
   }
 
-  /// Lets the agent pick a PDF and renders each page to an image.
-  Future<List<Uint8List>?> pickPdf() async {
+  /// Lets the agent pick a PDF and renders each page to an image. Throws
+  /// [TooManyPagesException] past [kMaxFormPages] pages.
+  Future<PickedPdf?> pickPdf() async {
     final files = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['pdf'],
     );
     if (files.isEmpty) return null;
     final bytes = await files.first.readAsBytes();
+    final count = _pageCount(bytes);
+    if (count != null && count > kMaxFormPages) {
+      throw TooManyPagesException(count);
+    }
     final pages = <Uint8List>[];
     // 150 dpi is plenty for an 8.5x11 page at the 1568 px we store.
     await for (final page in Printing.raster(bytes, dpi: 150)) {
       pages.add(await page.toPng());
     }
-    return pages;
+    return (pages: pages, pdf: bytes);
+  }
+
+  /// The PDF's page count, or null if it can't be read here (rendering may
+  /// still manage it).
+  int? _pageCount(Uint8List bytes) {
+    try {
+      final doc = PdfDocument(inputBytes: bytes);
+      try {
+        return doc.pages.count;
+      } finally {
+        doc.dispose();
+      }
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Resizes a page image to [kPageMaxEdge] as a JPEG and reads its text
@@ -124,7 +162,9 @@ class FormCaptureService {
   /// Hands the pages to the server to read in the background. Returns at
   /// once with a job to poll, or straight away with the map when the same
   /// form was already set up by someone (from the cache).
-  Future<FormJob> startJob(List<CapturedPage> pages) async {
+  /// [pdf] is the uploaded file, when there is one: the server reads its
+  /// fillable fields to place boxes exactly.
+  Future<FormJob> startJob(List<CapturedPage> pages, {Uint8List? pdf}) async {
     final result = await FirebaseFunctions.instance
         .httpsCallable(
           'startFormMapping',
@@ -132,6 +172,8 @@ class FormCaptureService {
         )
         .call<dynamic>({
           'pages': [for (final p in pages) _pageJson(p)],
+          if (pdf != null && pdf.length <= kMaxPdfBytes)
+            'pdfBase64': base64Encode(pdf),
         });
     return FormJob.fromMap(Map<String, dynamic>.from(result.data as Map));
   }

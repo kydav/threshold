@@ -1,6 +1,7 @@
 """Scores each field map and draws it over the pages.
 
-For every OUT_DIR/<name>/map.json:
+For every OUT_DIR/<name>/map.json (map_snapped.json when snap.mjs made one:
+that's what the server hands the app):
   - Coverage (only forms with fillable fields, truth.json): how many of the
     PDF's own fields have a mapped box on them, by kind.
   - Checks every form gets: the fields a buyer agreement can't do without,
@@ -42,6 +43,11 @@ def inter(a, b):
     return area([max(a[0], b[0]), max(a[1], b[1]), min(a[2], b[2]), min(a[3], b[3])])
 
 
+def iou(a, b):
+    i = inter(a, b)
+    return i / ((area(a) + area(b) - i) or 1)
+
+
 def hits(model_box, truth_box):
     """A mapped box counts for a real field when they clearly overlap."""
     i = inter(model_box, truth_box)
@@ -51,7 +57,8 @@ def hits(model_box, truth_box):
 
 
 def score(dirp: Path) -> dict:
-    m = json.loads((dirp / "map.json").read_text())
+    snapped = dirp / "map_snapped.json"
+    m = json.loads((snapped if snapped.exists() else dirp / "map.json").read_text())
     pages = json.loads((dirp / "pages.json").read_text())["pages"]
     fields = m["fields"]
     ids = {f["id"] for f in fields}
@@ -129,6 +136,8 @@ def score(dirp: Path) -> dict:
         extra = [f["id"] for f in fields
                  if not any(f["page"] == t["page"] and hits(f["box"], t["box"]) for t in truth)]
         r["extra"] = extra
+        r["fit"] = sum(max((iou(f["box"], t["box"]) for f in fields if f["page"] == t["page"]),
+                           default=0) for t in truth) / max(len(truth), 1)
 
     draw_overlays(dirp, fields, pages, json.loads(tp.read_text()) if tp.exists() else [])
     return r
@@ -156,11 +165,12 @@ def draw_overlays(dirp, fields, pages, truth):
 
 def report(rows, out: Path):
     L = ["# Form import bench", "",
-         "| Form | Pages | Fields | Coverage of real fields | Problems | Time | Cost |",
-         "|---|---|---|---|---|---|---|"]
+         "| Form | Pages | Fields | Coverage of real fields | Box fit | Problems | Time | Cost |",
+         "|---|---|---|---|---|---|---|---|"]
     for r in rows:
         cov = f"{r['found']}/{r['truth']} ({100 * r['found'] // max(r['truth'], 1)}%)" if "truth" in r else "—"
-        L.append(f"| {r['name']} | {r['pages']} | {r['fields']} | {cov} | "
+        fit = f"{100 * r['fit']:.0f}%" if "fit" in r else "—"
+        L.append(f"| {r['name']} | {r['pages']} | {r['fields']} | {cov} | {fit} | "
                  f"{len(r['problems']) or 'none'} | {r.get('seconds', 0):.0f}s | ${r.get('cost_usd', 0):.2f} |")
     total = sum(r.get("cost_usd", 0) for r in rows)
     L += ["", f"Total cost: ${total:.2f}", ""]

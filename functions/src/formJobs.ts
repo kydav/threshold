@@ -4,6 +4,7 @@ import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { logger } from 'firebase-functions/v2';
 import { confirmCached, findCached, saveCandidate } from './formCache';
 import { anthropicApiKey, mapPages, PageInput, validPages } from './mapFields';
+import { MAX_PDF_BYTES, PdfWidget, pdfWidgets, snapToPdfFields } from './pdfFields';
 
 /**
  * Background form imports. Reading a form takes a minute or more, longer
@@ -18,8 +19,8 @@ import { anthropicApiKey, mapPages, PageInput, validPages } from './mapFields';
  *  4. confirmFormMap: the agent saved their review, which counts toward
  *     the form being offered to others from the cache.
  *
- * Jobs live in formJobs/{jobId}; the page images in its "chunks"
- * subcollection until the job finishes. Clients reach them only through
+ * Jobs live in formJobs/{jobId}; the page images, OCR and the PDF's own
+ * field boxes in its "chunks" subcollection until the job finishes. Clients reach them only through
  * these functions (no client Firestore rules involved).
  */
 
@@ -33,12 +34,39 @@ type JobStatus = 'queued' | 'running' | 'done' | 'error';
 interface PageMeta {
   width: number;
   height: number;
-  ocr: PageInput['ocr'];
+  /** Image chunk count. */
   chunks: number;
+  /** Older jobs kept OCR here; newer ones in page_<i> (1 MiB doc limit). */
+  ocr?: PageInput['ocr'];
+}
+
+/** Per-page doc: OCR lines and, for uploaded PDFs, its fillable fields. */
+interface PageExtras {
+  ocr: PageInput['ocr'];
+  widgets?: PdfWidget[];
+}
+
+/** An uploaded PDF's fields per page, or nothing for scans / bad input. */
+async function widgetsFrom(
+  data: unknown,
+  pages: PageInput[]
+): Promise<PdfWidget[][] | null> {
+  const b64 = (data as { pdfBase64?: unknown })?.pdfBase64;
+  if (typeof b64 !== 'string' || !b64) return null;
+  const pdf = Buffer.from(b64, 'base64');
+  if (!pdf.length || pdf.length > MAX_PDF_BYTES) return null;
+  try {
+    const widgets = await pdfWidgets(pdf, pages);
+    return widgets.some((p) => p.length) ? widgets : null;
+  } catch (e) {
+    logger.warn('Could not read the PDF fields', e);
+    return null;
+  }
 }
 
 export const startFormMapping = onCall(
-  { region: REGION, timeoutSeconds: 120, memory: '512MiB' },
+  // Up to 30 page images plus a PDF arrive in one call.
+  { region: REGION, timeoutSeconds: 120, memory: '1GiB' },
   async (request) => {
     const uid = request.auth?.uid;
     if (!uid) throw new HttpsError('unauthenticated', 'Sign in to add a form.');
@@ -64,6 +92,8 @@ export const startFormMapping = onCall(
       return { jobId: job.id, status: 'done', cached: true, result: cached.map };
     }
 
+    const widgets = await widgetsFrom(request.data, pages);
+
     // The pages first: the trigger on the job reads them.
     const meta: PageMeta[] = [];
     const writes: Promise<unknown>[] = [];
@@ -78,7 +108,10 @@ export const startFormMapping = onCall(
             .set({ page: i, n, data: jpeg.subarray(n * CHUNK, (n + 1) * CHUNK) })
         );
       }
-      meta.push({ width: p.width, height: p.height, ocr: p.ocr, chunks: count });
+      meta.push({ width: p.width, height: p.height, chunks: count });
+      const extras: PageExtras = { ocr: p.ocr };
+      if (widgets?.[i]?.length) extras.widgets = widgets[i];
+      writes.push(job.collection('chunks').doc(`page_${i}`).set(extras));
     });
     writes.push(job.collection('chunks').doc('meta').set({ pages: meta }));
     await Promise.all(writes);
@@ -113,12 +146,16 @@ export const processFormJob = onDocumentCreated(
       const metaDoc = await chunks.doc('meta').get();
       const meta = (metaDoc.data()?.pages ?? []) as PageMeta[];
       const pages: PageInput[] = [];
+      const widgets: PdfWidget[][] = [];
       for (let i = 0; i < meta.length; i++) {
-        const parts = await Promise.all(
-          Array.from({ length: meta[i].chunks }, (_, n) =>
+        const [extrasDoc, ...parts] = await Promise.all([
+          chunks.doc(`page_${i}`).get(),
+          ...Array.from({ length: meta[i].chunks }, (_, n) =>
             chunks.doc(`${i}_${n}`).get()
-          )
-        );
+          ),
+        ]);
+        const extras = extrasDoc.data() as PageExtras | undefined;
+        widgets.push(extras?.widgets ?? []);
         const jpeg = Buffer.concat(
           parts.map((d) => Buffer.from(d.data()?.data as Uint8Array))
         );
@@ -126,11 +163,14 @@ export const processFormJob = onDocumentCreated(
           jpegBase64: jpeg.toString('base64'),
           width: meta[i].width,
           height: meta[i].height,
-          ocr: meta[i].ocr,
+          ocr: extras?.ocr ?? meta[i].ocr ?? [],
         });
       }
 
       const map = await mapPages(pages, anthropicApiKey.value());
+      // An uploaded PDF's own fields are exactly placed; use them.
+      const snapped = snapToPdfFields(map, widgets);
+      if (snapped) logger.info(`Snapped ${snapped} boxes to PDF fields`);
       try {
         await saveCandidate(db(), event.params.jobId, job.uid, pages, map);
       } catch (e) {

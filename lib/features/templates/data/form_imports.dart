@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/widgets.dart';
@@ -119,7 +120,11 @@ class FormImports extends Notifier<List<PendingImport>>
   /// Starts reading [pages] in the background. Returns the template right
   /// away when the server already knows this form; otherwise null, and the
   /// import shows on My forms until it's done.
-  Future<FormTemplate?> start(List<CapturedPage> pages) async {
+  /// [pdf] is the uploaded file, if the form came from one.
+  Future<FormTemplate?> start(
+    List<CapturedPage> pages, {
+    Uint8List? pdf,
+  }) async {
     final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
     var item = PendingImport(
       id: const Uuid().v4(),
@@ -129,6 +134,9 @@ class FormImports extends Notifier<List<PendingImport>>
       status: ImportStatus.uploading,
     );
     await _savePages(item.id, pages);
+    if (pdf != null && pdf.length <= kMaxPdfBytes) {
+      await File('${(await _dir(item.id)).path}/source.pdf').writeAsBytes(pdf);
+    }
     await _put(item);
     return _upload(item, pages);
   }
@@ -161,7 +169,11 @@ class FormImports extends Notifier<List<PendingImport>>
     List<CapturedPage> pages,
   ) async {
     try {
-      final job = await _capture.startJob(pages);
+      final source = File('${(await _dir(item.id)).path}/source.pdf');
+      final job = await _capture.startJob(
+        pages,
+        pdf: source.existsSync() ? await source.readAsBytes() : null,
+      );
       if (job.isDone) {
         return _finish(item.copyWith(jobId: job.jobId), job, pages: pages);
       }
@@ -258,7 +270,8 @@ class FormImports extends Notifier<List<PendingImport>>
     }
   }
 
-  // ---- Storage: form_imports/<id>/{import.json, page_<n>.jpg|.json} ----
+  // ---- Storage: form_imports/<id>/{import.json, page_<n>.jpg|.json,
+  //      source.pdf (uploaded PDFs only)} ----
 
   Future<Directory> _root() async {
     final base = await getApplicationDocumentsDirectory();

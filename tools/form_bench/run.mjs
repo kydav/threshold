@@ -1,6 +1,7 @@
-// Sends each prepared form through the app's real mapping request
-// (functions/lib/mapFields.js: same model, prompt and settings) and saves
-// the field map, timing and token usage.
+// Sends each prepared form through the app's real mapping
+// (functions/lib/mapFields.js mapPacket: same model, prompt, settings and,
+// past 12 pages, the same split into parts) and saves the field map,
+// timing and token usage.
 //
 // Usage: node run.mjs OUT_DIR [name-filter]
 // Needs ANTHROPIC_API_KEY, and `npm run build` in functions/ first.
@@ -13,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 const here = dirname(fileURLToPath(import.meta.url));
 const require = createRequire(join(here, '../../functions/package.json'));
 const Anthropic = require('@anthropic-ai/sdk').default;
-const { mapRequest, parseMapResponse } = require('./lib/mapFields.js');
+const { mapPacket } = require('./lib/mapFields.js');
 
 // $ per million tokens for claude-opus-5-5.
 const PRICE = { input: 4, output: 20 };
@@ -35,15 +36,14 @@ async function one(name) {
   const { pages } = JSON.parse(readFileSync(join(dir, 'pages.json'), 'utf8'));
   const t0 = Date.now();
   try {
-    const response = await client.beta.messages.stream(mapRequest(pages)).finalMessage();
-    const map = parseMapResponse(response);
-    const u = response.usage;
+    const { map, usage: u } = await mapPacket(client, pages);
     const cost = (u.input_tokens * PRICE.input + u.output_tokens * PRICE.output) / 1e6;
     writeFileSync(join(dir, 'map.json'), JSON.stringify(map, null, 1));
     writeFileSync(
       join(dir, 'run.json'),
       JSON.stringify({
-        model: response.model,
+        model: u.model,
+        parts: u.parts,
         seconds: (Date.now() - t0) / 1000,
         input_tokens: u.input_tokens,
         output_tokens: u.output_tokens,
