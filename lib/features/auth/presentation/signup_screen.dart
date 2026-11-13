@@ -121,6 +121,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     final authService = ref.read(authServiceProvider);
     final dataService = ref.read(dataServiceProvider);
     final profileNotifier = ref.read(userProfileProvider.notifier);
+    // The router outlives this screen, so it can still open the walkthrough.
+    final router = GoRouter.of(context);
     final email = _emailCtrl.text.trim();
     final password = _passwordCtrl.text;
     final displayName = _nameCtrl.text.trim();
@@ -170,6 +172,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       // safe after widget disposal.
       profileNotifier.state = profile;
       AnalyticsService.signUp(state: state);
+      // A new agent sees how Threshold works, as after Google/Apple setup.
+      router.go('/welcome?first=1');
     } on Exception catch (e) {
       debugPrint('signup _submit error: $e');
       if (mounted) setState(() => _error = _friendlyError(e.toString()));
