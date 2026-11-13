@@ -1,19 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:threshold/features/auth/data/user_profile.dart';
 import 'package:threshold/features/paywall/data/agreement_quota.dart';
 import 'package:threshold/features/templates/data/form_template.dart';
 import 'package:threshold/features/templates/data/template_deal.dart';
 import 'package:threshold/features/templates/data/template_repository.dart';
 import 'package:threshold/features/templates/presentation/terms_form.dart';
-
-final _templateByIdProvider = FutureProvider.family<FormTemplate?, String>((
-  ref,
-  id,
-) async {
-  final all = await ref.watch(templateRepositoryProvider).all();
-  return all.where((t) => t.id == id).firstOrNull;
-});
 
 /// The agent's part: who the buyer is and this deal's terms. Then the phone
 /// goes to the buyer.
@@ -25,7 +18,7 @@ class TemplateDealScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ref
-        .watch(_templateByIdProvider(templateId))
+        .watch(templateByIdProvider(templateId))
         .when(
           loading:
               () => const Scaffold(
@@ -38,7 +31,9 @@ class TemplateDealScreen extends ConsumerWidget {
                       ? const Scaffold(
                         body: Center(child: Text('Form not found')),
                       )
-                      : _DealForm(template: t),
+                      : t.reviewed
+                      ? _DealForm(template: t)
+                      : _CheckFirst(template: t),
         );
   }
 }
@@ -57,7 +52,14 @@ class _DealFormState extends ConsumerState<_DealForm> {
 
   // Made once: the screen above rebuilds (going to the sign screen and
   // back), and a fresh deal would drop everything typed so far.
-  late final TemplateDeal deal = TemplateDeal(widget.template);
+  late final TemplateDeal deal = () {
+    final p = ref.read(userProfileProvider);
+    return TemplateDeal(widget.template)..fillAgentDetails(
+      name: p?.fullName ?? '',
+      brokerage: p?.brokerageName ?? '',
+      license: p?.agentLicenseNumber ?? '',
+    );
+  }();
   final _name = TextEditingController();
   final _email = TextEditingController();
   final _name2 = TextEditingController();
@@ -177,4 +179,61 @@ class _Heading extends StatelessWidget {
     padding: const EdgeInsets.only(bottom: 4),
     child: Text(text, style: Theme.of(context).textTheme.titleMedium),
   );
+}
+
+/// A form fresh from import: its fields and the agent's own details get
+/// checked once before the first deal, so nothing prints blank.
+class _CheckFirst extends StatelessWidget {
+  const _CheckFirst({required this.template});
+
+  final FormTemplate template;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    return Scaffold(
+      appBar: AppBar(title: Text(template.title)),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Icon(
+                Icons.fact_check_outlined,
+                size: 56,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Check this form first',
+                textAlign: TextAlign.center,
+                style: text.headlineSmall,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Take a minute to confirm the fields and fill in your '
+                'details, like your name and brokerage. You only do this '
+                'once, and every deal on this form uses them.',
+                textAlign: TextAlign.center,
+                style: text.bodyLarge,
+              ),
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed:
+                    () => context.pushReplacement(
+                      '/templates/${template.id}/review?then=deal',
+                    ),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(56),
+                ),
+                child: const Text('Check the form'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

@@ -251,6 +251,32 @@ class TemplateDeal {
     }
   }
 
+  /// The agent's name, brokerage and license on any line the form's own
+  /// details left blank (a field the check missed, or one in the agent's
+  /// signature block). Never overwrites what the agent typed.
+  void fillAgentDetails({
+    required String name,
+    required String brokerage,
+    String license = '',
+  }) {
+    for (final f in template.fields) {
+      if (f.kind != FieldKind.text || f.filledBy == FieldFiller.buyer) {
+        continue;
+      }
+      final v = switch (f.role) {
+        FieldRole.agentName => name,
+        FieldRole.brokerageName => brokerage,
+        FieldRole.agentLicense => license,
+        _ => '',
+      };
+      final current = values[f.id];
+      if (v.isEmpty || (current is String && current.trim().isNotEmpty)) {
+        continue;
+      }
+      values[f.id] = v;
+    }
+  }
+
   /// Remembers this deal's terms as the starting point for the next one:
   /// the fee, protection period and every option picked. Not names, dates or
   /// addresses, which change every deal.

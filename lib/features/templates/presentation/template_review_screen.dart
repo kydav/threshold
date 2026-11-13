@@ -18,24 +18,23 @@ Color fillerColor(FieldFiller f) => switch (f) {
   FieldFiller.agentSign => const Color(0xFF9333EA),
 };
 
-final _templateProvider = FutureProvider.family<FormTemplate?, String>((
-  ref,
-  id,
-) async {
-  final all = await ref.watch(templateRepositoryProvider).all();
-  return all.where((t) => t.id == id).firstOrNull;
-});
-
 /// Check what the AI found: drag a box to fix its position, tap it to change
 /// what it is, and fill in your own details once.
 class TemplateReviewScreen extends ConsumerWidget {
-  const TemplateReviewScreen({required this.templateId, super.key});
+  const TemplateReviewScreen({
+    required this.templateId,
+    this.thenDeal = false,
+    super.key,
+  });
 
   final String templateId;
 
+  /// After saving, go on to a deal on this form instead of the form list.
+  final bool thenDeal;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final t = ref.watch(_templateProvider(templateId));
+    final t = ref.watch(templateByIdProvider(templateId));
     return t.when(
       loading:
           () =>
@@ -45,15 +44,16 @@ class TemplateReviewScreen extends ConsumerWidget {
           (template) =>
               template == null
                   ? const Scaffold(body: Center(child: Text('Form not found')))
-                  : _Review(template: template),
+                  : _Review(template: template, thenDeal: thenDeal),
     );
   }
 }
 
 class _Review extends ConsumerStatefulWidget {
-  const _Review({required this.template});
+  const _Review({required this.template, this.thenDeal = false});
 
   final FormTemplate template;
+  final bool thenDeal;
 
   @override
   ConsumerState<_Review> createState() => _ReviewState();
@@ -138,6 +138,7 @@ class _ReviewState extends ConsumerState<_Review> {
   Future<void> _save() async {
     setState(() => _saving = true);
     t.title = _title.text.trim().isEmpty ? t.title : _title.text.trim();
+    t.reviewed = true;
     t.agentValues
       ..clear()
       ..addAll({for (final e in _agent.entries) e.key: e.value.text.trim()});
@@ -163,7 +164,12 @@ class _ReviewState extends ConsumerState<_Review> {
             .catchError((Object e) => debugPrint('Form confirm failed: $e')),
       );
     }
-    if (mounted) context.go('/templates');
+    if (!mounted) return;
+    if (widget.thenDeal) {
+      context.pushReplacement('/templates/${t.id}/deal');
+    } else {
+      context.go('/templates');
+    }
   }
 
   Future<void> _edit(TemplateField f) async {

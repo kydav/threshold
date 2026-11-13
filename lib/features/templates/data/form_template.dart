@@ -273,6 +273,7 @@ class FormTemplate {
     Map<String, Object>? dealDefaults,
     this.summary = const [],
     this.mapJobId,
+    this.reviewed = true,
   }) : agentValues = agentValues ?? {},
        dealDefaults = dealDefaults ?? {};
 
@@ -298,6 +299,10 @@ class FormTemplate {
   /// The server import this form came from; confirming it after review
   /// lets others who import the same form reuse it.
   final String? mapJobId;
+
+  /// The agent has checked the fields and saved their details. A new
+  /// import isn't, and opens the check before its first deal.
+  bool reviewed;
 
   Iterable<TemplateField> fieldsBy(FieldFiller f) =>
       fields.where((x) => x.filledBy == f);
@@ -325,6 +330,8 @@ class FormTemplate {
         SummaryLine.fromMap(Map<String, dynamic>.from(l as Map)),
     ],
     mapJobId: m['mapJobId'] as String?,
+    // Forms saved before this flag were already in use.
+    reviewed: m['reviewed'] as bool? ?? true,
   );
 
   Map<String, dynamic> toMap() => {
@@ -338,5 +345,6 @@ class FormTemplate {
     'dealDefaults': dealDefaults,
     'summary': [for (final l in summary) l.toMap()],
     if (mapJobId != null) 'mapJobId': mapJobId,
+    'reviewed': reviewed,
   };
 }

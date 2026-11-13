@@ -69,6 +69,7 @@ class TemplateRepository {
       createdAt: DateTime.now(),
       summary: map.summary,
       mapJobId: mapJobId,
+      reviewed: false,
     );
     await save(template);
     return template;
@@ -231,3 +232,13 @@ final templateRepositoryProvider = Provider((_) => TemplateRepository());
 final templatesProvider = FutureProvider<List<FormTemplate>>(
   (ref) => ref.watch(templateRepositoryProvider).all(),
 );
+
+/// One form, from [templatesProvider]: invalidating that after a save
+/// refreshes every screen showing the form.
+final templateByIdProvider = FutureProvider.family<FormTemplate?, String>((
+  ref,
+  id,
+) async {
+  final all = await ref.watch(templatesProvider.future);
+  return all.where((t) => t.id == id).firstOrNull;
+});

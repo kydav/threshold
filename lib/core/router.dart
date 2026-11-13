@@ -105,8 +105,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/templates/:id/review',
         builder:
-            (_, state) =>
-                TemplateReviewScreen(templateId: state.pathParameters['id']!),
+            (_, state) => TemplateReviewScreen(
+              templateId: state.pathParameters['id']!,
+              // From a deal on an unchecked form: back to that deal.
+              thenDeal: state.uri.queryParameters['then'] == 'deal',
+            ),
       ),
       GoRoute(
         path: '/templates/:id/deal',
